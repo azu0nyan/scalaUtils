@@ -16,14 +16,6 @@ object V2 {
   implicit def fToV2(f: Scalar): V2 = V2(f, f)
 
 
-
-  //@ENGINE CONVERSION
-
-
-  //implicit def fromVector2D(v: Vector2D): V2 = V2(v.getX.toFloat, v.getY.toFloat)
-
-  //  implicit def toVector2d(v: V2): Vector2D = new Vector2D(v.x, v.y)
-
   implicit def toUnit(v: V2): UnitV2 = new UnitV2(v)
 
   val ox: V2 = V2(1, 0)

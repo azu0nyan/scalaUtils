@@ -15,11 +15,11 @@ trait Tilemap extends Grid[Scalar]{
 
   def toFlatHeightIndex(index: IntV2): Int = toFlatIndex(index)
 
-  def vertices(cordPlane:Plane):Seq[V3] = indices.map(i => cordPlane.toWorldCords(i.toV2, valueAt(i)))
+  def vertices(cordPlane:Plane):IterableOnce[V3] = indices.iterator.map(i => cordPlane.toWorldCords(i.toV2, valueAt(i)))
 
-  def maxHeight: Scalar = values.max
+  def maxHeight: Scalar = values.iterator.max
 
-  def minHeight: Scalar = values.min
+  def minHeight: Scalar = values.iterator.min
 
   //transforms
   def scaled(scale:Int):Tilemap = TilemapScaled(this, scale)

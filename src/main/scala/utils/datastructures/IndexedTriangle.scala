@@ -13,7 +13,7 @@ case class IndexedTriangle(indices: (Int, Int, Int), f: Int => V3) {
 
   lazy val triangle: Triangle = space.Triangle(f(indices._1), f(indices._2), f(indices._3))
 
-  lazy val flip = IndexedTriangle((indices._1, indices._3, indices._2), f)
+  lazy val flip:IndexedTriangle = IndexedTriangle((indices._1, indices._3, indices._2), f)
 
   def flipToMatchNormal(otherNormal: V3): IndexedTriangle = if (triangle.onPositiveSide(otherNormal)) this else flip
 

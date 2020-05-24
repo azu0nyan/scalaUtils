@@ -10,10 +10,8 @@ object SegmentPlanar {
   def apply(s: Seq[Scalar]): SegmentPlanar = apply(s(0), s(1), s(2), s(3))
 
   implicit def toOE(sio: Option[SegmentToSegmentPlanarIntersection]): Option[Either[PointIntersection, SegmentIntersection]] = sio.map {
-    _ match {
-      case p@PointIntersection(_) => Left(p)
-      case s@SegmentIntersection(_) => Right(s)
-    }
+    case p@PointIntersection(_) => Left(p)
+    case s@SegmentIntersection(_) => Right(s)
   }
 }
 

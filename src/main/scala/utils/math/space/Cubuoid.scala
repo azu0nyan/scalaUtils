@@ -1,6 +1,6 @@
 package utils.math.space
 
-import utils.math.planar.{QuadPlanar, Rectangle}
+import utils.math.planar.{QuadPlanar}
 import utils.math._
 object Cubuoid{
   def apply(a:AABox): Cubuoid = new Cubuoid(
@@ -84,9 +84,10 @@ case class Cubuoid(
 }
 
 
-class Parallelepiped(val min: V3, val max: V3) extends Cubuoid(new Rectangle(min.toPlanar, max.toPlanar), min.heightCord, max.heightCord){
-  def this(size: V3) = this(  -size  * HALF,  size * HALF)
-  def this(aaBox: AABox)= this(aaBox.min, aaBox.max)
-}
-
-class Cube(val size: Scalar) extends Parallelepiped(size)
+//class Parallelepiped(val min: V3, val max: V3) extends Cubuoid(new Rectangle(min.toPlanar, max.toPlanar), min.heightCord, max.heightCord){
+//  def this(size: V3) = this(  -size  * HALF,  size * HALF)
+//  def this(aaBox: AABox)= this(aaBox.min, aaBox.max)
+//}
+//
+//class Cube(val size: Scalar) extends Parallelepiped(size)
+//

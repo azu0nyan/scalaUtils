@@ -1,6 +1,6 @@
 package utils.math.planar
 
-import utils.datastructures.CircullarArray
+import utils.datastructures.CircullarOps
 import utils.datastructures.spatial.AARectangle
 import utils.math.{Scalar, clamp}
 import utils.math._
@@ -49,7 +49,7 @@ object PointList{
       replacePoints(p1 ++ p2 ++ p3 ++ p4)
     }
 
-    def vertex(index:Int):V2 = vertices(CircullarArray.circullarIndex(index, verticesCount))
+    def vertex(index:Int):V2 = vertices(CircullarOps.circullarIndex(index, verticesCount))
 
     def flipHorizontal(axis:Scalar = average.x) :MYTYPE = replacePoints(vertices.map(v => (v - V2(axis, 0d)) * V2(-1d, 1d) + V2(axis, 0d)).reverse)
 

@@ -2,7 +2,8 @@ package utils.datastructures
 
 import scala.collection.mutable.ArrayBuffer
 
-class MutableGrid[T](res:IntV2, defValue:T = null) extends Grid[T] {
+
+class MutableGrid[T](res:IntV2, defValue:T) extends Grid[T] {
 
   val array:ArrayBuffer[T] = new ArrayBuffer[T]()
   array ++= (for (i <- 0 until valuesCount) yield defValue)

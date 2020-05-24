@@ -1,6 +1,6 @@
 package utils.math.planar
 
-import utils.datastructures.{CircullarArray, CircullarSeq}
+import utils.datastructures.{CircullarOps}
 import utils.math._
 import utils.math.planar._
 import utils.math.planar.PolygonalChain.PolygonalChainOps
@@ -24,7 +24,7 @@ object PolygonalChain {
     )
 
     def sides: Seq[SegmentPlanar] = if (closed)
-      CircullarSeq.toCyclicPairs(vertices).map(p => SegmentPlanar(p._1, p._2))
+      CircullarOps.toCyclicPairs(vertices).map(p => SegmentPlanar(p._1, p._2))
     else {
       for (i <- 1 until vertices.size) yield SegmentPlanar(vertex(i - 1), vertex(i))
     }
@@ -38,7 +38,7 @@ object PolygonalChain {
 
     def distanceToFromSides(point: V2): Scalar = sides.map(s => s.distanceTo(point)).min
 
-    def sideAngles: Seq[AngleCCWPlanar] = CircullarSeq.toCyclicPairs(sides).map(s12 => AngleCCWPlanar(s12._1.v1, s12._1.v2, s12._2.v2))
+    def sideAngles: Seq[AngleCCWPlanar] = CircullarOps.toCyclicPairs(sides).map(s12 => AngleCCWPlanar(s12._1.v1, s12._1.v2, s12._2.v2))
 
 
   }

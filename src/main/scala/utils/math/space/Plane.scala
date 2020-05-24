@@ -1,6 +1,7 @@
 package utils.math.space
 
 import utils.datastructures.IntV2
+import utils.datastructures.spatial.AARectangle
 import utils.math.planar._
 import utils.math._
 
@@ -67,7 +68,7 @@ case class Plane(origin: V3, x: V3, y: V3) extends NormalAndClosest {
 
   def toWorldCords(planeCords: V2, height: Scalar): V3 = origin + (x * planeCords.x) + (y * planeCords.y) + (normal * height)
 
-  def clampPoint(point: V3, planeCords: Rectangle): V3 = toWorldCords(inPlaneCords(point).clampSnap(planeCords.min, planeCords.max))
+  def clampPoint(point: V3, planeCords: AARectangle): V3 = toWorldCords(inPlaneCords(point).clampSnap(planeCords.min, planeCords.max))
 
   def clampPoint(point: V3, clampType: ClampType): V3 = clampType match {
     case NoClamp() => point
@@ -101,4 +102,4 @@ sealed abstract class ClampType
 
 case class NoClamp() extends ClampType
 
-case class RectangularClamp(rectangle: Rectangle) extends ClampType
+case class RectangularClamp(rectangle: AARectangle) extends ClampType

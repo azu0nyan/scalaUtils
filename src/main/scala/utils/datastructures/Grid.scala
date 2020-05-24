@@ -16,11 +16,11 @@ trait Grid[T] {
   final def clampResolutionIndices(divIndex: IntV2):IntV2 = IntV2(math.min(resolution.i - 1, math.max(divIndex.i, 0)), math.min(resolution.j - 1, math.max(divIndex.j, 0)))
 
   /**for storing grid in 1D array*/
-  def toFlatIndex(index: IntV2): Int = CircullarArray.circullarIndex((index.i * resolution.j) + index.j, valuesCount)
+  def toFlatIndex(index: IntV2): Int = CircullarOps.circullarIndex((index.i * resolution.j) + index.j, valuesCount)
 
   def valuesCount: Int = resolution.i * resolution.j
 
-  def indices: Seq[IntV2] = for(i <- 0 until resolution.i; j<- 0 until resolution.j) yield IntV2(i, j)
+  def indices: IterableOnce[IntV2] = for(i <- 0 until resolution.i; j<- 0 until resolution.j) yield IntV2(i, j)
 
-  def values:Seq[T] = indices.map(i => valueAt(i))
+  def values:IterableOnce[T] = indices.iterator.map(i => valueAt(i))
 }

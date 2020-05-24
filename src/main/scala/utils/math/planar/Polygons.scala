@@ -1,6 +1,7 @@
 package utils.math.planar
 
-import utils.datastructures.CircullarSeq
+import utils.datastructures.CircullarOps
+import utils.datastructures.spatial.AARectangle
 import utils.math._
 object Polygons {
 
@@ -8,8 +9,8 @@ object Polygons {
 
   implicit def fromSeq(s:Seq[PolygonRegion]): Polygons = new Polygons(s)
 
-  def rectGrid(size:(Int,Int), offset: V2 = V2.ZERO, rectangle: Rectangle): Polygons = {
-    grid(size, offset, rectangle.wh, rectangle)
+  def rectGrid(size:(Int,Int), offset: V2 = V2.ZERO, cell: AARectangle): Polygons = {
+    grid(size, offset, cell.wh, cell.toPolygon)
   }
 
   def grid(size: (Int, Int), offset: V2 = V2.ZERO, spacing: V2, cell: PolygonRegion): Polygons =
@@ -18,7 +19,7 @@ object Polygons {
       j <- 0 until size._2
     ) yield cell + offset + spacing * V2(i, j)
 
-  def pie(verts:Int, radius: Scalar):Seq[PolygonRegion] = CircullarSeq.toCyclicPairs(new NGon(verts, radius).vertices).map(v12 => new PolygonRegion(Seq(v12._1, v12._2, V2(0,0)) ))
+  def pie(verts:Int, radius: Scalar):Seq[PolygonRegion] = CircullarOps.toCyclicPairs(new NGon(verts, radius).vertices).map(v12 => new PolygonRegion(Seq(v12._1, v12._2, V2(0,0)) ))
 }
 
 case class Polygons(polys:Seq[PolygonRegion]) {

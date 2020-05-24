@@ -1,14 +1,10 @@
 package utils.datastructures.spatial
 
-import utils.math.planar.{Rectangle, SegmentPlanar, V2}
+import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
 import utils.math._
 
 object AARectangle {
   val ZERO_EMPTY: AARectangle = AARectangle(V2.ZERO, V2.ZERO)
-
-  implicit def fromRectangle(r: Rectangle): AARectangle = AARectangle(r.min, r.max)
-
-  implicit def toRectangle(r: AARectangle): Rectangle = new Rectangle(r.min, r.max)
 
   def fromSize(size: V2): AARectangle = AARectangle(-size / 2d, size / 2d)
 
@@ -61,6 +57,7 @@ case class AARectangle(min: V2, max: V2) {
     max,
     V2(max.x, min.y)
   )
+  lazy val toPolygon:PolygonRegion = PolygonRegion(vertices)
 
 }
 
