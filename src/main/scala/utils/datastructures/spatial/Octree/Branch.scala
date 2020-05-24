@@ -1,6 +1,5 @@
 package utils.datastructures.spatial.Octree
 
-import utils.datastructures.spatial.SpatialStorage
 import utils.math.space.AABox
 
 object Branch {

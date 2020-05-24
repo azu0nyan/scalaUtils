@@ -1,8 +1,5 @@
 package utils.abstractions
 
-object Monoid{
-
-}
 
 trait Monoid[T] {
   def empty:T

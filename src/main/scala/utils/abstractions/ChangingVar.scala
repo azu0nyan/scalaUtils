@@ -2,7 +2,7 @@ package utils.abstractions
 
 import utils.system.Event
 import utils.system.Event.Event
-
+/**Reactive, revisit before use*/
 trait ChangingVar[A] {
 
   def currentOrElse(implicit default:DefaultVariable[A]): A = _current.getOrElse(default.get)
