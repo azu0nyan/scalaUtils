@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 import org.scalatest.funsuite.AnyFunSuite
 import utils.datastructures.containers.ThreadedAVLTree.ThreadedAVLTree
 import utils.math._
-import utils.math.planar.{Rectangle, V2}
+import utils.math.planar.{ V2}
 
 import scala.collection.mutable
 import scala.util.Random
