@@ -17,12 +17,12 @@ object MutableGraph {
 
 
 
-    case class GraphSnapshot(nodes:IndexedSeq[Node] = IndexedSeq()){
-
-    }
-
-    var snapshot:GraphSnapshot = GraphSnapshot()
-
+//    case class GraphSnapshot(nodes:IndexedSeq[Node] = IndexedSeq()){
+//
+//    }
+//
+//    var snapshot:GraphSnapshot = GraphSnapshot()
+//
     }
 
 
