@@ -1,17 +1,23 @@
 package datastructures
 
 import org.scalatest.funsuite.AnyFunSuite
-import utils.datastructures.IntV2
-import utils.datastructures.graph.GraphOps.Graph
-import utils.datastructures.graph.GraphOps._
-import utils.datastructures.graph._
+import org.scalatest.AppendedClues._
 
+import utils.datastructures.IntV2
+import utils.datastructures.graph.{ArrayBufferGraph, GraphGenUtils}
 class GraphTest extends AnyFunSuite {
 
-  def grid(dims:IntV2):Graph[IntV2, Unit] = new Graph[IntV2, Unit] {
-  override protected [GraphOps] def nodeId(node:  IntV2): NodeId = IntV2.toFlatIndex(node, dims)
-  override protected [GraphOps] def nodesCount: Int = dims.area
-  override protected [GraphOps] def nodeById(id:  Int): this.Node = Node()
-}
+
+
+  test("Array Buffer Graph traversal"){
+    val nodes = (0 until 10) toSeq
+    val g:ArrayBufferGraph[Int, Unit] = new ArrayBufferGraph[Int,Unit](GraphGenUtils.fullGraph(nodes))
+    for(i<- nodes){
+      val bft = g.bft(i).toSet
+      assert(bft == nodes.toSet) withClue s"bft failed traversal from $i travesed ${bft} should travese ${nodes.toSet}"
+      val dft = g.dft(i).toSet
+      assert(bft == nodes.toSet) withClue s"dft failed traversal from $i travesed ${bft} should travese ${nodes.toSet}"
+    }
+  }
 
 }
