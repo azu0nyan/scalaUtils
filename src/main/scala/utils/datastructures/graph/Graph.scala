@@ -17,7 +17,7 @@ object Graph {
 
   case class Path[NodeData, EdgeData](start: NodeData, otherNodes: Seq[PathNode[NodeData, EdgeData]]) {
     def toNextNode: Option[Path[NodeData, EdgeData]] = Option.when(otherNodes.nonEmpty)(Path(otherNodes.head.to, otherNodes.tail))
-    def length(implicit edgeLength: EdgeData => Cost): Cost = otherNodes.map(pathNode => edgeLength(pathNode.by)).reduceOption(_ + _).getOrElse(0d)
+    def length(implicit edgeLength: EdgeData => Cost = ed => 1d): Cost = otherNodes.map(pathNode => edgeLength(pathNode.by)).reduceOption(_ + _).getOrElse(0d)
   }
 
   /**Graph data interface anf generic implementations, override any method for more efficient implementation
@@ -85,7 +85,7 @@ object Graph {
       val fromId = nodeId(from)
       val toId = nodeId(to)
       val fromNode = nodeById(fromId)
-      val toNode = nodeById(toId)
+   //   val toNode = nodeById(toId)
       // For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
       val gScore: mutable.Map[NodeId, Cost] = mutable.Map[NodeId, Cost]()
       gScore(fromId) = 0
@@ -102,8 +102,11 @@ object Graph {
       def reconstructPath(): Path[NodeData, EdgeData] = Path[NodeData, EdgeData](fromNode.data, {
         var path: Seq[PathNode[NodeData, EdgeData]] = Seq()
         var currentNode = toId
-        while (currentNode >= 0) {
-          path = PathNode[NodeData, EdgeData](nodeById(currentNode).data, cameBy(currentNode)) +: path
+        while (currentNode >= 0 && currentNode != fromId) {
+          path = PathNode[NodeData, EdgeData](
+            nodeById(currentNode).data,
+            cameBy(currentNode)
+          ) +: path
           currentNode = cameFrom.getOrElse(currentNode, -1)
         }
         path
