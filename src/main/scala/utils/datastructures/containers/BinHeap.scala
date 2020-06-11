@@ -8,7 +8,6 @@ class BinHeap[T](implicit o: Ordering[T]) {
 
   private val data: ArrayBuffer[T] = new ArrayBuffer[T]()
 
-
   private val elToId: mutable.Map[T, Int] = mutable.Map()
 
   @inline private def swap(f: Int, s: Int): Unit = {
@@ -20,9 +19,11 @@ class BinHeap[T](implicit o: Ordering[T]) {
     elToId(ds) = f
   }
 
+  @inline def empty: Boolean = data.isEmpty
+
   @inline private final def parent(i: Int): Int = (i - 1) >> 1
-  @inline private final def leftChild(i: Int): Int = (i >> 1) + 1
-  @inline private final def rightChild(i: Int): Int = (i >> 1) + 2
+  @inline private final def leftChild(i: Int): Int = (i << 1) + 1
+  @inline private final def rightChild(i: Int): Int = (i << 1) + 2
 
   def add(el: T): this.type = {
     data += el
@@ -35,7 +36,7 @@ class BinHeap[T](implicit o: Ordering[T]) {
   @inline private def siftUp(_id: Int): Unit = {
     var id = _id
     //while parent greater than child
-    while (id > 1 && o.gt(data(parent(id)), data(id))) {
+    while (id >= 1 && o.gt(data(parent(id)), data(id))) {
       swap(id, parent(id))
       id = parent(id)
     }
@@ -44,17 +45,18 @@ class BinHeap[T](implicit o: Ordering[T]) {
   /** move element down tree */
   @inline private def siftDown(id: Int): Unit = {
     var cur = id
-    var min = cur
-    do {
-      var lc = leftChild(id)
-      var rc = rightChild(id)
+    var cont = true
+    while (cont) {
+      var min = cur
+      var lc = leftChild(cur)
+      var rc = rightChild(cur)
       if (lc < data.size && o.lt(data(lc), data(min))) min = lc
       if (rc < data.size && o.lt(data(rc), data(min))) min = rc
       if (min != cur) {
-        swap(min, id)
+        swap(min, cur)
         cur = min
-      }
-    } while (min != cur)
+      } else cont = false
+    }
   }
 
   def fillFrom(els: IndexedSeq[T]): this.type = {
@@ -78,12 +80,19 @@ class BinHeap[T](implicit o: Ordering[T]) {
 
   def poll(): T = {
     val res = data(0)
-    data(0) = data(data.size - 1)
-    data.remove(data.size - 1)
     elToId -= res
-    elToId(data(0)) = 0
-    siftDown(0)
+    if (data.size > 1) {
+      //move last forward
+      data(0) = data(data.size - 1)
+      elToId(data(0)) = 0
+      data.remove(data.size - 1)
+      siftDown(0)
+    } else {
+      data.remove(data.size - 1)
+    }
+
     res
+
   }
 
 
@@ -95,9 +104,22 @@ class BinHeap[T](implicit o: Ordering[T]) {
   }
 
 
+  def update(oldEl:T, newEl:T):this.type  = {
+    val id = elToId(oldEl)
+    elToId -= oldEl
+    data(id) = newEl
+    elToId(newEl) = id
+    onOrderingChangedFor(newEl)
+  }
+
+
   def peek(): Option[T] = Option.when(data.nonEmpty)(data(0))
 
   def contains(el: T): Boolean = elToId.contains(el)
 
+  def takeAllIterator(): Iterator[T] = new Iterator[T] {
+    override def hasNext: Boolean = !empty
+    override def next(): T = poll()
+  }
 
 }
