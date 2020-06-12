@@ -21,6 +21,7 @@ class BinHeapTest extends AnyFunSuite {
     b.add(1)
     assert(b.poll() == 1)
   }
+
   test("add take 2"){
     val b:BinHeap[Int] = new BinHeap[Int]
     b.add(1)
@@ -33,6 +34,7 @@ class BinHeapTest extends AnyFunSuite {
     assert(b.poll() == 1)
     assert(b.poll() == 2)
   }
+
   test("add take n"){
     val b:BinHeap[Int] = new BinHeap[Int]
     for(i <- 1 to 6) {
