@@ -41,5 +41,43 @@ class GraphTest extends AnyFunSuite {
     assert(g.shortestPath(0, 2).nonEmpty)
   }
 
+  test("find path on  cycle 1"){
+    val nodesAndEdges = (0 until 10).map(x => (x, 1))
+    val g = new ArrayBufferGraph[Int, Int](bidirectional = false).fillFastUnsafe(GraphGenUtils.cycleGraph(nodesAndEdges))
+    for(
+      i <- 0 until 10;
+      j <- 1 to 9){
+      val f = i
+      val t = (i + j) % 10
+      val path = g.shortestPath(f, t)
+      assert(path.nonEmpty)
+      assert(path.get.length() == j)
+      assert(path.get.nodes == (i to (i + j)).map(_ % 10))
+    }
+  }
+
+  test("find path on weighted graph"){
+    val g = new ArrayBufferGraph[Int, Int](bidirectional = false)
+    g.addNode(0)
+    g.addNode(1)
+    g.addNode(2)
+    g.addNode(3)
+    g.addNode(4)
+    g.addNode(5)
+    //0 3 6 (5)
+    g.addEge(0, 1, 2)
+    g.addEge(1, 2, 4)
+    g.addEge(0, 3, 6)
+    g.addEge(0, 3, 4)
+    g.addEge(0, 4, 1)
+    g.addEge(3, 5, 1)
+    g.addEge(0, 5, 20)
+    g.addEge(4, 0, 1)
+    assert(g.shortestPath(0, 5, pathCost = x => x).get.nodes == Seq(0, 3, 5))
+    assert(g.shortestPath(0, 5, pathCost = x => x).get.length(x => x) == 5)
+  }
+
+
+
 
 }

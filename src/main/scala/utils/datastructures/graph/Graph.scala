@@ -2,6 +2,7 @@ package utils.datastructures.graph
 
 import java.util.Comparator
 
+import utils.datastructures.containers.BinHeap
 import utils.math._
 
 import scala.collection.mutable
@@ -16,11 +17,14 @@ object Graph {
   case class PathNode[NodeData, EdgeData](to: NodeData, by: EdgeData)
 
   case class Path[NodeData, EdgeData](start: NodeData, otherNodes: Seq[PathNode[NodeData, EdgeData]]) {
+    def nodes: Seq[NodeData] = start +: otherNodes.map(_.to)
+    def edges: Seq[EdgeData] = otherNodes.map(_.by)
+
     def toNextNode: Option[Path[NodeData, EdgeData]] = Option.when(otherNodes.nonEmpty)(Path(otherNodes.head.to, otherNodes.tail))
     def length(implicit edgeLength: EdgeData => Cost = ed => 1d): Cost = otherNodes.map(pathNode => edgeLength(pathNode.by)).reduceOption(_ + _).getOrElse(0d)
   }
 
-  /**Graph data interface anf generic implementations, override any method for more efficient implementation
+  /** Graph data interface anf generic implementations, override any method for more efficient implementation
    * NodeData serves as unique id of edge, provided by user
    * */
   trait Graph[NodeData, EdgeData] {
@@ -32,7 +36,7 @@ object Graph {
     }
 
 
-    /** return -1 if not found override for more efficient implementation*/
+    /** return -1 if not found override for more efficient implementation */
     protected def nodeId(node: NodeData): NodeId = nodes.indexOf(node)
 
     protected def nodeIds: Iterator[NodeId]
@@ -76,7 +80,15 @@ object Graph {
       }
     }
 
-
+    /**
+     * Finds shortest path with A*
+     *
+     * @param from start
+     * @param to finish
+     * @param pathCost, mapping of edge to it's cost
+     * @param nodeHeuristic heuristic for distance left to finish from given node
+     * @return path or None if not found
+     */
     def shortestPath(
                       from: NodeData, to: NodeData,
                       pathCost: EdgeData => Cost = ed => 1d,
@@ -85,17 +97,16 @@ object Graph {
       val fromId = nodeId(from)
       val toId = nodeId(to)
       val fromNode = nodeById(fromId)
-   //   val toNode = nodeById(toId)
-      // For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
-      val gScore: mutable.Map[NodeId, Cost] = mutable.Map[NodeId, Cost]()
-      gScore(fromId) = 0
-      // For node n, fScore[n] := gScore[n] + h(n). fScore[n] represents our current best guess as to
+      //   val toNode = nodeById(toId)
+      // For node n, knownBest[n] is the cost of the cheapest path from start to n currently known.
+      val knownBest: mutable.Map[NodeId, Cost] = mutable.Map[NodeId, Cost]()
+      knownBest(fromId) = 0
+      // For node n, quenedBestGuesses[n] := knownBest[n] + h(n). quenedBestGuesses[n] represents our current best guess as to
       // how short a path from start to finish can be if it goes through n
-      val fScore: mutable.Map[NodeId, Cost] = mutable.Map[NodeId, Cost]()
-      fScore(fromId) = nodeHeuristic(fromNode.data)
+      val quenedBestGuesses: mutable.Map[NodeId, Cost] = mutable.Map[NodeId, Cost]()
+      quenedBestGuesses(fromId) = nodeHeuristic(fromNode.data)
 
-      val open: mutable.SortedSet[NodeId] = mutable.SortedSet[NodeId]()((x: NodeId, y: NodeId) => math.signum(fScore(x) - fScore(y)).toInt)
-      open += fromId
+      val openQueue: BinHeap[NodeId] = new BinHeap[NodeId]()(Ordering.by((n: NodeId) => quenedBestGuesses(n)))
 
       val cameFrom: mutable.Map[NodeId, NodeId] = mutable.Map()
       val cameBy: mutable.Map[NodeId, EdgeData] = mutable.Map()
@@ -113,31 +124,25 @@ object Graph {
       })
 
 
-      open += fromId
-      while (open.nonEmpty) {
-        val current = open.firstKey
-        open -= current
+      openQueue.add(fromId)
+      while (openQueue.nonEmpty) {
+        val current = openQueue.poll()
         if (current == toId) {
           return Some(reconstructPath())
         } else {
           val curNode = nodeById(current)
-          val curNodeScore = gScore(current)
+          val curNodeScore = knownBest(current)
           curNode.outEdges.foreach { edge =>
             val toNode = edge.to
-            val tentativeGScore = curNodeScore + pathCost(edge.data)
-            if (!gScore.contains(toNode)) { //newNode
+            val costWithCurrentEdge = curNodeScore + pathCost(edge.data)
+            // we encountered `toNode` first time || found better way, `>` filters paths with same cost
+            if (!knownBest.contains(toNode) || knownBest(toNode) > costWithCurrentEdge) {
+              knownBest(toNode) = costWithCurrentEdge
+              quenedBestGuesses(toNode) = costWithCurrentEdge + nodeHeuristic(nodeById(toNode).data)
               cameFrom(toNode) = current
               cameBy(toNode) = edge.data
-              gScore(toNode) = tentativeGScore
-              fScore(toNode) = tentativeGScore + nodeHeuristic(nodeById(toNode).data)
-              open += toNode
-            } else if (tentativeGScore < gScore(toNode)) { //found better way
-              if (open.contains(toNode)) open -= toNode //remove before ordering change todo change to minheap or smth
-              cameFrom(toNode) = current
-              cameBy(toNode) = edge.data
-              gScore(toNode) = tentativeGScore
-              fScore(toNode) = tentativeGScore + nodeHeuristic(nodeById(toNode).data)
-              open += toNode //addBack
+              if (openQueue.contains(toNode)) openQueue.onOrderingChangedFor(toNode)
+              else openQueue.add(toNode)
             }
           }
         }

@@ -6,6 +6,7 @@ import scala.collection.mutable.ArrayBuffer
 /** min-bin heap augmented with hash-table for fast updates */
 class BinHeap[T](implicit o: Ordering[T]) {
 
+
   private val data: ArrayBuffer[T] = new ArrayBuffer[T]()
 
   private val elToId: mutable.Map[T, Int] = mutable.Map()
@@ -20,6 +21,7 @@ class BinHeap[T](implicit o: Ordering[T]) {
   }
 
   @inline def empty: Boolean = data.isEmpty
+  @inline def nonEmpty: Boolean = data.nonEmpty
 
   @inline private final def parent(i: Int): Int = (i - 1) >> 1
   @inline private final def leftChild(i: Int): Int = (i << 1) + 1

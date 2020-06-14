@@ -1,6 +1,7 @@
 package utils.datastructures.graph
 
 import utils.datastructures.graph.Graph._
+import utils.datastructures.CircullarOps._
 
 object GraphGenUtils {
   def fullGraph[ND](nodes: Seq[ND], loops: Boolean = false): AdjacencyList[ND, Unit] =
@@ -10,5 +11,8 @@ object GraphGenUtils {
           .map(to => ((), to)) //edge
       )
     )
+
+  def cycleGraph[ND, ED](nodes: Seq[(ND, ED)]): AdjacencyList[ND, ED] =
+    for (i <- nodes.indices) yield (nodes(i)._1, Seq((nodes(i)._2, nodes(circullarIndex(i + 1, nodes.size))._1)))
 
 }
