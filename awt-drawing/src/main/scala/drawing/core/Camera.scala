@@ -8,8 +8,8 @@ import utils.system.Event
 import utils.system.Event.Event
 
 class Camera(var cameraCenterInWorld: V2 = new V2(0.0f, 0.0f),
-             var cameraZoom: Int = 10,
-             var zooms: Seq[Scalar] = Seq[Scalar](1.0E-8D, 2.5E-8D, 5.0E-8D, 7.5E-8D, 1.0E-7D, 2.5E-7D, 5.0E-7D, 7.5E-7D, 1.0E-6D, 2.5E-6D, 5.0E-6D, 7.5E-6D, 1.0E-5D, 2.5E-5D, 5.0E-5D, 7.5E-5D, 1.0E-4D, 2.5E-4D, 5.0E-4D, 7.5E-4D, 0.001D, 0.0025D, 0.005D, 0.0075D, 0.001D, 0.0025D, 0.005D, 0.0075D, 0.01D, 0.025D, 0.05D, 0.075D, 0.1D, 0.2D, 0.25D, 0.5D, 0.75D, 1.0D, 1.5D, 2.0D, 2.5D, 3.0D, 4.0D, 5.0D, 7.5D, 10.0D, 15.0D, 20.0D),
+             var cameraZoom: Int = 37,
+             var zooms: Seq[Scalar] = Seq[Scalar](1.0E-8D, 2.5E-8D, 5.0E-8D, 7.5E-8D, 1.0E-7D, 2.5E-7D, 5.0E-7D, 7.5E-7D, 1.0E-6D, 2.5E-6D, 5.0E-6D, 7.5E-6D, 1.0E-5D, 2.5E-5D, 5.0E-5D, 7.5E-5D, 1.0E-4D, 2.5E-4D, 5.0E-4D, 7.5E-4D, 0.001D, 0.0025D, 0.005D, 0.0075D, 0.001D, 0.0025D, 0.005D, 0.0075D, 0.01D, 0.025D, 0.05D, 0.075D, 0.1D, 0.2D, 0.25D, 0.5D, 0.75D, 1.0D, 1.5D, 2.0D, 2.5D, 3.0D, 4.0D, 5.0D, 7.5D, 10.0D, 15.0D, 20.0D, 30.0D, 40.0D, 50.0D, 70.0D, 100.0D, 150.0D, 200.0D, 250.0D, 400.0D, 500.0D),
              var screenPartPerScroll: Scalar = 0.1f,
              var controlsEnabled: Boolean = false,
              var zoomIN: Int = KeyEvent.VK_E,
@@ -82,4 +82,7 @@ class Camera(var cameraCenterInWorld: V2 = new V2(0.0f, 0.0f),
       }
     })
   }
+
+
+  override def toString = s"Camera($mouseInWorld, $mouseOnScreen, $cameraCenterInWorld, $cameraZoom, $controlsEnabled, $getZoom, $leftTopAngleInWorld)"
 }
