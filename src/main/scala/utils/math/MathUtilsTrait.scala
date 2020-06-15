@@ -1,5 +1,6 @@
 package utils.math
 
+import utils.datastructures.IntV2
 import utils.math.misc.{Interval, IntervalT}
 import utils.math.planar.V2
 import utils.math.space.Rotations.Rotation
@@ -106,6 +107,8 @@ trait MathUtilsTrait {
   def clamp(x: V2, min: V2, max: V2): V2 = V2(clamp(x.x, min.x, max.x), clamp(x.y, min.y, max.y))
 
   def clamp(x: Scalar, min: Scalar, max: Scalar): Scalar = math.min(max, math.max(min, x))
+
+  def clamp(x: Int, min: Int, max: Int): Int = math.min(max, math.max(min, x))
 
   def clampSnap(x: V2, min: V2, max: V2): V2 = V2(clampSnap(x.x, min.x, max.x), clampSnap(x.y, min.y, max.y))
 

@@ -8,7 +8,7 @@ trait HeightGrid extends Grid[Scalar]{
 //cells
   final def cells: IntV2 = IntV2(resolution.i - 1, resolution.j - 1)
 
-  final def clampCellIndices(cellIndex: IntV2) = IntV2(math.min(cells.i - 1, math.max(cellIndex.i, 0)), math.min(cells.j - 1, math.max(cellIndex.j, 0)))
+  final def clampCellIndices(cellIndex: IntV2):IntV2 = IntV2(math.min(cells.i - 1, math.max(cellIndex.i, 0)), math.min(cells.j - 1, math.max(cellIndex.j, 0)))
 
   def cellIndices: Seq[IntV2] = for(i <- 0 until cells.i; j<- 0 until cells.j) yield IntV2(i, j)
 //values
