@@ -4,7 +4,7 @@ import utils.datastructures.{Grid, IntV2}
 import utils.math.space.{Plane, V3}
 import utils.math._
 
-trait Tilemap extends Grid[Scalar]{
+trait HeightGrid extends Grid[Scalar]{
 //cells
   final def cells: IntV2 = IntV2(resolution.i - 1, resolution.j - 1)
 
@@ -22,9 +22,9 @@ trait Tilemap extends Grid[Scalar]{
   def minHeight: Scalar = values.iterator.min
 
   //transforms
-  def scaled(scale:Int):Tilemap = TilemapScaled(this, scale)
+  def scaled(scale:Int):HeightGrid = HeightGridScaled(this, scale)
 
 //  def *(scale:Int):Tilemap = scaled(scale)
 
-  def toHeightmap:Heightmap = TilemapToHeightmap(this)
+  def toHeightmap:Heightmap = HeightGridToHeightmap(this)
 }

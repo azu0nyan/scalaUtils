@@ -4,7 +4,7 @@ import utils.datastructures.IntV2
 import utils.math.planar.V2
 import utils.math._
 
-trait TiledHeightmap extends Tilemap with Heightmap {
+trait TiledHeightmap extends HeightGrid with Heightmap {
   override def heightAt(pos: V2): Scalar = {
     val cell = clampResolutionIndices(pos.toIntV2)
     val unit = V2(pos.x % 1f, pos.y % 1f)

@@ -44,7 +44,7 @@ trait Heightmap  {
 
   def lerp(start: Scalar, startVal: Scalar, end: Scalar, endVal: Scalar): Heightmap = map(utils.math.lerp(start, startVal, end, endVal, _))
 
-  def toTileMap(res: IntV2): Tilemap = HeightmapToTiled(this, res)
+  def toTileMap(res: IntV2): HeightGrid = HeightmapToHeightGrid(this, res)
 }
 
 
