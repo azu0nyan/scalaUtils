@@ -44,9 +44,11 @@ class HeightGridDrawer(
       while (j < h){
         val onScreen = V2(i + leftTopScreen.x, j + leftTopScreen.y)
         val inWorld = camera.screenToWorld(onScreen)
-        val inGrid = ((inWorld - offset) / scale).toIntV2
-        val color = heightToColor(heightGrid.valueAt(inGrid))
-        img.setRGB(i, j, color.getRGB)
+        if(inWorld.x >= 0 && inWorld.y >= 0) {
+          val inGrid = ((inWorld - offset) / scale).toIntV2
+          val color = heightToColor(heightGrid.valueAt(inGrid))
+          img.setRGB(i, j, color.getRGB)
+        }
         j +=1
       }
       i += 1
@@ -56,10 +58,10 @@ class HeightGridDrawer(
   }
 
   override def drawAndUpdate(g: Graphics2D, dt: Scalar): Unit = {
-    val aos = areaOnScreen(onScreenLt, onScreenRb)
+    val (aoslt, aosrb) = areaOnScreen(onScreenLt, onScreenRb)
     if(onScreenLt.x != onScreenRb.x && onScreenLt.y != onScreenRb.y ) {
-      val img = generateImage(aos._1, aos._2)
-      g.drawImage(img, onScreenLt.x, onScreenLt.y, null)
+      val img = generateImage(aoslt, aosrb)
+      g.drawImage(img, aoslt.x, aoslt.y, null)
     }
   }
 

@@ -193,7 +193,7 @@ class DrawingWindow() extends JFrame {
 
 
   val mousePosDrawer:DrawableObject = addDrawer(g =>{
-    DrawingUtils.drawText(f"${camera.mouseInWorld.x}%.2f ${camera.mouseInWorld.y}%.2f ", camera.mouseInWorld, g, 1)
+    DrawingUtils.drawText(f"${camera.mouseInWorld.x}%.2f ${camera.mouseInWorld.y}%.2f ", camera.mouseInWorld, g, 20, scaleFont = false)
   }, 10000, false)
 
 }
