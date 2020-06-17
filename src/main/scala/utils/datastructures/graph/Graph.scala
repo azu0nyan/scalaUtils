@@ -51,6 +51,12 @@ object Graph {
         e <- nodeById(i).outEdges iterator
       ) yield e.data
 
+    def neighbours(n: NodeData): Seq[NodeData] = nodeById(nodeId(n)).outEdges.map(e => nodeById(e.to).data)
+
+    def edgesAndNeighbours: Iterator[(NodeData, EdgeData, NodeData)] = nodes.flatMap(nd => nodeById(nodeId(nd)).outEdges.map(e => (nd, e.data, nodeById(e.to).data)))
+
+    def edgesAndNeighboursFor(n: NodeData): Seq[(EdgeData, NodeData)] = nodeById(nodeId(n)).outEdges.map(e => (e.data, nodeById(e.to).data))
+
     /*deep first traversal**/
     def dft(from: NodeData): Iterator[NodeData] = traversal(from, deepFirst = true)
 
@@ -83,9 +89,9 @@ object Graph {
     /**
      * Finds shortest path with A*
      *
-     * @param from start
-     * @param to finish
-     * @param pathCost, mapping of edge to it's cost
+     * @param from          start
+     * @param to            finish
+     * @param pathCost      , mapping of edge to it's cost
      * @param nodeHeuristic heuristic for distance left to finish from given node
      * @return path or None if not found
      */

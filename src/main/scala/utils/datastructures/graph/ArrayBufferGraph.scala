@@ -7,7 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 class ArrayBufferGraph[NodeData, EdgeData](
-                                            val bidirectional: Boolean = true
+                                            val bidirectional: Boolean
                                           ) extends Graph[NodeData, EdgeData] {
   //Interface impl
   val nodeDatas: ArrayBuffer[Node] = ArrayBuffer()
