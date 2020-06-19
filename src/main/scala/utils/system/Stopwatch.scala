@@ -2,7 +2,10 @@ package utils.system
 
 import utils.system.SClock.Timestamp
 
-case class StopwatchSample(dt:Timestamp, dNs:Long)
+case class StopwatchSample(dt:Timestamp, dNs:Long) {
+  def msStr:String = s"${dt.dt} ms."
+
+}
 
 class Stopwatch {
   val start:Timestamp = SClock.now()

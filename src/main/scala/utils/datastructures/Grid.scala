@@ -9,6 +9,8 @@ trait Grid[T] {
   /** pos will be clamped to  [(0, 0), resolution - (1, 1)] */
   @inline def valueAt(pos: IntV2): T = valueAtUnsafe(clampResolutionIndices(pos))
 
+  @inline def validIndex(pos: IntV2): Boolean = pos.x >= 0 && pos.y >= 0 && pos. x < resolution.x && pos.y < resolution.y
+
   /** do not call directly, use "valueAt" for safety check */
   def valueAtUnsafe(pos: IntV2): T
 

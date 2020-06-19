@@ -28,17 +28,5 @@ trait HeightGrid extends Grid[Scalar] {
 
   def toHeightmap: Heightmap = HeightGridToHeightmap(this)
 
-  def bakeToArray: HeightGrid = new HeightGrid {
-
-    /** Grid size, indices will be from (0, 0) to resolution - (1, 1) */
-   override val resolution: IntV2 = HeightGrid.this.resolution
-
-   val array:Array[Scalar] = Array.ofDim(valuesCount)
-    for(i <- 0 until resolution.area){
-      array(i) = HeightGrid.this.valueAt(fromFlatIndex(i))
-    }
-
-    /** do not call directly, use "valueAt" for safety check */
-    override def valueAtUnsafe(pos: IntV2): Scalar = array(toFlatIndex(pos))
-  }
+  def bakeToArray: ArrayHeightGrid = new ArrayHeightGrid(this)
 }
