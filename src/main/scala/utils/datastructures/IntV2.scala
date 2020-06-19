@@ -22,6 +22,7 @@ object IntV2 {
 }
 
 case class IntV2(i: Int, j: Int) {
+
   def x: Int = i
 
   def y: Int = j

@@ -36,13 +36,19 @@ object Graph {
     }
 
 
+    @inline protected def nodeByData(node: NodeData): Node = nodeById(nodeId(node))
+
     /** return -1 if not found override for more efficient implementation */
     protected def nodeId(node: NodeData): NodeId = nodes.indexOf(node)
 
     protected def nodeIds: Iterator[NodeId]
 
+    protected def innerNodes:Iterator[Node] = nodeIds.map(nodeById)
+
     @inline protected def nodeById(id: Int): Node
 
+
+    //PUBLIC interface
     def nodes: Iterator[NodeData] = for (i <- nodeIds) yield nodeById(i).data
 
     def edges: Iterator[EdgeData] =
@@ -51,11 +57,31 @@ object Graph {
         e <- nodeById(i).outEdges iterator
       ) yield e.data
 
-    def neighbours(n: NodeData): Seq[NodeData] = nodeById(nodeId(n)).outEdges.map(e => nodeById(e.to).data)
+    def findEdge(from:NodeData, to:NodeData):Option[EdgeData] = {
+      val toId = nodeId(to)
+      val fromId = nodeId(to)
+      if(toId >= 0 && fromId >= 0) {
+        (nodeById(fromId).outEdges.find(_.to == toId).map(_.data))
+      } else None
+    }
+
+
+
+
+
+    def neighbours(n: NodeData): Seq[NodeData] = nodeByData(n).outEdges.map(e => nodeById(e.to).data)
 
     def edgesAndNeighbours: Iterator[(NodeData, EdgeData, NodeData)] = nodes.flatMap(nd => nodeById(nodeId(nd)).outEdges.map(e => (nd, e.data, nodeById(e.to).data)))
 
-    def edgesAndNeighboursFor(n: NodeData): Seq[(EdgeData, NodeData)] = nodeById(nodeId(n)).outEdges.map(e => (e.data, nodeById(e.to).data))
+    def edgesAndNeighboursFor(n: NodeData): Seq[(EdgeData, NodeData)] = nodeByData(n).outEdges.map(e => (e.data, nodeById(e.to).data))
+
+    def edgesFrom(n: NodeData): Seq[EdgeData] = nodeByData(n).outEdges.map(_.data)
+
+    /** default implementation highly inefficient */
+    def edgesDirectedTo(to:NodeData):Seq[(EdgeData, NodeData)] = {
+      val toId = nodeId(to)
+      innerNodes.filter(_.outEdges.exists(_.to == toId)).map(x => (x.outEdges.find(_.to == toId).get.data, x.data)).toSeq
+    }
 
     /*deep first traversal**/
     def dft(from: NodeData): Iterator[NodeData] = traversal(from, deepFirst = true)

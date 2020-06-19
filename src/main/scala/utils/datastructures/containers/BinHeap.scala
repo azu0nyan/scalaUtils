@@ -27,13 +27,6 @@ class BinHeap[T](implicit o: Ordering[T]) {
   @inline private final def leftChild(i: Int): Int = (i << 1) + 1
   @inline private final def rightChild(i: Int): Int = (i << 1) + 2
 
-  def add(el: T): this.type = {
-    data += el
-    val id = data.size - 1
-    elToId(el) = id
-    siftUp(id)
-    this
-  }
 
   @inline private def siftUp(_id: Int): Unit = {
     var id = _id
@@ -68,6 +61,18 @@ class BinHeap[T](implicit o: Ordering[T]) {
       data += els(i)
       elToId += els(i) -> i
     }
+    this
+  }
+
+  def +=(el: T): this.type = add(el)
+
+  def -=(el: T): this.type = remove(el)
+
+  def add(el: T): this.type = {
+    data += el
+    val id = data.size - 1
+    elToId(el) = id
+    siftUp(id)
     this
   }
 
@@ -106,7 +111,7 @@ class BinHeap[T](implicit o: Ordering[T]) {
   }
 
 
-  def update(oldEl:T, newEl:T):this.type  = {
+  def update(oldEl: T, newEl: T): this.type = {
     val id = elToId(oldEl)
     elToId -= oldEl
     data(id) = newEl
