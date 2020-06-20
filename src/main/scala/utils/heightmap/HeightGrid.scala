@@ -5,6 +5,8 @@ import utils.math.space.{Plane, V3}
 import utils.math._
 
 trait HeightGrid extends Grid[Scalar] {
+
+  final val heightAt: IntV2 => Scalar = valueAt
   //cells
   final def cells: IntV2 = IntV2(resolution.i - 1, resolution.j - 1)
 

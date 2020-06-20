@@ -1,22 +1,27 @@
-package utils.datastructures.containers
+package performance
 
+import utils.datastructures.containers.{IntArrayBuffer, IntToIntBucketMap}
+
+import scala.collection.immutable.IntMap
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /** min-bin heap augmented with hash-table for fast updates */
-class BinHeap[T](implicit o: Ordering[T]) {
+class IntBinHeap(implicit lt: (Int,Int) => Boolean) {
 
-  private val data: ArrayBuffer[T] = new ArrayBuffer[T]()
+  def gt(x:Int, y:Int):Boolean = x != y && lt(y, x)
 
-  private val elToId: mutable.Map[T, Int] = mutable.Map()
+  private val data = new IntArrayBuffer
+
+  private val elToId: IntToIntBucketMap = new IntToIntBucketMap()
 
   @inline private def swap(f: Int, s: Int): Unit = {
     val df = data(f)
     val ds = data(s)
     data(f) = ds
     data(s) = df
-    elToId(df) = s
-    elToId(ds) = f
+    elToId.update(df, s)
+    elToId.update(ds, f)
   }
 
   @inline def empty: Boolean = data.isEmpty
@@ -30,7 +35,7 @@ class BinHeap[T](implicit o: Ordering[T]) {
   @inline private def siftUp(_id: Int): Unit = {
     var id = _id
     //while parent greater than child
-    while (id >= 1 && o.gt(data(parent(id)), data(id))) {
+    while (id >= 1 && gt(data(parent(id)), data(id))) {
       swap(id, parent(id))
       id = parent(id)
     }
@@ -44,8 +49,8 @@ class BinHeap[T](implicit o: Ordering[T]) {
       var min = cur
       var lc = leftChild(cur)
       var rc = rightChild(cur)
-      if (lc < data.size && o.lt(data(lc), data(min))) min = lc
-      if (rc < data.size && o.lt(data(rc), data(min))) min = rc
+      if (lc < data.size && lt(data(lc), data(min))) min = lc
+      if (rc < data.size && lt(data(rc), data(min))) min = rc
       if (min != cur) {
         swap(min, cur)
         cur = min
@@ -53,48 +58,48 @@ class BinHeap[T](implicit o: Ordering[T]) {
     }
   }
 
-  def fillFrom(els: IndexedSeq[T]): this.type = {
-    data.clearAndShrink(els.size)
+  def fillFrom(els: IndexedSeq[Int]): this.type = {
+    data.clear()
     elToId.clear()
     for (i <- els.indices) {
-      data += els(i)
+      data.addLast(els(i))
       elToId += els(i) -> i
     }
     this
   }
 
-  def +=(el: T): this.type = add(el)
+  def +=(el: Int): this.type = add(el)
 
-  def -=(el: T): this.type = remove(el)
+  def -=(el: Int): this.type = remove(el)
 
-  def add(el: T): this.type = {
-    data += el
+  def add(el: Int): this.type = {
+    data.addLast(el)
     val id = data.size - 1
     elToId(el) = id
     siftUp(id)
     this
   }
 
-  def remove(el: T): this.type = {
+  def remove(el: Int): this.type = {
     val id = elToId(el)
     elToId -= el
     data(id) = data(data.size - 1)
-    data.remove(data.size - 1)
+    data.removeLast()
     elToId(data(id)) = id
     this
   }
 
-  def poll(): T = {
+  def poll(): Int = {
     val res = data(0)
     elToId -= res
     if (data.size > 1) {
       //move last forward
       data(0) = data(data.size - 1)
       elToId(data(0)) = 0
-      data.remove(data.size - 1)
+      data.removeLast()
       siftDown(0)
     } else {
-      data.remove(data.size - 1)
+      data.removeLast()
     }
 
     res
@@ -102,15 +107,15 @@ class BinHeap[T](implicit o: Ordering[T]) {
   }
 
 
-  def onOrderingChangedFor(el: T): this.type = {
+  def onOrderingChangedFor(el: Int): this.type = {
     val id = elToId(el)
-    if (id != 0 && o.lt(el, data(parent(id)))) siftUp(id)
+    if (id != 0 && lt(el, data(parent(id)))) siftUp(id)
     else siftDown(id)
     this
   }
 
 
-  def update(oldEl: T, newEl: T): this.type = {
+  def update(oldEl: Int, newEl: Int): this.type = {
     val id = elToId(oldEl)
     elToId -= oldEl
     data(id) = newEl
@@ -119,13 +124,14 @@ class BinHeap[T](implicit o: Ordering[T]) {
   }
 
 
-  def peek(): Option[T] = Option.when(data.nonEmpty)(data(0))
+  def peek(): Option[Int] = Option.when(data.nonEmpty)(data(0))
 
-  def contains(el: T): Boolean = elToId.contains(el)
+  def contains(el: Int): Boolean = elToId.contains(el)
 
-  def takeAllIterator(): Iterator[T] = new Iterator[T] {
+  def takeAllIterator(): Iterator[Int] = new Iterator[Int] {
     override def hasNext: Boolean = !empty
-    override def next(): T = poll()
+    override def next(): Int = poll()
   }
 
 }
+

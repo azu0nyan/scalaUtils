@@ -2,6 +2,7 @@ package datastructures
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
+import performance.IntBinHeap
 import utils.datastructures.IntV2
 import utils.datastructures.containers.BinHeap
 import utils.datastructures.graph.{ArrayBufferGraph, GraphGenUtils}
@@ -76,5 +77,17 @@ class BinHeapTest extends AnyFunSuite {
 
   }
 
+
+//  test("add take n int bin heap"){
+//    val b:IntBinHeap = new IntBinHeap((x, y) => x < y)
+//    for(i <- 1 to 6) {
+//      Permutations.allPermutations(i).foreach { p =>
+//        p.foreach(i => b.add(i))
+//        val res = b.takeAllIterator().toSeq
+//        val shouldBe = ( 0 until i).toSeq
+//        assert(res == shouldBe) withClue s"add order $p result $res should be $shouldBe"
+//      }
+//    }
+//  }
 
 }
