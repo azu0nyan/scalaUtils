@@ -15,11 +15,7 @@ class MutableMeshSection(
                   override val normals: ArrayBuffer[V3],
                   override val uvs: ArrayBuffer[V2]
                  ) extends MeshSection {
-  def this(meshSection: MeshSection) = {
-    this()
-    addOther(meshSection)
 
-  }
   def this() = {
     this(ArrayBuffer(),
       ArrayBuffer(),
@@ -27,6 +23,11 @@ class MutableMeshSection(
       ArrayBuffer())
   }
 
+  def this(meshSection: MeshSection) = {
+    this()
+    addOther(meshSection)
+
+  }
   def addOther(ot:MeshSection):MutableMeshSection = this ++= ot
 
 

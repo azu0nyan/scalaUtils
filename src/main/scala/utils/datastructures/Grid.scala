@@ -47,4 +47,6 @@ trait Grid[T] {
       Option.when(i.x < resolution.x - 1)(IntV2(i.x + 1, i.y)),
       Option.when(i.y < resolution.y - 1)(IntV2(i.x, i.y + 1)),
     ).flatten
+
+  def toArrayGrid:ArrayGrid[T] = new ArrayGrid[T](values.toArray, resolution)
 }

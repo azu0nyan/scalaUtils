@@ -7,7 +7,7 @@ import utils.math._
 trait HeightGrid extends Grid[Scalar] {
 
   final val heightAt: IntV2 => Scalar = valueAt
-  //cells
+  //cells(insides of grid)
   final def cells: IntV2 = IntV2(resolution.i - 1, resolution.j - 1)
 
   final def clampCellIndices(cellIndex: IntV2): IntV2 = IntV2(math.min(cells.i - 1, math.max(cellIndex.i, 0)), math.min(cells.j - 1, math.max(cellIndex.j, 0)))
@@ -37,6 +37,6 @@ trait HeightGrid extends Grid[Scalar] {
     /** Grid size, indices will be from (0, 0) to resolution - (1, 1) */
     override def resolution: IntV2 = size
     /** do not call directly, use "valueAt" for safety check */
-    override def valueAtUnsafe(pos: IntV2): Scalar = HeightGrid.this.valueAt(pos - leftTop)
+    override def valueAtUnsafe(pos: IntV2): Scalar = HeightGrid.this.valueAt(pos + leftTop)
   }
 }

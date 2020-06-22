@@ -14,10 +14,10 @@ object Polygon {
   def apply(p: PolygonRegion, plane: Plane, uvParams: UVGenParams = UVGenParams.defaultParams): MutableMeshSection = {
     val normal = plane.normal
     new MutableMeshSection(
-      ArrayBuffer(p.vertices.map(v => plane.toWorldCords(v))),
-      ArrayBuffer(p.triangulationIndices),
-      ArrayBuffer((0 until p.verticesCount).map(_ => normal)),
-      ArrayBuffer(p.vertices.map(m => uvParams.transform(m)))
+      p.vertices.map(v => plane.toWorldCords(v)).to(ArrayBuffer),
+      p.triangulationIndices.to(ArrayBuffer),
+      (0 until p.verticesCount).map(_ => normal).to(ArrayBuffer),
+      p.vertices.map(m => uvParams.transform(m)).to(ArrayBuffer)
     )
   }
 }

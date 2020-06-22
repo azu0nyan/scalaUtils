@@ -14,6 +14,9 @@ object Event {
     def apply(arg: Arg): Unit = onEvent(arg)
 
     def onEvent(arg: Arg): Unit
+
+    def onEventLazy(code: => Arg):Unit = onEvent(code)
+
   }
 
 
@@ -32,6 +35,8 @@ object Event {
     override def onEvent(arg: Arg): Unit = {
       listeners.foreach(_ (arg))
     }
+    /**calculates arg only if listeners exists*/
+    override def onEventLazy(code: => Arg): Unit = if(listeners.nonEmpty) onEvent(code)
   }
 
 }
