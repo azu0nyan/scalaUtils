@@ -31,4 +31,12 @@ trait HeightGrid extends Grid[Scalar] {
   def toHeightmap: Heightmap = HeightGridToHeightmap(this)
 
   def bakeToArray: ArrayHeightGrid = new ArrayHeightGrid(this)
+
+  /**!!don't doing safety checks*/
+  def viewSubgrid(leftTop:IntV2, size:IntV2):HeightGrid = new HeightGrid {
+    /** Grid size, indices will be from (0, 0) to resolution - (1, 1) */
+    override def resolution: IntV2 = size
+    /** do not call directly, use "valueAt" for safety check */
+    override def valueAtUnsafe(pos: IntV2): Scalar = HeightGrid.this.valueAt(pos - leftTop)
+  }
 }
