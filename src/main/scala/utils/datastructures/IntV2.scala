@@ -23,6 +23,7 @@ object IntV2 {
 
 case class IntV2(i: Int, j: Int) {
 
+
   def lesserIndices:Iterator[(Int,Int)] = for(q <- 0 until i iterator; w <- 0 until j iterator ) yield (q, w)
 
   def x: Int = i

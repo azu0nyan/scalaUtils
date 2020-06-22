@@ -9,9 +9,13 @@ import scala.collection.mutable.ArrayBuffer
 
 object HeightGrid {
 
-  def apply(heightGrid: HeightGrid, coordinatesPlane: Plane, up: V3 = V3.upAxis): MutableMeshSection = {
+  def apply(heightGrid: HeightGrid,
+            origin:V3,
+            x:V3,
+            y:V3,
+            up: V3 = V3.upAxis): MutableMeshSection = {
 
-    val vertices = heightGrid.vertices(coordinatesPlane).iterator.to(ArrayBuffer)
+    val vertices = heightGrid.indices.map( i => origin + x * i.x + y * i.y + up * heightGrid.heightAt(i)).iterator.to(ArrayBuffer)
 
     val uvs = heightGrid.indices.map(_.toV2).to(ArrayBuffer)
 
