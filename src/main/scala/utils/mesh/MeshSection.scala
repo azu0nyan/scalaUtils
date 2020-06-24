@@ -1,9 +1,12 @@
 package utils.mesh
 
 import utils.datastructures.IndexedTriangle
+import utils.datastructures.containers.{IntSet, IntToIntBucketMap}
 import utils.math.planar.V2
 import utils.math.space.{Triangle, V3}
 
+import scala.collection.immutable.IntMap
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 trait MeshSection {
@@ -39,6 +42,42 @@ trait MeshSection {
 
   override def toString = s"MeshSection[verts:${vertices.size}, tris:${triangles.size}, uvs:${uvs.size}, normals:${normals.size}])"
 
+  def splitByParts(maxVertices: Int): Seq[MeshSection] = {
+    if (vertices.size <= maxVertices) Seq(this)
+    else {
+      var res = Seq()
+      val processedVertices: mutable.Set[Int] = new IntSet
+      val newMapping: mutable.Map[Int, Int] = new IntToIntBucketMap()
+      var current: MutableMeshSection = new MutableMeshSection()()
+      triangles.foreach { case (v1, v2, v3) =>
+        val newVerts: Int =
+          (if (processedVertices.contains(v1)) 0 else 1) +
+            (if (processedVertices.contains(v2)) 0 else 1) +
+            (if (processedVertices.contains(v3)) 0 else 1)
+        if (newVerts + current.vertices.size > maxVertices) { //finish old and create new
+          res = res :+ current
+          processedVertices.clear()
+          newMapping.clear()
+          current = new MutableMeshSection()
+        }
+        def addIfNotContains(v: Int): Unit = {
+          if (!processedVertices.contains(v)) {
+            val newId = processedVertices.size
+            processedVertices += newId
+            newMapping += v -> newId
+            current.vertices += vertices(v)
+            current.uvs += uvs(v)
+            current.normals += normals(v)
+          }
+        }
+        addIfNotContains(v1)
+        addIfNotContains(v2)
+        addIfNotContains(v3)
+        current.triangles.addOne(newMapping(v1), newMapping(v2), newMapping(v3))
+      }
+      res :+ current
+    }
+  }
 
   def toMultiMaterialMesh[MATERIAL](material: MATERIAL): MultiMaterialMesh[MATERIAL] = {
     val mmm = new MultiMaterialMesh[MATERIAL]()
