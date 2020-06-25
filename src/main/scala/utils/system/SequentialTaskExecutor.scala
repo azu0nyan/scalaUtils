@@ -3,7 +3,7 @@ package utils.system
 import java.util.concurrent.ConcurrentLinkedQueue
 
 
-
+/*
 class PricedSequentialTaskExecutor[T <:MiTask](var pricePerUpdate: Int = 2000,
                              var priceLimit: Int = 8000,
                              var money: Int = 0,
@@ -33,8 +33,8 @@ class PricedSequentialTaskExecutor[T <:MiTask](var pricePerUpdate: Int = 2000,
       }
     }
   }
-}
-class SimpleSequentialTaskExecutor[T <:MiTask]() {
+}*/
+class SimpleSequentialTaskExecutor[T <:Runnable]() {
   private val tasks: ConcurrentLinkedQueue[T] = new ConcurrentLinkedQueue[T]()
 
   def addTask(t: T): Boolean = tasks.add(t)
@@ -42,7 +42,7 @@ class SimpleSequentialTaskExecutor[T <:MiTask]() {
   def executeAllTasks():Unit = {
     while (!tasks.isEmpty) {
       val task = tasks.poll()
-      task.doTask()
+      task.run()
 
     }
   }
