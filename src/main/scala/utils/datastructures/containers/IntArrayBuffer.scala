@@ -32,6 +32,7 @@ class IntArrayBuffer(val initialCapacity:Int = 8) extends Seq[Int]{
       data =  Array.ofDim(initialCapacity)
     }
   }
+  override def isEmpty: Boolean = filled == 0
 
   def update(idx:  Int, elem:  Int): Unit = data(idx) = elem
 

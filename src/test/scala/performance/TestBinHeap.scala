@@ -6,7 +6,7 @@ import scala.collection.ArrayOps
 import scala.util.Random
 
 object TestBinHeap extends App {
-  class MyIHeap extends BinHeap[Int]
+  /*class MyIHeap extends BinHeap[Int]
 
   for(i<- 0 to 1) {
     for (count <- (0 to (6 + 1)).map(math.pow(10, _).toInt)) {
@@ -36,6 +36,6 @@ object TestBinHeap extends App {
       t1.run()
      // t3.run()
     }
-  }
+  }*/
 
 }

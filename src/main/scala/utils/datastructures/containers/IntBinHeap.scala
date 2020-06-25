@@ -1,15 +1,11 @@
-package performance
-
-import utils.datastructures.containers.{IntArrayBuffer, IntToIntBucketMap}
-
-import scala.collection.immutable.IntMap
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+package utils.datastructures.containers
 
 /** min-bin heap augmented with hash-table for fast updates */
 class IntBinHeap(implicit lt: (Int,Int) => Boolean) {
 
   def gt(x:Int, y:Int):Boolean = x != y && lt(y, x)
+
+  def size:Int = data.size
 
   private val data = new IntArrayBuffer
 

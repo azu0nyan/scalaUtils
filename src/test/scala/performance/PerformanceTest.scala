@@ -3,13 +3,13 @@ package performance
 
 import java.util.concurrent.CountDownLatch
 
-class PerformanceTest(toTest: () => Unit, name: String = "Def. name", announce: Boolean = true, count: Int = 1, threads: Int = 1) {
+class PerformanceTest(toTest: => Unit, name: String = "Def. name", announce: Boolean = true, count: Int = 1, threads: Int = 1) {
   var c = 0
 
   private def executeTests(): Unit = {
     var i: Int = 0
     while (i < count) {
-      toTest.apply()
+      toTest
       i += 1
     }
   }

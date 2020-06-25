@@ -3,12 +3,14 @@ package utils.datastructures.containers
 import scala.collection.mutable
 
 /** Int to Int map without boxing(if you use methods defined here) */
-class IntToIntBucketMap(val bucketsPow: Int = 16) extends mutable.Map[Int, Int] {
+class IntToIntBucketMap(bucketsPow: Int = 16)extends IntBucketMap[Int](bucketsPow)
+
+class IntBucketMap[@specialized T](val bucketsPow: Int = 16) extends mutable.Map[Int, T] {
 
   override def size: Int = _size
   var _size: Int = 0
 
-  class Node(val key: Int, var value: Int)
+  class Node(val key: Int, var value: T)
 
   private val bucketMask: Int = (for (i <- 0 until bucketsPow) yield (1 << i)).reduce(_ | _)
 
@@ -19,15 +21,15 @@ class IntToIntBucketMap(val bucketsPow: Int = 16) extends mutable.Map[Int, Int] 
 
   @inline private def bucketId(elem: Int): Int = elem & bucketMask
 
-  override def apply(key: Int): Int = get(key).get
+  override def apply(key: Int): T = get(key).get
 
-  override def get(key: Int): Option[Int] = {
+  override def get(key: Int): Option[T] = {
     val bucket = buckets(bucketId(key))
     if (bucket != null) bucket.find(_.key == key).map(_.value)
     else None
   }
 
-  override def iterator: Iterator[(Int, Int)] = new Iterator[(Int, Int)] {
+  override def iterator: Iterator[(Int, T)] = new Iterator[(Int, T)] {
     var currentBucket = 0
     var inCurrentBucket: Int = -1
 
@@ -43,7 +45,7 @@ class IntToIntBucketMap(val bucketsPow: Int = 16) extends mutable.Map[Int, Int] 
     skipToNext()
 
     override def hasNext: Boolean = currentBucket < bucketsCount
-    override def next(): (Int, Int) = {
+    override def next(): (Int, T) = {
       val res = buckets(currentBucket)(inCurrentBucket)
       skipToNext()
       (res.key, res.value)
@@ -51,7 +53,7 @@ class IntToIntBucketMap(val bucketsPow: Int = 16) extends mutable.Map[Int, Int] 
   }
 
 
-  override def addOne(elem: (Int, Int)): IntToIntBucketMap.this.type = {
+  override def addOne(elem: (Int, T)): IntBucketMap.this.type = {
     if (!contains(elem._1)) {
       _size += 1
       val b = bucketId(elem._1)
@@ -63,7 +65,7 @@ class IntToIntBucketMap(val bucketsPow: Int = 16) extends mutable.Map[Int, Int] 
     }
     this
   }
-  override def subtractOne(elem: Int): IntToIntBucketMap.this.type = {
+  override def subtractOne(elem: Int): IntBucketMap.this.type = {
     val b = bucketId(elem)
     if (buckets(b) != null) {
       if (buckets(b).length == 1 && buckets(b)(0).key == elem) {
@@ -78,7 +80,7 @@ class IntToIntBucketMap(val bucketsPow: Int = 16) extends mutable.Map[Int, Int] 
     this
   }
 
-  override def update(key: Int, value: Int): Unit = {
+  override def update(key: Int, value: T): Unit = {
     val b = bucketId(key)
     val bucket: Array[Node] = buckets(b)
     if (bucket != null) {
