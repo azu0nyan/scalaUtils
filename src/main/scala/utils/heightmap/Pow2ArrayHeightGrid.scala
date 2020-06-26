@@ -5,7 +5,7 @@ import utils.math.Scalar
 
 class Pow2ArrayHeightGrid(val size2Pow: Int) extends HeightGrid {
 
-
+  override def apply(flat:Int):Scalar = heightAt(flat)
   /** Grid size, indices will be from (0, 0) to resolution - (1, 1) */
   val size: Int = 1 << size2Pow
   val yMask: Int = (for (i <- 0 until size2Pow) yield 1 << i).reduce(_ | _)

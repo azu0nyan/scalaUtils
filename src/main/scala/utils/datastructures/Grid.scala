@@ -5,6 +5,9 @@ trait Grid[T] {
 
   /** Grid size, indices will be from (0, 0) to resolution - (1, 1) */
   def resolution: IntV2
+  @inline def apply(pos:IntV2):T = valueAt(pos)
+
+  @inline def apply(flat:Int):T = valueAt(fromFlatIndex(flat))
 
   /** pos will be clamped to  [(0, 0), resolution - (1, 1)] */
   @inline def valueAt(pos: IntV2): T = valueAtUnsafe(clampResolutionIndices(pos))

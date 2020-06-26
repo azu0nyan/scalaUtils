@@ -2,7 +2,6 @@ package datastructures
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
-import performance.IntBinHeap
 import utils.datastructures.IntV2
 import utils.datastructures.containers.BinHeap
 import utils.datastructures.graph.{ArrayBufferGraph, GraphGenUtils}
