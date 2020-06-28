@@ -7,10 +7,12 @@ trait Grid[T] {
   def resolution: IntV2
   @inline def apply(pos:IntV2):T = valueAt(pos)
 
-  @inline def apply(flat:Int):T = valueAt(fromFlatIndex(flat))
-
   /** pos will be clamped to  [(0, 0), resolution - (1, 1)] */
   @inline def valueAt(pos: IntV2): T = valueAtUnsafe(clampResolutionIndices(pos))
+
+  @inline def apply(flat:Int):T = valueAt(fromFlatIndex(flat))
+
+  @inline def valueAt(flat:Int):T = valueAt(fromFlatIndex(flat))
 
   @inline def validIndex(pos: IntV2): Boolean = pos.x >= 0 && pos.y >= 0 && pos. x < resolution.x && pos.y < resolution.y
 

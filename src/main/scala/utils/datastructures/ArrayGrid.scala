@@ -13,5 +13,13 @@ class ArrayGrid[T](array:Array[Any], override val resolution:IntV2) extends Grid
     }
   }
 
+  def setValue(flat:Int, newValue:T):Unit = {
+      array(flat) = newValue.asInstanceOf[Any]
+  }
+
+  @inline override def apply(flat:Int):T = array(flat).asInstanceOf[T]
+
+  @inline override def valueAt(flat:Int):T = array(flat).asInstanceOf[T]
+
 
 }

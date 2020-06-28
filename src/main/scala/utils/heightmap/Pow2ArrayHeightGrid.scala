@@ -5,6 +5,8 @@ import utils.math._
 
 class Pow2ArrayHeightGrid(val size2Pow: Int) extends HeightGrid {
 
+
+
   def this(h:HeightGrid) = {
     this(log2(h.resolution.x).toInt)
     fillFrom(h)
@@ -58,18 +60,20 @@ class Pow2ArrayHeightGrid(val size2Pow: Int) extends HeightGrid {
 
 
   /** xxxxxxxxxxxxxxxxxyyyyyyyyyyyyyyy **/
-  @inline private final def left(i: Int): Int = i - size
-  @inline private final def right(i: Int): Int = i + size
-  @inline private final def top(i: Int): Int = i - 1
-  @inline private final def topLeft(i: Int): Int = i - 1 - size
-  @inline private final def topRight(i: Int): Int = i - 1 + size
-  @inline private final def bot(i: Int): Int = i + 1
-  @inline private final def botLeft(i: Int): Int = i + 1 - size
-  @inline private final def botRight(i: Int): Int = i + 1 + size
+  @inline final def x(i:Int) :Int = i >> size2Pow
+  @inline final def y(i:Int) :Int  = i & yMask
+  @inline final def left(i: Int): Int = i - size
+  @inline final def right(i: Int): Int = i + size
+  @inline final def top(i: Int): Int = i - 1
+  @inline final def topLeft(i: Int): Int = i - 1 - size
+  @inline final def topRight(i: Int): Int = i - 1 + size
+  @inline final def bot(i: Int): Int = i + 1
+  @inline final def botLeft(i: Int): Int = i + 1 - size
+  @inline final def botRight(i: Int): Int = i + 1 + size
 
 
   /** ignoring case with 1x1 grid, assuming every cell have at least 2 neighbours */
-  def flatNeighboursXY(i: Int): Array[Int] = {
+  @inline def flatNeighboursXY(i: Int): Array[Int] = {
     val x = i >> size2Pow
     val y = i & yMask
     if (x > 0) { //have left
@@ -116,7 +120,7 @@ class Pow2ArrayHeightGrid(val size2Pow: Int) extends HeightGrid {
     xf == xs || yf == ys
   }
 
-  def flatNeighboursDiag(i: Int): Array[Int] ={
+  @inline def flatNeighboursDiag(i: Int): Array[Int] ={
     val x = i >> size2Pow
     val y = i & yMask
     if (x > 0) { //have left
