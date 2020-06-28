@@ -1,9 +1,14 @@
 package utils.heightmap
 
 import utils.datastructures.IntV2
-import utils.math.Scalar
+import utils.math._
 
 class Pow2ArrayHeightGrid(val size2Pow: Int) extends HeightGrid {
+
+  def this(h:HeightGrid) = {
+    this(log2(h.resolution.x).toInt)
+    fillFrom(h)
+  }
 
   override def apply(flat:Int):Scalar = heightAt(flat)
   /** Grid size, indices will be from (0, 0) to resolution - (1, 1) */
