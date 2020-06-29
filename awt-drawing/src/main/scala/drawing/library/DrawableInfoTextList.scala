@@ -33,7 +33,7 @@ class DrawableInfoTextList(
 
   /** вызывается в потоке рисования каждый кадр */
   override def draw(g: Graphics2D): Unit = {
-    if(enabled) {
+    if(isEnabledNow) {
       DrawingUtils.drawPolygon(new AARectangle(boxLeftBot, boxRightTop).toPolygon, g, true, bgColor)
       DrawingUtils.drawPolygon(new AARectangle(boxLeftBot, boxRightTop).toPolygon, g, false, borderColor, borderWidth)
       for (i <- lines.indices) {

@@ -31,14 +31,14 @@ package object core{
 
     /** вызывается до рисования каждый кадр */
     override def update(dt: Scalar): Unit = {
-      if(enabled) {
+      if(isEnabledNow) {
         updateMe.apply(dt)
       }
     }
 
     /** вызывается в потоке рисования каждый кадр */
     override def draw(g: Graphics2D): Unit = {
-      if(enabled) {
+      if(isEnabledNow) {
         drawMe.apply(g)
       }
     }
