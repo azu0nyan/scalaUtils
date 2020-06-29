@@ -32,10 +32,10 @@ trait EnabledDisabled {
     enabledVar = false
   }
 
-  def enabled:Boolean = enabledVar
+  def isEnabledNow:Boolean = enabledVar
 
   def toggle():this.type = {
-    if(enabled) disable()
+    if(isEnabledNow) disable()
     else enable()
 
     this
