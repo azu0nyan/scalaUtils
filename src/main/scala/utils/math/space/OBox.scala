@@ -127,12 +127,12 @@ object OBox {
 
 
 /**
-  * Region R = { x | x = c+r*u[0]+s*u[1]+t*u[2] }, |r|<=e[0], |s|<=e[1], |t|<=e[2]
-  *
-  * @param center      OBB center point
-  * @param axes        Local x-, y-, and z-axes
-  * @param halfExtents Positive halfwidth extents of OBB along each axis
-  */
+ * Region R = { x | x = c+r*u[0]+s*u[1]+t*u[2] }, |r|<=e[0], |s|<=e[1], |t|<=e[2]
+ *
+ * @param center      OBB center point
+ * @param axes        Local x-, y-, and z-axes
+ * @param halfExtents Positive halfwidth extents of OBB along each axis
+ */
 case class OBox(
                  center: V3 = V3.ZERO,
                  axes: Axes = (V3.x, V3.y, V3.z),
@@ -146,8 +146,21 @@ case class OBox(
     case 2 => axes._3
   }
 
+  //@formatter:off
+  /*
+   *     v6________ v7
+   *    /|          /|
+   *   / |         / |
+   * v4__|________v5 |
+   * |   |        |  |
+   * |   v2______ v3
+   * |  /         | /
+   * | /          |/
+   * v0___________v1
+    */
+  //@formatter:on
 
-  def angles: Seq[V3] =
+  lazy val angles: Seq[V3] =
     Seq(
       (fromLocalAABoxSpaceVector(V3(-1, -1, -1)) * halfExtents) + center,
       (fromLocalAABoxSpaceVector(V3(-1, -1, 1)) * halfExtents) + center,
@@ -158,6 +171,28 @@ case class OBox(
       (fromLocalAABoxSpaceVector(V3(1, 1, -1)) * halfExtents) + center,
       (fromLocalAABoxSpaceVector(V3(1, 1, 1)) * halfExtents) + center,
     )
+  //@formatter:off
+  /*
+   *     v6________ v7
+   *    /|          /|
+   *   / |         / |
+   * v4__|________v5 |
+   * |   |        |  |
+   * |   v2______ | v3
+   * |  /         | /
+   * | /          |/
+   * v0___________v1
+    */
+  //@formatter:on
+
+  lazy val sides: Seq[Quad] = Seq(
+    Quad(angles(0), angles(1), angles(2), angles(3)),
+    Quad(angles(4), angles(5), angles(6), angles(7)),
+    Quad(angles(0), angles(1), angles(4), angles(5)),
+    Quad(angles(1), angles(3), angles(5), angles(7)),
+    Quad(angles(3), angles(2), angles(7), angles(6)),
+    Quad(angles(2), angles(0), angles(6), angles(4)),
+  )
 
   /*Seq(
   (V3(-1, -1, -1) * halfExtents) + center,
@@ -212,13 +247,13 @@ case class OBox(
     halfExtents)
 
   /**
-    * subtracting center from v since v is point
-    */
+   * subtracting center from v since v is point
+   */
   def toLocalAABoxSpacePoint(v: V3): V3 = (v - center).toBasis(axes)
 
   /**
-    * just projecting on basis vectors since v is vector
-    */
+   * just projecting on basis vectors since v is vector
+   */
   def toLocalAABoxSpaceVector(v: V3): V3 = v.toBasis(axes)
 
   /** v vector in local space so no center offset applied */

@@ -2,6 +2,13 @@ package utils.math.space
 
 import utils.math.planar.{QuadPlanar, V2}
 
+/*
+vertices
+2 3
+0 1
+ */
+
+
 case class Quad(val bl: V3, val br: V3, val tl: V3, val tr: V3) {
   def leftSideBT: V3 = tl - bl
 
