@@ -59,6 +59,23 @@ package object math
     def tesseracted: Scalar = s * s * s * s
   }
 
+  implicit class LongPower(val s: Long) extends AnyVal {
+    def fastPow(n:Long, p:Int) :Long =
+      if(p == 0) 1
+      else if(p == 1) n
+      else if((p & 1) == 0) {
+        val res = fastPow(n, p>>1)
+        res * res
+      } else n * fastPow(n, p - 1)
+    def ^^(p: Long): Long = fastPow(s, p)
+
+    def squared: Long = s * s
+
+    def cubed: Long = s * s * s
+
+    def tesseracted: Long = s * s * s * s
+  }
+
 
 
   implicit class WithAlmostEquals(val d: Scalar) extends AnyVal {
