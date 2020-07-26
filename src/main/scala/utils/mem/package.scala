@@ -26,11 +26,11 @@ package object mem {
   type Terabyte = Tebibyte
   type Petabyte = Pebibyte
 
-  case class  DataBit(override val count: Long) extends MultipliedData(count, 1)
-  case class  DataByte(override val count: Long) extends MultipliedData(count, 8)
-  case class  Kibibyte(override val count: Long) extends MultipliedData(count, 8 * 1024)
-  case class  Mebibyte(override val count: Long) extends MultipliedData(count, 8 * (1024 ^^ 2))
-  case class  Gibibyte(override val count: Long) extends MultipliedData(count, 8 * (1024 ^^ 3))
-  case class  Tebibyte(override val count: Long) extends MultipliedData(count, 8 * (1024 ^^ 4))
-  case class  Pebibyte(override val count: Long) extends MultipliedData(count, 8 * (1024 ^^ 5))
+  case class  DataBit( count_ : Long) extends MultipliedData(count_, 1)
+  case class  DataByte( count_ : Long) extends MultipliedData(count_, 8)
+  case class  Kibibyte( count_ : Long) extends MultipliedData(count_, 8 * 1024)
+  case class  Mebibyte( count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 2))
+  case class  Gibibyte( count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 3))
+  case class  Tebibyte( count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 4))
+  case class  Pebibyte( count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 5))
 }
