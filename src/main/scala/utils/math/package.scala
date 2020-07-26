@@ -60,7 +60,7 @@ package object math
   }
 
   implicit class LongPower(val s: Long) extends AnyVal {
-    def fastPow(n:Long, p:Int) :Long =
+    def fastPow(n:Long, p:Long) :Long =
       if(p == 0) 1
       else if(p == 1) n
       else if((p & 1) == 0) {
