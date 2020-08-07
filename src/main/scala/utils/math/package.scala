@@ -59,6 +59,8 @@ package object math
     def tesseracted: Scalar = s * s * s * s
   }
 
+
+
   implicit class LongPower(val s: Long) extends AnyVal {
     def fastPow(n:Long, p:Long) :Long =
       if(p == 0) 1
