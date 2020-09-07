@@ -19,21 +19,17 @@ object RomanNumerals {
     sb.toString()
   }
 
-  def fromRoman(s:Seq[Char]):Int = (s:Seq[Char]) match {
-    case 'I' :: 'V' :: r => 4 + fromRoman(r)
-    case 'I' :: 'X' :: r => 9 + fromRoman(r)
-    case 'I' :: r => 1 + fromRoman(r)
-    case 'V' :: r => 5 + fromRoman(r)
-    case 'X' :: 'L' :: r => 40 + fromRoman(r)
-    case 'X' :: 'C' :: r => 90 + fromRoman(r)
-    case 'X' :: r => 10 + fromRoman(r)
-    case 'L' :: r => 50 + fromRoman(r)
-    case 'C' :: 'M' :: r => 900 + fromRoman(r)
-    case 'C' :: 'D' :: r => 400 + fromRoman(r)
-    case 'C' :: r => 100 + fromRoman(r)
-    case 'D' :: r => 500 + fromRoman(r)
-    case 'M' :: r => 1000 + fromRoman(r)
 
+  def fromRoman(s:String):Int = s.length match {
+    case 0 => 0
+    case 1 => map(s)
+    case _ => map.get(s.substring(0, 2)) match {
+      case Some(x) => x + fromRoman(s.substring(2))
+      case None =>map(s.substring(0, 1)) + fromRoman(s.substring(1))
+    }
   }
+
+
+  val map:Map[String, Int] = (for(i<- num.indices) yield (sym(i) -> num(i))).toMap
 
 }
