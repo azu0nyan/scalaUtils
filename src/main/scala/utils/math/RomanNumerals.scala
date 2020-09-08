@@ -2,8 +2,8 @@ package utils.math
 
 object RomanNumerals {
 
-  val num: Array[Int] = Array(1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000).reverse
-  val sym: Array[String] = Array("I", "IV", "V", "IX", "X", "XL", "L", "XC", "C", "CD", "D", "CM", "M").reverse
+  val num: Array[Int] = Array(1, 4, 5, 9, 10, 40, 50, 90, 100, 400, 500, 900, 1000)
+  val sym: Array[String] = Array("I", "IV", "V", "IX", "X", "XL", "L", "XC", "C", "CD", "D", "CM", "M")
 
   def toRoman(x:Int):String = {
     val sb = new StringBuilder
