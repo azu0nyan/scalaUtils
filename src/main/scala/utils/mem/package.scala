@@ -3,7 +3,7 @@ package utils
 import utils.math._
 
 package object mem {
-  trait Data {
+  sealed trait Data {
     def bits: Long
     def bytes: Long = bits >> 3
     def kilobytes: Long = bits >> (3 + 10L)
@@ -12,10 +12,8 @@ package object mem {
     def terabytes: Long = bits >> (3 + 40L)
     def petabytes: Long = bits >> (3 + 50L)
   }
+  import nest._
 
-  protected class MultipliedData(val count: Long, val multiplier: Long) extends Data {
-    override def bits: Long = count * multiplier
-  }
 
   implicit class toData(x: Long) {
     def Bit: DataBit = DataBit(x)
@@ -32,12 +30,37 @@ package object mem {
   type Gigabyte = Kibibyte
   type Terabyte = Tebibyte
   type Petabyte = Pebibyte
+  object nest {
 
-  case class DataBit(count_ : Long) extends MultipliedData(count_, 1)
-  case class DataByte(count_ : Long) extends MultipliedData(count_, 8)
-  case class Kibibyte(count_ : Long) extends MultipliedData(count_, 8 * 1024)
-  case class Mebibyte(count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 2))
-  case class Gibibyte(count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 3))
-  case class Tebibyte(count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 4))
-  case class Pebibyte(count_ : Long) extends MultipliedData(count_, 8 * (1024 ^^ 5))
+
+
+    case class DataBit(count: Long) extends Data {
+      val multiplier: Long = 1
+      override val bits: Long = count * multiplier
+    }
+    case class DataByte(count: Long) extends Data {
+      val multiplier: Long = 8
+      override val bits: Long = count * multiplier
+    }
+    case class Kibibyte(count: Long) extends Data {
+      val multiplier: Long = 8 * 1024
+      override val bits: Long = count * multiplier
+    }
+    case class Mebibyte(count: Long) extends Data {
+      val multiplier: Long = 8 * (1024 ^^ 2)
+      override val bits: Long = count * multiplier
+    }
+    case class Gibibyte(count: Long) extends Data {
+      val multiplier: Long = 8 * (1024 ^^ 3)
+      override val bits: Long = count * multiplier
+    }
+    case class Tebibyte(count: Long) extends Data {
+      val multiplier: Long = 8 * (1024 ^^ 4)
+      override val bits: Long = count * multiplier
+    }
+    case class Pebibyte(count: Long) extends Data {
+      val multiplier: Long = 8 * (1024 ^^ 5)
+      override val bits: Long = count * multiplier
+    }
+  }
 }
