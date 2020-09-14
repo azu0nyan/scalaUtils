@@ -5,6 +5,22 @@ import scala.collection.mutable
 object Permutations {
 
 
+  def permute(per:Seq[Int], data:Seq[Int]):Seq[Int] = {
+    val res = Array.ofDim[Int](data.size)
+    for(i<- per.indices){
+      res(per(i)) = data(i)
+    }
+    res.toSeq
+  }
+
+  def compose(per1:Seq[Int], per2:Seq[Int]):Seq[Int] = {
+    val res =Array.ofDim[Int](per1.size)
+    for(i <- per1.indices){
+      res(i) = per2(per1(i))
+    }
+    res.toSeq
+  }
+
   def nextPermutationSeq(per: Seq[Int]): Seq[Int] = {
     val arr = per.toArray
     nextPermutation(arr)
