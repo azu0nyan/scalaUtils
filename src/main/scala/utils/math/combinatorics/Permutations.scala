@@ -1,10 +1,61 @@
 package utils.math.combinatorics
 
+import scala.collection.mutable
+
 object Permutations {
+
+
+  def nextPermutationSeq(per: Seq[Int]): Seq[Int] = {
+    val arr = per.toArray
+    nextPermutation(arr)
+    arr.toSeq
+  }
+
+  def elemOrbit(per: Seq[Int], elem: Int): Seq[Int] = {
+    var cur = elem
+    val res: mutable.Buffer[Int] = mutable.Buffer()
+    do {
+      res += cur
+      cur = per(cur)
+    } while (cur != elem)
+    res.toSeq
+  }
+
+  def allCycles(per: Seq[Int]): Seq[Seq[Int]] = {
+    val acc: mutable.Buffer[Seq[Int]] = mutable.Buffer()
+    val checked = Array.ofDim[Boolean](per.size)
+    for (i <- checked.indices) {
+      if (!checked(i)) {
+        val cycle: mutable.Buffer[Int] = mutable.Buffer()
+        var cur = i
+        do {
+          cycle += cur
+          checked(cur) = true
+          cur = per(cur)
+        } while (!checked(cur))
+        acc += cycle.toSeq
+      }
+    }
+    acc.toSeq
+  }
+
+  def toCanonicalCyclicNotation(per: Seq[Int]): String = {
+    val cycles = allCycles(per).filterNot(_.size == 1)
+    if (cycles.isEmpty) "()"
+    else cycles.map(_.mkString("(", ",", ")")).mkString("")
+  }
+
+  def fromCyclicNotation(notation:String, size:Int):Seq[Int] = {
+    val res = (0 until size).toArray
+    notation.split("\\)").map(_.replace("(","").split(",").flatMap(_.toIntOption))
+      .map(c => c :+ c.head).foreach(c => c.sliding(2).foreach(p => res(p(0)) = p(1)))
+    res.toSeq
+  }
+
 
   def allPermutations(elems: Int): Iterator[IndexedSeq[Int]] = new Iterator[IndexedSeq[Int]] {
     var currentId: Long = 0
-    val maxId:Long = factorial(elems)
+    val maxId: Long = factorial(elems)
     val currentArray: Array[Int] = (0 until elems) toArray
     override def hasNext: Boolean = currentId < maxId
     override def next(): IndexedSeq[Int] = {
