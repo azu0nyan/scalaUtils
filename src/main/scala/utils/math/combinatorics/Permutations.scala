@@ -1,5 +1,6 @@
 package utils.math.combinatorics
 
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 
 object Permutations {
@@ -10,7 +11,7 @@ object Permutations {
         if (f(j) > f(i)) res(f(i)) += 1
       }
     }
-    res
+    ArraySeq.unsafeWrapArray( res)
   }
 
 
@@ -31,7 +32,7 @@ object Permutations {
     for (i <- per.indices) {
       res(per(i)) = data(i)
     }
-    res
+    ArraySeq.unsafeWrapArray( res)
   }
 
   def compose(per1: Seq[Int], per2: Seq[Int]): Seq[Int] = {
@@ -39,13 +40,13 @@ object Permutations {
     for (i <- per1.indices) {
       res(i) = per2(per1(i))
     }
-    res
+    ArraySeq.unsafeWrapArray( res)
   }
 
   def nextPermutationSeq(per: Seq[Int]): Seq[Int] = {
     val arr = per.toArray
     nextPermutation(arr)
-    arr
+    ArraySeq.unsafeWrapArray( arr)
   }
 
   def elementOrbit(per: Seq[Int], elem:Int):Set[Int] = elementCycle(per, elem).toSet
@@ -63,7 +64,7 @@ object Permutations {
   def allCycles(per: Seq[Int]): Seq[Seq[Int]] = {
     val acc: mutable.Buffer[Seq[Int]] = mutable.Buffer()
     val checked = Array.ofDim[Boolean](per.size)
-    for (i <- checked.indices) {
+     for (i <- checked.indices) {
       if (!checked(i)) {
         val cycle: mutable.Buffer[Int] = mutable.Buffer()
         var cur = i
