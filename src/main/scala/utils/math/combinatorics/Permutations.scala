@@ -3,31 +3,54 @@ package utils.math.combinatorics
 import scala.collection.mutable
 
 object Permutations {
-
-
-  def permute(per:Seq[Int], data:Seq[Int]):Seq[Int] = {
-    val res = Array.ofDim[Int](data.size)
-    for(i<- per.indices){
-      res(per(i)) = data(i)
+  def inversionTable(f: Seq[Int]): Seq[Int] = {
+    val res = Array.ofDim[Int](f.size)
+    for (i <- f.indices) {
+      for (j <- 0 until i) {
+        if (f(j) > f(i)) res(f(i)) += 1
+      }
     }
-    res.toSeq
+    res
   }
 
-  def compose(per1:Seq[Int], per2:Seq[Int]):Seq[Int] = {
-    val res =Array.ofDim[Int](per1.size)
-    for(i <- per1.indices){
+
+//  def fromInversionTable(f: Seq[Int]): Seq[Int] = {
+//    val n = f.size
+//    val res = Array.ofDim[Int](n)
+//    var curr = 1
+//    for(k <- res.indices){
+//      var j = 0
+//      for(i <- 0 until n ){
+//        if()
+//      }
+//    }
+//  }
+
+  def permute(per: Seq[Int], data: Seq[Int]): Seq[Int] = {
+    val res = Array.ofDim[Int](data.size)
+    for (i <- per.indices) {
+      res(per(i)) = data(i)
+    }
+    res
+  }
+
+  def compose(per1: Seq[Int], per2: Seq[Int]): Seq[Int] = {
+    val res = Array.ofDim[Int](per1.size)
+    for (i <- per1.indices) {
       res(i) = per2(per1(i))
     }
-    res.toSeq
+    res
   }
 
   def nextPermutationSeq(per: Seq[Int]): Seq[Int] = {
     val arr = per.toArray
     nextPermutation(arr)
-    arr.toSeq
+    arr
   }
 
-  def elemOrbit(per: Seq[Int], elem: Int): Seq[Int] = {
+  def elementOrbit(per: Seq[Int], elem:Int):Set[Int] = elementCycle(per, elem).toSet
+
+  def elementCycle(per: Seq[Int], elem: Int): Seq[Int] = {
     var cur = elem
     val res: mutable.Buffer[Int] = mutable.Buffer()
     do {
@@ -61,9 +84,9 @@ object Permutations {
     else cycles.map(_.mkString("(", ",", ")")).mkString("")
   }
 
-  def fromCyclicNotation(notation:String, size:Int):Seq[Int] = {
+  def fromCyclicNotation(notation: String, size: Int): Seq[Int] = {
     val res = (0 until size).toArray
-    notation.split("\\)").map(_.replace("(","").split(",").flatMap(_.toIntOption))
+    notation.split("\\)").map(_.replace("(", "").split(",").flatMap(_.toIntOption))
       .map(c => c :+ c.head).foreach(c => c.sliding(2).foreach(p => res(p(0)) = p(1)))
     res.toSeq
   }
@@ -82,6 +105,12 @@ object Permutations {
     }
   }
 
+  def hasNext(per: Seq[Int]): Boolean = {
+    for (i <- 1 until per.length) {
+      if (per(i - 1) < per(i)) return true
+    }
+    return false
+  }
 
   ////PERMUTATIONS
   def nextPermutation(per: Array[Int]): Unit = {
