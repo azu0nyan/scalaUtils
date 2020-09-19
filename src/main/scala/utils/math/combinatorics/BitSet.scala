@@ -12,7 +12,7 @@ object BitSet {
   def hasNext(set: Array[Boolean]): Boolean = set.contains(false)
 
 
-  def nextSeq(seq:Seq[Boolean], n:Int):Option[Seq[Boolean]] = {
+  def nextSeq(seq:Seq[Boolean]):Option[Seq[Boolean]] = {
     val arr = seq.toArray
     Option.when(hasNext(arr)){
       next(arr)
