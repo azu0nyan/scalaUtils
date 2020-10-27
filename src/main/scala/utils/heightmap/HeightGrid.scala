@@ -4,16 +4,29 @@ import utils.datastructures.{Grid, IntV2}
 import utils.math.space.{Plane, V3}
 import utils.math._
 
+
+trait CelledGrid extends HeightGrid {
+  //cells(insides of grid)
+  final def cellsInsideGrid: IntV2 = IntV2(resolution.i - 1, resolution.j - 1)
+
+  final def clampCellIndices(cellIndex: IntV2): IntV2 = IntV2(math.min(cellsInsideGrid.i - 1, math.max(cellIndex.i, 0)), math.min(cellsInsideGrid.j - 1, math.max(cellIndex.j, 0)))
+
+  def cellIndices: Seq[IntV2] = for (i <- 0 until cellsInsideGrid.i; j <- 0 until cellsInsideGrid.j) yield IntV2(i, j)
+  //values
+
+
+}
+
+
+
+
+
 trait HeightGrid extends Grid[Scalar] {
 
+
+
+
   final val heightAt: IntV2 => Scalar = valueAt
-  //cells(insides of grid)
-  final def cells: IntV2 = IntV2(resolution.i - 1, resolution.j - 1)
-
-  final def clampCellIndices(cellIndex: IntV2): IntV2 = IntV2(math.min(cells.i - 1, math.max(cellIndex.i, 0)), math.min(cells.j - 1, math.max(cellIndex.j, 0)))
-
-  def cellIndices: Seq[IntV2] = for (i <- 0 until cells.i; j <- 0 until cells.j) yield IntV2(i, j)
-  //values
 
   @inline def toFlatHeightIndex(index: IntV2): Int = toFlatIndex(index)
 
