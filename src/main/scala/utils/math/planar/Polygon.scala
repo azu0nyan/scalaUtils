@@ -104,7 +104,7 @@ object Polygon {
 
     def aabb :AARectangle =regions.map(_.aabb).reduceOption((b1, b2)=> b1.combine(b2)).getOrElse(AARectangle.ZERO_EMPTY)
     /**
-      * @Override
+      *
       */
     def intersectingRegions: Iterator[(PolygonRegion, PolygonRegion)] = regions.combinations(2).filter(p => p(0).intersects(p(1))).map(p => (p(0), p(1)))
 
