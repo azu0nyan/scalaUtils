@@ -81,6 +81,6 @@ object PerlinNoise{
 
 case class PerlinNoise(seed:Long = 0) extends Heightmap {
 
-  override def heightAt(pos: V2): Scalar = PerlinNoise.noise(pos.x.toFloat , pos.y.toFloat, seed/ Float.MaxValue)
+  override def heightAt(pos: V2): Scalar = PerlinNoise.noise(pos.x.toFloat , pos.y.toFloat, seed.toFloat * 1.4f)
 
 }
