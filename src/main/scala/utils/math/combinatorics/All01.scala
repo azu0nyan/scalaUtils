@@ -16,7 +16,7 @@ object All01 {
         h <- if (i == 0) Seq("") else all01NonEmpty(i);
         t <- if (i == n - 2) Seq("") else all01NonEmpty(n - 2 - i)
       ) yield h + "00" + t
-    }
+    }.toSet.toSeq
 
   def withExactlyTwo0(n: Int): Seq[String] = if (n <= 1) Seq() else
     for (
