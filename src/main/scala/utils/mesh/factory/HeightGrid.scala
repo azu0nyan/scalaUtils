@@ -40,7 +40,7 @@ object HeightGrid {
       ).map(t => t.flipToMatchNormal(up).triangle)
     ).map(s => Triangle.averageNormal(s)).to(ArrayBuffer)
 
-    val triangles = heightGrid.cellIndices.flatMap(
+    val triangles = (heightGrid.resolution - IntV2(1, 1)).lesserIndices.flatMap(
       i => Seq(triangle1(i).flipToMatchNormal(up).indices, triangle2(i).flipToMatchNormal(up).indices)).to(ArrayBuffer)
 
     new MutableMeshSection(vertices, triangles, normals, uvs)

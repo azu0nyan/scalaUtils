@@ -42,6 +42,8 @@ case class IntV2(i: Int, j: Int) {
 
   def *(v: IntV2): IntV2 = IntV2(i * v.i, j * v.j)
 
+  def *(v: Int): IntV2 = IntV2(i * v, j * v)
+
   def /(v: IntV2): IntV2 = IntV2(i / v.i, j / v.j)
 
   def clampCircullar(resolution: IntV2): IntV2 = IntV2(utils.math.circullarIndex(i, resolution.i), utils.math.circullarIndex(j, resolution.j))

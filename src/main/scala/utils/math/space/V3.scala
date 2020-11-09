@@ -91,6 +91,8 @@ case class V3(x: Scalar, y: Scalar, z: Scalar) {
 
   @inline def unary_- : V3 = opposite
 
+  @inline def unit : V3 = normalize
+
   @inline def opposite: V3 = V3(-x, -y, -z)
 
   @inline def +(v: V3) = V3(x + v.x, y + v.y, z + v.z)
@@ -147,19 +149,19 @@ case class V3(x: Scalar, y: Scalar, z: Scalar) {
   @inline def heightCord: Scalar = y //todo heightComponent
 
   /** creating 2d vector dropping x */
-  @inline def dropX = V2(y, z)
+  @inline def dropX:V2 = V2(y, z)
 
   /** creating 2d vector dropping y */
-  @inline def dropY = V2(x, z)
+  @inline def dropY:V2 = V2(x, z)
 
   /** creating 2d vector dropping z */
-  @inline def dropZ = V2(x, y)
+  @inline def dropZ:V2 = V2(x, y)
 
-  @inline def replaceX(nx: Scalar) = V3(nx, y, z)
+  @inline def replaceX(nx: Scalar) :V3= V3(nx, y, z)
 
-  @inline def replaceY(ny: Scalar) = V3(x, ny, z)
+  @inline def replaceY(ny: Scalar) :V3= V3(x, ny, z)
 
-  @inline def replaceZ(nz: Scalar) = V3(x, y, nz)
+  @inline def replaceZ(nz: Scalar) :V3= V3(x, y, nz)
 
   @inline def toSeq: Seq[Scalar] = Seq(x, y, z)
 

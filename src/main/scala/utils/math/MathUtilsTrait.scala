@@ -76,9 +76,9 @@ trait MathUtilsTrait {
   }
 
   /**
-    * @param a from inclusive
-    * @param b to inclusive
-    */
+   * @param a from inclusive
+   * @param b to inclusive
+   */
   def randIntInRangeInclusive(a: Int, b: Int, r: Random = new Random()): Int = {
     val min: Int = scala.math.min(a, b)
     val max: Int = scala.math.max(a, b)
@@ -117,6 +117,18 @@ trait MathUtilsTrait {
     if (clamp(x, min, max) ~= min) min
     else if (clamp(x, min, max) ~= max) max
     else clamp(x, min, max)
+
+  def clampRepeat(x: Scalar, min: Scalar, max: Scalar): Scalar = {
+    if (x < min) {
+      max - ((min - x) % (max - min))
+    } else if (x > max) {
+      min + ((x - max) % (max - min))
+    } else x
+  }
+
+  def clampRepeat(x:V2, min:V2, max:V2):V2 = V2(clampRepeat(x.x, min.x, max.x), clampRepeat(x.y, min.y, max.y))
+
+  def clampRepeat(x:V3, min:V3, max:V3):V3 = V3(clampRepeat(x.x, min.x, max.x), clampRepeat(x.y, min.y, max.y), clampRepeat(x.z, min.z, max.z))
 
   val unitInterval: IntervalT[Scalar] = IntervalT[Scalar](ZERO, ONE)
 
@@ -197,12 +209,12 @@ trait MathUtilsTrait {
   else x.toInt - 1
 
   /**
-    * conversion from spherical coordinates to world coordinates
-    *
-    * @param radius      0 to inf
-    * @param inclination 0 to PI
-    * @param azimuth     0 to 2PI
-    */
+   * conversion from spherical coordinates to world coordinates
+   *
+   * @param radius      0 to inf
+   * @param inclination 0 to PI
+   * @param azimuth     0 to 2PI
+   */
   @inline def fromSphericalCoordinates(radius: Scalar, inclination: Angle, azimuth: Angle): V3 =
     V3(
       radius * sin(inclination) * cos(azimuth),
