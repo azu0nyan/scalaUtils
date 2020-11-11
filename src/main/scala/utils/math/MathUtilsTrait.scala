@@ -46,6 +46,8 @@ trait MathUtilsTrait {
 
   @inline def pow(a: Scalar, b: Scalar): Scalar = math.pow(a, b)
 
+  def eqWithDelta(a:Scalar, b:Scalar, delta:Scalar):Boolean = abs(a - b) <= delta
+
   def min(vals: Scalar*): Scalar = vals.min
 
   def max(vals: Scalar*): Scalar = vals.max

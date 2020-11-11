@@ -40,6 +40,8 @@ case class IntV2(i: Int, j: Int) {
 
   def -(v: IntV2): IntV2 = IntV2(i - v.i, j - v.j)
 
+  def **(v: IntV2): Int = i * v.i + j * v.j
+
   def *(v: IntV2): IntV2 = IntV2(i * v.i, j * v.j)
 
   def *(v: Int): IntV2 = IntV2(i * v, j * v)
