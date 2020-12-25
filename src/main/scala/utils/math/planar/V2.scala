@@ -113,6 +113,8 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
   def toIntV2: IntV2 = IntV2(x.toInt, y.toInt)
 
   def collinear(other: V2): Boolean = (normalize ~= other.normalize) || (normalize ~= other.normalize.opposite)
+
+
 }
 
 class UnitV2(v: V2) extends V2(v.normalize.x, v.normalize.y)
