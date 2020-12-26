@@ -8,19 +8,20 @@ object ManachersAlgo {
 
 
   def manacherOddCount(s: String): Long = {
-    var sum = 0
-    var l = 0
-    var r = -1
-    val d = new Array[Int](s.length)
+    var sum = 0L
+    var l = 0L
+    var r = -1L
+    val d = new Array[Long](s.length)
     for (i <- 0 until s.length) {
-      var size = 0
+      var size = 0L
       if (i > r) size = 0
       else {
         val j = (r - i) + l
-        size = Math.min(r - i, d(j))
+        size = Math.min((r - i).toLong, d(j.toInt))
       }
       while ( {
-        i - size - 1 >= 0 && i + size + 1 < s.length && s.charAt(i - size - 1) == s.charAt(i + size + 1)
+        i - size - 1 >= 0 && i + size + 1 < s.length && s.charAt((i - size - 1).toInt) ==
+          s.charAt((i + size + 1).toInt)
       }) size += 1
       d(i) = size
       sum += d(i)
@@ -33,27 +34,29 @@ object ManachersAlgo {
   }
 
   def manacherEvenCount(s: String): Long = {
-    var sum = 0
-    var l = 0
-    var r = -1
-    val d = new Array[Int](s.length)
+    var sum = 0L
+    var l = 0L
+    var r = -1L
+    val d = new Array[Long](s.length)
     for (i <- 0 until s.length) {
-      var size = 0
+      var size = 0L
       if (i > r) size = 0
       else {
         val j = (r - i) + l + 1
-        size = Math.min((r - i) + 1, d(j))
+        size = Math.min((r - i) + 1, d(j.toInt))
       }
       while ( {
-        i - size - 1 >= 0 && i + size < s.length && s.charAt(i - size - 1) == s.charAt(i + size)
+        i - size - 1 >= 0 && i + size < s.length && s.charAt((i - size - 1).toInt) == s.charAt((i + size).toInt)
       }) size += 1
       d(i) = size
       sum += d(i)
+//      println(s"$i ${d(i)} $sum")
       if (i + size - 1 > r) {
         l = i - size
         r = i + size - 1
       }
     }
+//    println(d.max)
     sum
   }
 

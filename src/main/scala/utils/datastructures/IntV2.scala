@@ -2,6 +2,8 @@ package utils.datastructures
 
 import utils.math.planar.V2
 
+import utils.math._
+
 object IntV2 {
 
   def clamp(x: IntV2, min: IntV2, max: IntV2): IntV2 = IntV2(utils.math.clamp(x.x, min.x, max.x), utils.math.clamp(x.y, min.y, max.y))
@@ -40,11 +42,17 @@ case class IntV2(i: Int, j: Int) {
 
   def -(v: IntV2): IntV2 = IntV2(i - v.i, j - v.j)
 
+  def **(v: IntV2): Int = i * v.i + j * v.j
+
   def *(v: IntV2): IntV2 = IntV2(i * v.i, j * v.j)
 
   def *(v: Int): IntV2 = IntV2(i * v, j * v)
 
   def /(v: IntV2): IntV2 = IntV2(i / v.i, j / v.j)
+
+  def lengthSquared:Int = x * x + y * y
+
+  def length:Scalar = sqrt(lengthSquared)
 
   def clampCircullar(resolution: IntV2): IntV2 = IntV2(utils.math.circullarIndex(i, resolution.i), utils.math.circullarIndex(j, resolution.j))
 

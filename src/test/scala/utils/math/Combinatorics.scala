@@ -4,6 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import utils.math.combinatorics.{BitSet, Combinations, Partitions}
 
 class Combinatorics extends AnyFunSuite {
+
   test("partitions") {
     val cur = Partitions.first(16)
     println(cur.mkString(" + "))

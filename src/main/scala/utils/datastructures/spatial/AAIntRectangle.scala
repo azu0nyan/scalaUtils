@@ -31,6 +31,8 @@ case class AAIntRectangle(min:IntV2, max:IntV2) {
   //def clampPoint(point:IntV2): IntV2 = MathUtils.clamp(point, min, max)
 
   def intersects(ot: AAIntRectangle): Boolean = max.i > ot.min.i && min.i < ot.max.i && max.j > ot.min.j && min.j < ot.max.j
+  def intersectsOrTouches(ot: AAIntRectangle): Boolean = max.i >= ot.min.i && min.i <= ot.max.i &&
+    max.j >= ot.min.j && min.j <= ot.max.j
 
   def combine(ot: AAIntRectangle): AAIntRectangle = AAIntRectangle(
     IntV2(math.min(min.i, ot.min.i), math.min(min.j, ot.min.j)),
