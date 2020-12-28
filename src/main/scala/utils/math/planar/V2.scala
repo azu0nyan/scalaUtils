@@ -103,7 +103,6 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   def toSeq: Seq[Scalar] = Seq(x, y)
 
-  //@ENGINE CONVERSION  todo
   def planarToV3(upCord: Scalar): V3 = V3(x, upCord, -y)
 
   def clamp: (V2, V2) => V2 = utils.math.clamp(this, _, _)
