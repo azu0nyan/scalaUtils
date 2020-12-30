@@ -108,9 +108,9 @@ trait MathUtilsTrait {
 
   def clamp(x: V2, min: V2, max: V2): V2 = V2(clamp(x.x, min.x, max.x), clamp(x.y, min.y, max.y))
 
-  def clamp(x: Scalar, min: Scalar, max: Scalar): Scalar = math.min(max, math.max(min, x))
+  @inline def clamp(x: Scalar, min: Scalar, max: Scalar): Scalar = if(x < min) min else if(x > max) max else x
 
-  def clamp(x: Int, min: Int, max: Int): Int = math.min(max, math.max(min, x))
+  @inline def clamp(x: Int, min: Int, max: Int): Int = if(x < min) min else if(x > max) max else x
 
   def clampSnap(x: V2, min: V2, max: V2): V2 = V2(clampSnap(x.x, min.x, max.x), clampSnap(x.y, min.y, max.y))
 

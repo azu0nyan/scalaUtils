@@ -1,5 +1,9 @@
 package utils.datastructures
 
+import utils.heightmap.GridOps
+import utils.math._
+import utils.math.planar.V2
+
 /** Grid with values at integer points, use indices or values to iterate over */
 trait Grid[T] {
 
@@ -18,6 +22,8 @@ trait Grid[T] {
 
   /** do not call directly, use "valueAt" for safety check */
   def valueAtUnsafe(pos: IntV2): T
+
+  def valueAtUnsafeXY(x:Int, y:Int): T = valueAtUnsafe(IntV2(x, y))
 
   /** clamp to  [(0, 0), resolution - (1, 1)] */
   final def clampResolutionIndices(divIndex: IntV2): IntV2 = IntV2(math.min(resolution.i - 1, math.max(divIndex.i, 0)), math.min(resolution.j - 1, math.max(divIndex.j, 0)))
@@ -55,4 +61,8 @@ trait Grid[T] {
     ).flatten
 
   def toArrayGrid:ArrayGrid[T] = new ArrayGrid[T](values.toArray, resolution)
+
+  def interpolateFromCellCenters(mix:(T, T, Scalar) => T, pos:V2):T = {
+    GridOps.interpolateFromCellCenters((x, y) => apply(x, y), resolution.x, resolution.y, mix, pos.x, pos.y)
+  }
 }
