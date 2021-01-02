@@ -52,6 +52,8 @@ trait MathUtilsTrait {
 
   def max(vals: Scalar*): Scalar = vals.max
 
+
+
   /** creates vector where each component is minimum of corresponding components from v1 and v2 */
   def minCords(v1: V3, v2: V3): V3 = V3.combine(v1, v2, min)
 
@@ -101,6 +103,21 @@ trait MathUtilsTrait {
   def randRotation(r: Random = new Random()): Rotation = {
     Quat(r.nextFloat(), r.nextFloat(), r.nextFloat(), r.nextFloat()).normalized
   }
+
+  //mix
+  @inline def mix(x:Scalar, y:Scalar, a:Scalar):Scalar = x *(1 - a) + y * a
+
+  @inline def mixV2(x:V2, y:V2, a:Scalar):V2 = V2(
+    mix(x.x, y.x, a),
+    mix(x.y, y.y, a)
+  )
+
+  @inline def mixV3(x:V3, y:V3, a:Scalar):V3 = V3(
+    mix(x.x, y.x, a),
+    mix(x.y, y.y, a),
+    mix(x.z, y.z, a),
+  )
+
 
   //Clamps
 
