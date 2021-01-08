@@ -1,4 +1,6 @@
-package utils.datastructures.spatial
+package utils.datastructures.planar
+
+import utils.datastructures.spatial.AARectangle
 
 //TODO
 sealed abstract class AABBTree[T](val aabb: AARectangle) {
