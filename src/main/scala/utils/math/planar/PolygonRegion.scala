@@ -9,7 +9,7 @@ import utils.math.planar.patch.Path.Path
 
 object PolygonRegion {
 
-  def from(p:Path, vertices:Int) :PolygonRegion = PolygonRegion(p.toPoints(vertices))
+  def from(p: Path, vertices: Int): PolygonRegion = PolygonRegion(p.toPoints(vertices))
 
 
   trait PolygonRegionOps[MYTYPE <: PolygonRegionOps[MYTYPE]] extends PolygonalChainOps[MYTYPE] {
@@ -20,10 +20,10 @@ object PolygonRegion {
     def areaSigned: Scalar = sides.map(fs => (fs.v1.x + fs.v2.x) * (fs.v1.y - fs.v2.y)).sum
 
     /**
-      * todo tmp func
-      *
-      * @return
-      */
+     * todo tmp func
+     *
+     * @return
+     */
     def isCw: Boolean = areaSigned < 0
 
     def area: Scalar = Math.abs(areaSigned)
@@ -31,33 +31,37 @@ object PolygonRegion {
     def distanceTo(point: V2): Scalar = if (contains(point)) 0 else distanceToFromSides(point)
 
     def contains(point: V2): Boolean = {
-      if (vertices.length < 3) return false
-      val otherEnd: V2 = V2(aabb.max.x + 1000f, point.y)
-      val toTest: SegmentPlanar = SegmentPlanar(point, otherEnd)
-      var res: Int = 0
-      var res2: Int = 0
-      for (side <- sides) {
-        // println(toTest + " " + side + " " + toTest.intersects(side))
-        if (toTest.intersects(side)) {
-          res2 = res2 + 1
-          if (side.contains(point)) return true
-          /*
+      if (vertices.length < 1) false
+      else if (vertices.length == 1) vertices.head ~= point
+      else if (vertices.length == 2) SegmentPlanar(vertices.head, vertices.last).collinear(point)
+      else {
+        val otherEnd: V2 = V2(aabb.max.x + 1000f, point.y)
+        val toTest: SegmentPlanar = SegmentPlanar(point, otherEnd)
+        var res: Int = 0
+        var res2: Int = 0
+        for (side <- sides) {
+          // println(toTest + " " + side + " " + toTest.intersects(side))
+          if (toTest.intersects(side)) {
+            res2 = res2 + 1
+            if (side.contains(point)) return true
+            /*
              The issue is solved as follows: If the intersection point is a vertex of a tested polygon side,
              then the intersection counts only if the second vertex of the side lies below the ray.
             */
-          if (
-            (side.v1.y == point.y && side.v2.y < point.y)
-              ||
-              (side.v2.y == point.y && side.v1.y < point.y)
-              ||
-              (side.v1.y != point.y && side.v2.y != point.y)
-          ) {
-            res = res + 1
+            if (
+              (side.v1.y == point.y && side.v2.y < point.y)
+                ||
+                (side.v2.y == point.y && side.v1.y < point.y)
+                ||
+                (side.v1.y != point.y && side.v2.y != point.y)
+            ) {
+              res = res + 1
+            }
           }
         }
+
+        res % 2 == 1
       }
-      //   println(res + " " + res2)
-      return res % 2 == 1
     }
 
     //todo  плохо работает для случаев когда ребро совпадает с границей side.v1.y == 0 && side.v2.y == 0
@@ -113,7 +117,7 @@ object PolygonRegion {
     /** side to side intersections counts */
     def intersects(ot: PolygonRegion): Boolean = ot.vertices.exists(contains) || ot.sides.exists(contains)
 
-    //worst case O(n^3)
+    /** worst case O(n^3) */
     def triangulation: Seq[TrianglePlanar] = {
       if (vertices.length < 3) return Seq()
       if (vertices.length == 3) return Seq(TrianglePlanar(vertices(0), vertices(1), vertices(2)))
@@ -138,7 +142,7 @@ object PolygonRegion {
       mergeVerticesWithAt(verticesToConnect._1, verticesToConnect._2, true, holeVs)
     }
 
-    def matchSign(sign:Int): MYTYPE = if(sign == areaSign) replacePoints(vertices) else this.reverse
+    def matchSign(sign: Int): MYTYPE = if (sign == areaSign) replacePoints(vertices) else this.reverse
 
     // IN CW order
     def triangulationIndices: Seq[(Int, Int, Int)] = triangulation.map(t => (indexOf(t.v1), indexOf(t.v2), indexOf(t.v3)))
@@ -177,7 +181,6 @@ case class PolygonRegionWithCache(vertices: Seq[V2]) extends PolygonRegionOps[Po
 
 
 case class PolygonRegion(vertices: Seq[V2]) extends PolygonRegionOps[PolygonRegion] {
-
 
 
   override def replacePoints(vertices: Seq[V2]): PolygonRegion = PolygonRegion(vertices)
