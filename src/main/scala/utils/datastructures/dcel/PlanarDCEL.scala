@@ -20,42 +20,56 @@ class PlanarDCEL[VD, HED, FD](
   }
 
 
-
-
   def cutPoly(poly: Seq[V2],
-              newVdProvider:V2 => VD,
+              newVdProvider: V2 => VD,
               splitEdgeListener: HalfEdge => Unit = (x) => (),
-              splitFaceListener:(Face, Face) => Unit = (x, y) => (),
+              splitFaceListener: (Face, Face) => Unit = (x, y) => (),
              ): Unit = {
-    def getOrAddVertex(pos:V2):Vertex =
+    def getOrAddVertex(pos: V2): Vertex =
       vertices.find(_.pos ~= pos)
-      .orElse(
-        halfEdges.find(_.asSegment.contains(pos)).map{
-          e =>
-            val res = split(e, newVdProvider(pos),e.data, e.twin.data)
-            splitEdgeListener(e)
-            res
-        }
-      ).getOrElse(makeVertex(newVdProvider(pos)))
+        .orElse(
+          halfEdges.find(_.asSegment.contains(pos)).map {
+            e =>
+              val res = split(e, newVdProvider(pos), e.data, e.twin.data)
+              splitEdgeListener(e)
+              res
+          }
+        ).getOrElse(makeVertex(newVdProvider(pos)))
+    if (poly.size <= 1) return;
+
+    var toTraverse = poly.tail
+    val startPosition = poly.head
 
 
+    var currentPosition = startPosition
+    var currentVertex = getOrAddVertex(currentPosition)
 
 
+   /* def popNext():(V2, Option[Face]) = {
+      val seg = SegmentPlanar(currentPosition, toTraverse.head)
+      if(currentVertex.incidentEdge.isEmpty){
+        innerFaces.find(_.polygon.contains(currentPosition)).iterator.toSeq
+      }
+      val face =
+      if(currentFace.)
+    }*/
 
-    if (poly.size > 1) {
-//      var currentVertex = poly.head
-      val startVertex =
-
-//      var currentFace: Option[Face] = innerFaces.find(_.polygon.contains(currentVertex))
-//      var faceEdge: Option[HalfEdge] = currentFace.flatMap(_.edges.find(_.asSegment.contains(currentVertex)))
-//      var edgeVertex: Option[Vertex] = faceEdge.flatMap(e =>
-//        if (e.origin.pos ~= currentVertex) Some(e.origin)
-//        else if (e.dest.pos ~= currentVertex) Some(e.dest)
-//        else None)
-
-
+    while (toTraverse.nonEmpty){
 
     }
+
+//    var currentFace:Option[Face] = outerFace
+//    if(currentVertex.incidentEdge.isEmpty){
+//      currentFace =
+//    }
+
+    //      var currentFace: Option[Face] = innerFaces.find(_.polygon.contains(currentVertex))
+    //      var faceEdge: Option[HalfEdge] = currentFace.flatMap(_.edges.find(_.asSegment.contains(currentVertex)))
+    //      var edgeVertex: Option[Vertex] = faceEdge.flatMap(e =>
+    //        if (e.origin.pos ~= currentVertex) Some(e.origin)
+    //        else if (e.dest.pos ~= currentVertex) Some(e.dest)
+    //        else None)
+
 
   }
 }
