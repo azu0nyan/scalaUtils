@@ -9,9 +9,9 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
                                                 outerFaceData: FaceData
                                               ) {
 
-  class Vertex private[DCEL](
+  class Vertex private[dcel](
                               private[this] var _data: VertexData,
-                              private[DCEL] var incidentEdge: Option[HalfEdge] = None
+                              private[dcel] var incidentEdge: Option[HalfEdge] = None
                             ) {
     def data: VertexData = _data
     def data_=(value: VertexData): Unit = {
@@ -47,13 +47,13 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
    * @param next     next half‐edge on the boundary of incidentFace
    * @param prev     previous half-edge
    */
-  class HalfEdge private[DCEL](
+  class HalfEdge private[dcel](
                                 private[this] var _data: HalfEdgeData,
-                                private[DCEL] var origin: Vertex,
-                                private[DCEL] var twin: HalfEdge,
-                                private[DCEL] var leftFace: Face,
-                                private[DCEL] var next: HalfEdge,
-                                private[DCEL] var prev: HalfEdge,
+                                private[dcel] var origin: Vertex,
+                                private[dcel] var twin: HalfEdge,
+                                private[dcel] var leftFace: Face,
+                                private[dcel] var next: HalfEdge,
+                                private[dcel] var prev: HalfEdge,
                               ) {
 
     def dest: Vertex = twin.origin
@@ -83,8 +83,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
    * @param incidentEdge starting point to traverse in CCW order
    */
   class Face private[DCEL](
-                            private[this] var _data: FaceData = null,
-                            private[DCEL] var incidentEdge: Option[HalfEdge] = None
+                            private[this] var _data: FaceData ,
+                            private[dcel] var incidentEdge: Option[HalfEdge] = None
                           ) {
     def data: FaceData = _data
     def data_=(value: FaceData): Unit = {
