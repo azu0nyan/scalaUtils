@@ -41,9 +41,33 @@ class PlanarDCEL[VD, HED, FD](
     val startPosition = poly.head
 
 
-    var currentPosition = startPosition
-    var currentVertex = getOrAddVertex(currentPosition)
+//    var currentPosition = startPosition
+    var currentVertex = getOrAddVertex(startPosition)
 
+    def popNext():Vertex = {
+      val end = toTraverse.head
+      val cur = currentVertex.pos
+
+      val toTest = if(currentVertex.incidentEdge.isEmpty) {
+        val face = innerFaces.find(_.polygon.contains(currentVertex.pos)).getOrElse(outerFace)
+        face.edges
+      } else {
+        currentVertex.edgesWithOriginHere
+      }
+
+      val path = SegmentPlanar(cur, end)
+
+
+
+    }
+
+    var previousVertex = getOrAddVertex()
+
+    if(currentVertex.edgesWithOriginHere.isEmpty) {
+
+    } else {
+
+    }
 
    /* def popNext():(V2, Option[Face]) = {
       val seg = SegmentPlanar(currentPosition, toTraverse.head)

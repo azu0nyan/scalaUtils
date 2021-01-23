@@ -18,6 +18,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
       _data = value
     }
 
+    def adjacentFaces():Set[Face] = edgesWithOriginHere.map(_.leftFace).toSet
+
     def edgesWithOriginHere: Iterator[HalfEdge] =
       if (incidentEdge.isEmpty) Iterator.empty
       else new Iterator[HalfEdge] {
