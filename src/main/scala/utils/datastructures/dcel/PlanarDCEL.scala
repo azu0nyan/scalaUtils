@@ -1,6 +1,7 @@
 package utils.datastructures.dcel
 
-import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
+import utils.math.planar.{PointIntersection, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
+import utils.math._
 
 class PlanarDCEL[VD, HED, FD](
                                outerFaceData: FD,
@@ -19,9 +20,11 @@ class PlanarDCEL[VD, HED, FD](
     def asSegment: SegmentPlanar = SegmentPlanar(extractor(e.origin.data), extractor(e.dest.data))
   }
 
+  def faceAt(pos:V2):Face = innerFaces.find(_.polygon.contains(pos)).getOrElse(outerFace)
 
   def cutPoly(poly: Seq[V2],
               newVdProvider: V2 => VD,
+              newEdgeDataProvider:(Vertex, Vertex, Face, Face) => (HED, HED),
               splitEdgeListener: HalfEdge => Unit = (x) => (),
               splitFaceListener: (Face, Face) => Unit = (x, y) => (),
              ): Unit = {
@@ -35,65 +38,73 @@ class PlanarDCEL[VD, HED, FD](
               res
           }
         ).getOrElse(makeVertex(newVdProvider(pos)))
+
     if (poly.size <= 1) return;
 
     var toTraverse = poly.tail
     val startPosition = poly.head
 
 
-//    var currentPosition = startPosition
-    var currentVertex = getOrAddVertex(startPosition)
+    //    var currentPosition = startPosition
+    var previous = getOrAddVertex(startPosition)
 
-    def popNext():Vertex = {
+    def popNext(): Vertex = {
+      val cur = previous.pos
       val end = toTraverse.head
-      val cur = currentVertex.pos
 
-      val toTest = if(currentVertex.incidentEdge.isEmpty) {
-        val face = innerFaces.find(_.polygon.contains(currentVertex.pos)).getOrElse(outerFace)
+      val toTest = if (previous.incidentEdge.isEmpty) {
+        val face = faceAt(cur)
         face.edges
       } else {
-        currentVertex.edgesWithOriginHere
+        previous.edgesWithOriginHere
       }
 
       val path = SegmentPlanar(cur, end)
-
-
-
-    }
-
-    var previousVertex = getOrAddVertex()
-
-    if(currentVertex.edgesWithOriginHere.isEmpty) {
-
-    } else {
-
-    }
-
-   /* def popNext():(V2, Option[Face]) = {
-      val seg = SegmentPlanar(currentPosition, toTraverse.head)
-      if(currentVertex.incidentEdge.isEmpty){
-        innerFaces.find(_.polygon.contains(currentPosition)).iterator.toSeq
+      val intersections = toTest.flatMap(t => t.asSegment.intersection(path))
+        .filter {
+          case PointIntersection(p) => !(p ~= cur)
+          case _ => true
+        }
+      if (intersections.isEmpty) {
+        toTraverse = toTraverse.tail
+        getOrAddVertex(end)
+      } else {
+        val closestIntersection = intersections.map {
+          case PointIntersection(p) => p
+          case SegmentIntersection(SegmentPlanar(s, e)) =>
+            if (s ~= cur) e
+            else if (e ~= cur) s //todo check if intersection can return degenerate segments
+            else if (e.distance(cur) < s.distance(cur)) e else s
+        }.minBy(_.distance(cur))
+        getOrAddVertex(closestIntersection)
       }
-      val face =
-      if(currentFace.)
-    }*/
-
-    while (toTraverse.nonEmpty){
-
     }
 
-//    var currentFace:Option[Face] = outerFace
-//    if(currentVertex.incidentEdge.isEmpty){
-//      currentFace =
-//    }
+    while (toTraverse.nonEmpty) {
+      val currentVertex = popNext()
+      if(previous.incidentEdge.isEmpty && currentVertex.incidentEdge.isEmpty){
+        //no edges or faces, we inside some face
+        val face = faceAt(previous.pos)
+        val (ld, rd) = newEdgeDataProvider(previous, currentVertex, face, face)
+        makeEdge(previous, currentVertex, face, face, ld, rd)
+      } else if(previous.incidentEdge.nonEmpty && currentVertex.incidentEdge.isEmpty) {
+        //we are going inside face
+        val face = faceAt(currentVertex.pos)
+        val (ld, rd) = newEdgeDataProvider(previous, currentVertex, face, face)
+        makeEdge(previous, currentVertex, face, face, ld, rd)
+      } else if(previous.incidentEdge.isEmpty && currentVertex.incidentEdge.nonEmpty){
+        //we are going to edge from inside face
+        val face = faceAt(previous.pos)
+        val (ld, rd) = newEdgeDataProvider(previous, currentVertex, face, face)
+        makeEdge(previous, currentVertex, face, face, ld, rd)
+      } else {
+        //we are connecting different points
 
-    //      var currentFace: Option[Face] = innerFaces.find(_.polygon.contains(currentVertex))
-    //      var faceEdge: Option[HalfEdge] = currentFace.flatMap(_.edges.find(_.asSegment.contains(currentVertex)))
-    //      var edgeVertex: Option[Vertex] = faceEdge.flatMap(e =>
-    //        if (e.origin.pos ~= currentVertex) Some(e.origin)
-    //        else if (e.dest.pos ~= currentVertex) Some(e.dest)
-    //        else None)
+      }
 
+
+      previous = currentVertex
+    }
 
   }
 }
