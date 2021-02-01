@@ -1,5 +1,8 @@
 package utils.datastructures.dcel
 
+import utils.system.Event
+import utils.system.Event.{Event, EventImpl}
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -18,7 +21,7 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
       _data = value
     }
 
-    def adjacentFaces():Set[Face] = edgesWithOriginHere.map(_.leftFace).toSet
+    def adjacentFaces(): Set[Face] = edgesWithOriginHere.map(_.leftFace).toSet
 
     def edgesWithOriginHere: Iterator[HalfEdge] =
       if (incidentEdge.isEmpty) Iterator.empty
@@ -48,13 +51,24 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
    * @param prev     previous half-edge
    */
   class HalfEdge private[dcel](
-                                private[this] var _data: HalfEdgeData,
-                                private[dcel] var origin: Vertex,
-                                private[dcel] var twin: HalfEdge,
-                                private[dcel] var leftFace: Face,
-                                private[dcel] var next: HalfEdge,
-                                private[dcel] var prev: HalfEdge,
+                                private[dcel] var _data: HalfEdgeData,
+                                private[dcel] var _origin: Vertex,
+                                private[dcel] var _twin: HalfEdge,
+                                private[dcel] var _leftFace: Face,
+                                private[dcel] var _next: HalfEdge,
+                                private[dcel] var _prev: HalfEdge,
                               ) {
+
+    def origin: Vertex = _origin
+    def ending: Vertex = _next.origin
+
+    def twin: HalfEdge = _twin
+
+
+    def leftFace: Face = _leftFace
+    def next: HalfEdge = _next
+    def prev: HalfEdge = _prev
+
 
     def dest: Vertex = twin.origin
 
@@ -83,7 +97,7 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
    * @param incidentEdge starting point to traverse in CCW order
    */
   class Face private[DCEL](
-                            private[this] var _data: FaceData ,
+                            private[this] var _data: FaceData,
                             private[dcel] var incidentEdge: Option[HalfEdge] = None
                           ) {
     def data: FaceData = _data
@@ -91,27 +105,45 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
       _data = value
     }
 
-    def vertices:Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
-    def edges:Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
+
+    def vertices: Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
+    def edges: Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
   }
 
   val outerFace = new Face(outerFaceData, None)
 
-  val innerFaces:mutable.Set[Face] = mutable.Set[Face]()
+  val innerFaces: mutable.Set[Face] = mutable.Set[Face]()
 
-  val halfEdges:mutable.Set[HalfEdge] = mutable.Set[HalfEdge]()
+  val halfEdges: mutable.Set[HalfEdge] = mutable.Set[HalfEdge]()
 
-  val vertices:mutable.Set[Vertex] = mutable.Set[Vertex]()
+  val vertices: mutable.Set[Vertex] = mutable.Set[Vertex]()
+
+  val onNewFace: Event[Face] = new EventImpl[Face]
+  val onNewEdge: Event[HalfEdge] = new EventImpl[HalfEdge]
+  val onNewVertex: Event[Vertex] = new EventImpl[Vertex]
+  val onEdgeSplit: Event[(HalfEdge, HalfEdge)] = new EventImpl[(HalfEdge, HalfEdge)]
+  val onEdgeCollapse: Event[HalfEdge] = new EventImpl[HalfEdge]
+
 
   def makeVertex(d: VertexData): Vertex = {
     val res = new Vertex(d, None)
     vertices += res
+    onNewVertex(res)
     res
   }
 
   def makeFace(f: FaceData): Face = {
     val res = new Face(f, None)
     innerFaces += res
+    onNewFace(res)
+    res
+  }
+
+  def makeFace(f: FaceData, edge:HalfEdge): Face = {
+    val res = new Face(f, None)
+    innerFaces += res
+    edge.traverseEdges.foreach(e => e._leftFace = res)
+    onNewFace(res)
     res
   }
 
@@ -121,7 +153,7 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     halfEdges += main
     halfEdges += twin
 
-    main.twin = twin
+    main._twin = twin
 
     val fPrev = from.edgesWithEndHere.find(_.leftFace == leftFace)
     val fNext = to.edgesWithOriginHere.find(_.leftFace == leftFace)
@@ -130,54 +162,58 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
 
     fPrev match {
       case Some(prev) =>
-        prev.next = main
-        main.prev = prev
+        prev._next = main
+        main._prev = prev
       case None =>
-        main.prev = twin
+        main._prev = twin
     }
 
     fNext match {
       case Some(next) =>
-        next.prev = main
-        main.next = next
+        next._prev = main
+        main._next = next
       case None =>
-        main.next = twin
+        main._next = twin
     }
     sPrev match {
       case Some(prev) =>
-        twin.prev = prev
-        prev.next = twin
+        twin._prev = prev
+        prev._next = twin
       case None =>
-        twin.prev = main
+        twin._prev = main
     }
     sNext match {
       case Some(next) =>
-        twin.next = next
-        next.prev = twin
+        twin._next = next
+        next._prev = twin
       case None =>
-        twin.next = main
+        twin._next = main
     }
 
     if (from.incidentEdge.isEmpty) from.incidentEdge = Some(main)
     if (to.incidentEdge.isEmpty) to.incidentEdge = Some(twin)
     if (leftFace.incidentEdge.isEmpty) leftFace.incidentEdge = Some(main)
     if (rightFace.incidentEdge.isEmpty) rightFace.incidentEdge = Some(twin)
+    onNewEdge(main)
     main
   }
 
   /** e and twin become shorter, creates new vertex and two half-edges */
   def split(e: HalfEdge, at: VertexData, newLeftData: HalfEdgeData, newRightData: HalfEdgeData): Vertex = {
     val res = new Vertex(at, None)
+    onNewVertex(res)
     val newNext = new HalfEdge(newLeftData, res, null, e.leftFace, e.next, e)
     halfEdges += newNext
-    e.next = newNext
+    e._next = newNext
 
     val newNextTwin = new HalfEdge(newRightData, e.dest, newNext, e.twin.leftFace, e.twin, e.twin.prev)
     halfEdges += newNextTwin
-    e.twin.prev = newNextTwin
+    e.twin._prev = newNextTwin
 
     res.incidentEdge = Some(newNext)
-    newNext.twin = newNextTwin
+    newNext._twin = newNextTwin
+    onNewEdge(newNext)
+    onEdgeSplit((e, newNext))
     res
   }
 
@@ -191,12 +227,13 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
       e.origin.incidentEdge = Option.when(e.nextAdjacent != e)(e.nextAdjacent)
     if (e.twin.origin.incidentEdge.contains(e.twin))
       e.twin.origin.incidentEdge = Option.when(e.twin.nextAdjacent != e.twin)(e.twin.nextAdjacent)
-    e.prev.next = e.next
-    e.next.prev = e.prev
-    e.twin.prev.next = e.twin.next
-    e.twin.next.prev = e.twin.prev
+    e.prev._next = e.next
+    e.next._prev = e.prev
+    e.twin.prev._next = e.twin.next
+    e.twin.next._prev = e.twin.prev
     halfEdges -= e
     halfEdges -= e.twin
+    onEdgeCollapse(e)
   }
 
 
