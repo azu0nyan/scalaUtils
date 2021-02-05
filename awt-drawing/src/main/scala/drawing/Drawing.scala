@@ -9,6 +9,7 @@ import utils.datastructures.IntV2
 
 object Drawing extends DrawingWindow {
 
+
   override def startDrawingThread(size: IntV2, decorated: Boolean, camera:Camera = new Camera()): Unit = {
 
     DrawingUtils.camera = camera
@@ -17,15 +18,7 @@ object Drawing extends DrawingWindow {
     super.startDrawingThread(size, decorated, camera )
   }
 
-  val  FpsCounter : EnabledDisabled = new EnabledDisabled {
-    override val initialEnabled = false
-
-    var fpsCounter = new FpsCounter
-    addKeyBinding(KeyEvent.VK_F5, () => toggle() )
-    log.info("FpsCounter init ...")
-    onEnabled.subscribe(_ => addDrawable(fpsCounter))
-    onDisabled.subscribe(_ => removeDrawable(fpsCounter))
-  }
+  val  FpsCounter : EnabledDisabled = new FpsCounter(this)
 
 
 
