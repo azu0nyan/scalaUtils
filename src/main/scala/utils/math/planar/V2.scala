@@ -37,81 +37,83 @@ object V2 {
 case class V2(x: Scalar, y: Scalar) extends WithMap{
 
 
-  def apply(i: Int): Scalar = i match {
+  @inline def apply(i: Int): Scalar = i match {
     case 0 => x
     case 1 => y
     case _ => throw new IndexOutOfBoundsException(s"$i out of bounds of vector")
   }
 
-  def xInt:Int = x.toInt
+  @inline def xInt:Int = x.toInt
 
-  def yInt:Int = y.toInt
+  @inline def yInt:Int = y.toInt
 
-  def unary_- : V2 = opposite
+  @inline def unary_- : V2 = opposite
 
-  def opposite: V2 = V2(-x, -y)
+  @inline def opposite: V2 = V2(-x, -y)
 
-  def +(v: V2): V2 = V2(x + v.x, y + v.y)
+  @inline def +(v: V2): V2 = V2(x + v.x, y + v.y)
 
-  def -(v: V2): V2 = V2(x - v.x, y - v.y)
+  @inline def -(v: V2): V2 = V2(x - v.x, y - v.y)
 
-  def *(v: V2): V2 = V2(x * v.x, y * v.y)
+  @inline def *(v: V2): V2 = V2(x * v.x, y * v.y)
 
-  def *(s:Scalar): V2 = V2(x * s, y * s)
+  @inline def *(s:Scalar): V2 = V2(x * s, y * s)
 
-  def /(v: V2): V2 = V2(x / v.x, y / v.y)
+  @inline def /(v: V2): V2 = V2(x / v.x, y / v.y)
 
-  def -(): V2 = V2(-x, -y)
+  @inline def -(): V2 = V2(-x, -y)
 
-  def **(v: V2): Scalar = x * v.x + y * v.y
+  @inline def **(v: V2): Scalar = x * v.x + y * v.y
 
-  def det(v: V2): Scalar = x * v.y - y * v.x
+  @inline def det(v: V2): Scalar = x * v.y - y * v.x
 
-  def ~=(v: V2): Boolean = (x ~= v.x) && (y ~= v.y)
+  @inline def ~=(v: V2): Boolean = (x ~= v.x) && (y ~= v.y)
 
-  def normalize: V2 = if (length == 0) {
+  @inline def normalize: V2 = if (length == 0) {
     V2(0, 0)
   } else {
     /(length)
   }
 
-  def angle(v: V2): Scalar = (math.atan2(v.y, v.x) - math.atan2(y, x))
+  @inline def angleToOX: Scalar =  math.atan2(y, x)
 
-  def distance(v: V2): Scalar = (this - v).length
+  @inline def angle(v: V2): Scalar = (math.atan2(v.y, v.x) - math.atan2(y, x))
 
-  def rotate90CW:V2 = V2(-y, x)
+  @inline def distance(v: V2): Scalar = (this - v).length
 
-  def rotate90CCW:V2 = V2(y, -x)
+  @inline def rotate90CW:V2 = V2(-y, x)
 
-  def rotate(a: Scalar):V2 = V2(x * cos(a) - y * sin(a), x * sin(a) + y * cos(a))
+  @inline def rotate90CCW:V2 = V2(y, -x)
 
-  def rotateAroundPoint(rotation: Scalar, point: V2): V2 = (this - point).rotate(rotation) + point
+  @inline def rotate(a: Scalar):V2 = V2(x * cos(a) - y * sin(a), x * sin(a) + y * cos(a))
 
-  def scaleAroundPoint(scale: Scalar, point: V2): V2 = (this - point) * scale + point
+  @inline   def rotateAroundPoint(rotation: Scalar, point: V2): V2 = (this - point).rotate(rotation) + point
 
-  def lengthSquared:Scalar = this ** this
+  @inline def scaleAroundPoint(scale: Scalar, point: V2): V2 = (this - point) * scale + point
 
-  def length: Scalar = math.hypot(x, y)
+  @inline def lengthSquared:Scalar = this ** this
+
+  @inline def length: Scalar = math.hypot(x, y)
 
   override def toString: String = s"""V2($x, $y)"""
 
-  def addZ(z: Scalar):V3 = V3(x, y, z)
+  @inline def addZ(z: Scalar):V3 = V3(x, y, z)
 
-  def addX(X: Scalar):V3 = V3(X, x, y)
+  @inline def addX(X: Scalar):V3 = V3(X, x, y)
 
-  def addY(Y: Scalar):V3 = V3(x, Y, y)
+  @inline def addY(Y: Scalar):V3 = V3(x, Y, y)
 
-  def toSeq: Seq[Scalar] = Seq(x, y)
+  @inline def toSeq: Seq[Scalar] = Seq(x, y)
 
-  def planarToV3(upCord: Scalar): V3 = V3(x, upCord, -y)
+  @inline def planarToV3(upCord: Scalar): V3 = V3(x, upCord, -y)
 
-  def clamp: (V2, V2) => V2 = utils.math.clamp(this, _, _)
+  @inline def clamp: (V2, V2) => V2 = utils.math.clamp(this, _, _)
 
-  def clampSnap: (V2, V2) => V2 = utils.math.clampSnap(this, _, _)
+  @inline def clampSnap: (V2, V2) => V2 = utils.math.clampSnap(this, _, _)
 
-  def toIntV2: IntV2 = IntV2(x.toInt, y.toInt)
+  @inline def toIntV2: IntV2 = IntV2(x.toInt, y.toInt)
 
-  def collinear(other: V2): Boolean = (normalize ~= other.normalize) || (normalize ~= other.normalize.opposite)
+  @inline def collinear(other: V2): Boolean = (normalize ~= other.normalize) || (normalize ~= other.normalize.opposite)
 
 
 }

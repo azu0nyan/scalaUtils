@@ -3,12 +3,16 @@ package utils.datastructures.dcel
 import utils.math.planar.{AngleCCWPlanar, AngleOps, PointIntersection, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
 import utils.math._
 
+object PlanarDCEL{
 
+}
 
 class PlanarDCEL[VD, HED, FD](
                                outerFaceData: FD,
                                val extractor: VD => V2
                              ) extends DCEL[VD, HED, FD](outerFaceData) {
+
+  def pos(v:Vertex):V2 = extractor(v.data)
 
   implicit class PlanarVertex(f: Vertex) {
     def pos: V2 = extractor(f.data)
@@ -54,7 +58,7 @@ class PlanarDCEL[VD, HED, FD](
 
     if (poly.size <= 1) return Seq()
 
-    var toTraverse = poly.tail
+    var toTraverse = poly.tail :+ poly.head
     val startPosition = poly.head
 
 

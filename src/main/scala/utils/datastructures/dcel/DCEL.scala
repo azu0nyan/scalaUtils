@@ -1,45 +1,35 @@
 package utils.datastructures.dcel
 
+import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
 import utils.system.Event
 import utils.system.Event.{Event, EventImpl}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+object DCEL{
 
 
-/** Double connected edge list */
-class DCEL[VertexData, HalfEdgeData, FaceData](
-                                                outerFaceData: FaceData
-                                              ) {
+  /**
+   * @param _data        data associated with face
+   * @param incidentEdge starting point to traverse in CCW order
+   */
+  class RawFace[VertexData, HalfEdgeData, FaceData] private[DCEL](
+                            private[this] var _data: FaceData,
+                            private[dcel] var _incidentEdge: Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = None
+                          ) {
+    type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
+    type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
+    type Face = RawFace[VertexData, HalfEdgeData, FaceData]
 
-  class Vertex private[dcel](
-                              private[this] var _data: VertexData,
-                              private[dcel] var incidentEdge: Option[HalfEdge] = None
-                            ) {
-    def data: VertexData = _data
-    def data_=(value: VertexData): Unit = {
+    def data: FaceData = _data
+    def data_=(value: FaceData): Unit = {
       _data = value
     }
+    def incidentEdge: Option[HalfEdge] = _incidentEdge
 
-    def adjacentFaces(): Set[Face] = edgesWithOriginHere.map(_.leftFace).toSet
 
-    def edgesWithOriginHere: Iterator[HalfEdge] =
-      if (incidentEdge.isEmpty) Iterator.empty
-      else new Iterator[HalfEdge] {
-        val start: HalfEdge = incidentEdge.get
-        var cur: HalfEdge = incidentEdge.get
-        var first: Boolean = false
-
-        override def hasNext: Boolean = first | cur != start
-        override def next(): HalfEdge = {
-          val res = cur
-          cur = cur.twin.next
-          first = false
-          res
-        }
-      }
-
-    def edgesWithEndHere: Iterator[HalfEdge] = edgesWithOriginHere.map(_.twin)
+    def vertices: Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
+    def edges: Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
   }
 
   /**
@@ -50,14 +40,17 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
    * @param next     next half‐edge on the boundary of incidentFace
    * @param prev     previous half-edge
    */
-  class HalfEdge private[dcel](
+  class RawHalfEdge[VertexData, HalfEdgeData, FaceData] private[dcel](
                                 private[dcel] var _data: HalfEdgeData,
-                                private[dcel] var _origin: Vertex,
-                                private[dcel] var _twin: HalfEdge,
-                                private[dcel] var _leftFace: Face,
-                                private[dcel] var _next: HalfEdge,
-                                private[dcel] var _prev: HalfEdge,
+                                private[dcel] var _origin: RawVertex[VertexData, HalfEdgeData, FaceData],
+                                private[dcel] var _twin: RawHalfEdge[VertexData, HalfEdgeData, FaceData],
+                                private[dcel] var _leftFace: RawFace[VertexData, HalfEdgeData, FaceData],
+                                private[dcel] var _next: RawHalfEdge[VertexData, HalfEdgeData, FaceData],
+                                private[dcel] var _prev: RawHalfEdge[VertexData, HalfEdgeData, FaceData],
                               ) {
+    type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
+    type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
+    type Face = RawFace[VertexData, HalfEdgeData, FaceData]
 
     def origin: Vertex = _origin
     def ending: Vertex = _next.origin
@@ -80,9 +73,9 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     def nextAdjacent: HalfEdge = twin.next
 
     def traverseEdges: Iterator[HalfEdge] = new Iterator[HalfEdge] {
-      var cur: HalfEdge = HalfEdge.this
-      var first = false
-      override def hasNext: Boolean = !first || cur != HalfEdge.this
+      var cur: HalfEdge = RawHalfEdge.this
+      var first = true
+      override def hasNext: Boolean = first || cur != RawHalfEdge.this
       override def next(): HalfEdge = {
         val res = cur
         cur = cur.next
@@ -92,23 +85,49 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     }
   }
 
-  /**
-   * @param _data        data associated with face
-   * @param incidentEdge starting point to traverse in CCW order
-   */
-  class Face private[DCEL](
-                            private[this] var _data: FaceData,
-                            private[dcel] var incidentEdge: Option[HalfEdge] = None
-                          ) {
-    def data: FaceData = _data
-    def data_=(value: FaceData): Unit = {
+
+  class RawVertex[VertexData, HalfEdgeData, FaceData] private[dcel](
+                              private[this] var _data: VertexData,
+                              private[dcel] var incidentEdge: Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = None
+                            ) {
+    type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
+    type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
+    type Face = RawFace[VertexData, HalfEdgeData, FaceData]
+
+    def data: VertexData = _data
+    def data_=(value: VertexData): Unit = {
       _data = value
     }
 
+    def adjacentFaces(): Set[Face] = edgesWithOriginHere.map(_.leftFace).toSet
 
-    def vertices: Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
-    def edges: Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
+    def edgesWithOriginHere: Iterator[HalfEdge] =
+      if (incidentEdge.isEmpty) Iterator.empty
+      else new Iterator[HalfEdge] {
+        val start: HalfEdge = incidentEdge.get
+        var cur: HalfEdge = incidentEdge.get
+        var first: Boolean = true
+
+        override def hasNext: Boolean = first || cur != start
+        override def next(): HalfEdge = {
+          val res = cur
+          cur = cur.twin.next
+          first = false
+          res
+        }
+      }
+
+    def edgesWithEndHere: Iterator[HalfEdge] = edgesWithOriginHere.map(_.twin)
   }
+}
+
+/** Double connected edge list */
+class DCEL[VertexData, HalfEdgeData, FaceData](
+                                                outerFaceData: FaceData
+                                              ) {
+  type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
+  type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
+  type Face = RawFace[VertexData, HalfEdgeData, FaceData]
 
   val outerFace = new Face(outerFaceData, None)
 
@@ -139,8 +158,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     res
   }
 
-  def makeFace(f: FaceData, edge:HalfEdge): Face = {
-    val res = new Face(f, None)
+  def makeFace(f: FaceData, edge: HalfEdge): Face = {
+    val res = new Face(f, Some(edge))
     innerFaces += res
     edge.traverseEdges.foreach(e => e._leftFace = res)
     onNewFace(res)
@@ -192,8 +211,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
 
     if (from.incidentEdge.isEmpty) from.incidentEdge = Some(main)
     if (to.incidentEdge.isEmpty) to.incidentEdge = Some(twin)
-    if (leftFace.incidentEdge.isEmpty) leftFace.incidentEdge = Some(main)
-    if (rightFace.incidentEdge.isEmpty) rightFace.incidentEdge = Some(twin)
+    if (leftFace.incidentEdge.isEmpty) leftFace._incidentEdge = Some(main)
+    if (rightFace.incidentEdge.isEmpty) rightFace._incidentEdge = Some(twin)
     onNewEdge(main)
     main
   }
@@ -220,9 +239,9 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
 
   def collapseEdge(e: HalfEdge): Unit = {
     if (e.leftFace.incidentEdge.contains(e))
-      e.leftFace.incidentEdge = Option.when(e.next != e)(e.next)
+      e.leftFace._incidentEdge = Option.when(e.next != e)(e.next)
     if (e.twin.leftFace.incidentEdge.contains(e.twin))
-      e.twin.leftFace.incidentEdge = Option.when(e.twin.next != e)(e.twin.next)
+      e.twin.leftFace._incidentEdge = Option.when(e.twin.next != e)(e.twin.next)
     if (e.origin.incidentEdge.contains(e))
       e.origin.incidentEdge = Option.when(e.nextAdjacent != e)(e.nextAdjacent)
     if (e.twin.origin.incidentEdge.contains(e.twin))
