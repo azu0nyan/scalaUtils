@@ -25,7 +25,7 @@ object Graph {
   }
 
   /** Graph data interface anf generic implementations, override any method for more efficient implementation
-   * NodeData serves as unique id of edge, provided by user
+   * NodeData serves as unique id of node, provided by user
    * */
   trait Graph[NodeData, EdgeData] {
 
@@ -59,9 +59,9 @@ object Graph {
 
     def findEdge(from:NodeData, to:NodeData):Option[EdgeData] = {
       val toId = nodeId(to)
-      val fromId = nodeId(to)
+      val fromId = nodeId(from)
       if(toId >= 0 && fromId >= 0) {
-        (nodeById(fromId).outEdges.find(_.to == toId).map(_.data))
+        nodeById(fromId).outEdges.find(_.to == toId).map(_.data)
       } else None
     }
 
