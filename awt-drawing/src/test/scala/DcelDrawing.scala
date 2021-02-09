@@ -10,8 +10,15 @@ import java.util.concurrent.atomic.AtomicInteger
 
 object DcelDrawing extends App {
   Drawing.startDrawingThread()
-//  Drawing.camera.invertY = true
+  //FUCK YOU
+  new Thread(()=> {
+     Thread.sleep(100)
+    Drawing.setSize(1920, 1079)
+  }).start()
+
+  Drawing.camera.invertY = true
   Drawing.FpsCounter.enable()
+  Drawing.camera.enableControls()
 
   val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
   dcel.onNewFace.subscribe(f => println("new face", f.data, f.vertices.size, f.vertices.map(_.data).toSeq))
@@ -63,8 +70,8 @@ object DcelDrawing extends App {
   }
 
 
- /* Drawing.addDrawer{ g=>
-    for(x <- 0 until 16; y <- 0 until 16){
+ Drawing.addDrawer{ g=>
+   /* for(x <- 0 until 16; y <- 0 until 16){
 
       val size = 50
       val v2 = V2(x * size * 1.1 - 400, y * size * 1.1 - 400)
@@ -76,13 +83,13 @@ object DcelDrawing extends App {
       DrawingUtils.drawArrow(v2, v3, g, lineWidth = 2, arrowHeadSize =  size / 5)
       DrawingUtils.drawArrow(v2, v2 + offset * size / 2, g,Color.GREEN, lineWidth = 2, arrowHeadSize =  size / 5)
       DrawingUtils.drawArrow(v2, v2 - offset * size / 2, g,Color.RED, lineWidth = 2, arrowHeadSize =  size / 5)
-    }
+    }*/
 
 
     DrawingUtils.drawArrow(V2(100, 100), V2(100, 200),g = g,  color = Color.BLACK, arrowHeadSize = 10d)
 
 
-  }*/
+  }
 
   //  dcel.
 }

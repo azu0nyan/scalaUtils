@@ -9,6 +9,7 @@ import utils.system.Event.Event
 
 class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
              initialZoom: Int = 37,
+             initialRotation:Scalar = 0,
              val resolution: V2 = new V2(1920, 1080),
              var zooms: Seq[Scalar] = Seq[Scalar](1.0E-8D, 2.5E-8D, 5.0E-8D, 7.5E-8D, 1.0E-7D, 2.5E-7D, 5.0E-7D, 7.5E-7D, 1.0E-6D, 2.5E-6D, 5.0E-6D, 7.5E-6D, 1.0E-5D, 2.5E-5D, 5.0E-5D, 7.5E-5D, 1.0E-4D, 2.5E-4D, 5.0E-4D, 7.5E-4D, 0.001D, 0.0025D, 0.005D, 0.0075D, 0.001D, 0.0025D, 0.005D, 0.0075D, 0.01D, 0.025D, 0.05D, 0.075D, 0.1D, 0.2D, 0.25D, 0.5D, 0.75D, 1.0D, 1.5D, 2.0D, 2.5D, 3.0D, 4.0D, 5.0D, 7.5D, 10.0D, 15.0D, 20.0D, 30.0D, 40.0D, 50.0D, 70.0D, 100.0D, 150.0D, 200.0D, 250.0D, 400.0D, 500.0D),
              var screenPartPerScroll: Scalar = 0.1f,
@@ -21,11 +22,13 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
              var moveRIGHT: Int = KeyEvent.VK_D,
              var invertY: Boolean = false) {
 
+  private[this] var _rotation = initialRotation
+  private[this] var _lookAt = initialLookAt
   private[this] var _cameraZoom: Int = initialZoom
   private[this] def cameraZoom: Int = _cameraZoom
+
   private[this] def cameraZoom_=(value: Int): Unit = {
     _cameraZoom = value
-    _leftTopAngleInWorld = calcLefTopAngleInWorld()
     _zoom = calcZoom
   }
 
@@ -33,28 +36,27 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
   else cameraZoom % zooms.length + zooms.length)
 
   private[this] var _zoom: Scalar = calcZoom
+
   def getZoom: Scalar = _zoom
 
+  private def cameraCenterInWorld: V2 = _lookAt
 
-  private[this] var _cameraCenterInWorld: V2 = initialLookAt
+  def worldToScreenTransform:Transform2D = if(invertY) Transform2D( - _lookAt * V2(_zoom, - _zoom) + resolution / 2, _rotation, V2(_zoom, - _zoom))
+  else Transform2D(- _lookAt * _zoom + resolution / 2, _rotation, V2(_zoom))
 
-  private def cameraCenterInWorld: V2 = _cameraCenterInWorld
+//  private def calcLefTopAngleInWorld(): V2 = cameraCenterInWorld - screenResolution.normalize * (screenToWorld(screenResolution.length / 2))
 
-  private def calcLefTopAngleInWorld(): V2 = cameraCenterInWorld - screenResolution.normalize * (screenToWorld(screenResolution.length / 2))
-
-  private[this] var _leftTopAngleInWorld: V2 = calcLefTopAngleInWorld()
-
-  def leftTopAngleInWorld: V2 = _leftTopAngleInWorld
+//  private[this] var _leftTopAngleInWorld: V2 = calcLefTopAngleInWorld()
+//
+//  def leftTopAngleInWorld: V2 = _leftTopAngleInWorld
 
   def lookAt(value: V2): Unit = {
-    _cameraCenterInWorld = value
-    _leftTopAngleInWorld = calcLefTopAngleInWorld()
+    _lookAt = value
   }
 
   var mouseInWorld: V2 = new V2(0.0D, 0.0D)
 
   var mouseOnScreen: V2 = new V2(0.0D, 0.0D)
-
 
   var correspondingWindow: Option[DrawingWindow] = None
 
@@ -65,11 +67,10 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
 
   def screenToWorld(screen: Scalar): Scalar = screen / getZoom
 
-  def worldToScreen(world: V2): V2 = ((if (invertY) V2(world.x, -world.y) else world) - leftTopAngleInWorld) * getZoom
+  def worldToScreen(world: V2): V2 = worldToScreenTransform.transformPoint(world) //((if (invertY) V2(world.x, -world.y) else world) - leftTopAngleInWorld) * getZoom
 
   def screenToWorld(screen: V2): V2 =
-    if (invertY) (V2(screen.x, screen.y)  / getZoom + leftTopAngleInWorld) * ( 1d, -1d) //todo fix
-    else screen  / getZoom + leftTopAngleInWorld
+    worldToScreenTransform.inverse.transformPoint(screen)
 
   // screen * (1f / getZoom) + leftTopAngleInWorld
 //    if (invertY) V2(screen.x, screen.y) * (1f / getZoom) + leftTopAngleInWorld
@@ -115,5 +116,5 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
   }
 
 
-  override def toString = s"Camera($mouseInWorld, $mouseOnScreen, $cameraCenterInWorld, $cameraZoom, $controlsEnabled, $getZoom, $leftTopAngleInWorld)"
+  override def toString = s"Camera($mouseInWorld, $mouseOnScreen, $cameraCenterInWorld, $cameraZoom, $controlsEnabled, $getZoom)"
 }

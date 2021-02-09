@@ -50,6 +50,7 @@ class DrawingWindow() extends JFrame {
 
     val drawingThread = new Thread(
       () => {
+        Thread.sleep(100)
         log.info("Drawing thread started")
         while (true) {
           val dtMs = System.currentTimeMillis - lastFrameEnd
