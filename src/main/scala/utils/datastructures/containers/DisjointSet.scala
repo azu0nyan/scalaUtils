@@ -2,6 +2,10 @@ package utils.datastructures.containers
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+class IntBucketDisjointSet(bucketsPow:Int = 16) extends DisjointSet[Int] {
+  override val parent: mutable.Map[Int, Int] = new IntToIntBucketMap(bucketsPow)
+  override val rank:mutable.Map[Int, Int] = new IntToIntBucketMap(bucketsPow)
+}
 
 class DisjointSet[@specialized(Int, Long, Char, Byte, Short) T] {
 
