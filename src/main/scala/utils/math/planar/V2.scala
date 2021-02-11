@@ -35,6 +35,8 @@ object V2 {
 }
 
 case class V2(x: Scalar, y: Scalar) extends WithMap{
+  def toProduct:(Scalar, Scalar) = (x, y)
+
   @inline def reciporalSafe: V2 = V2(
     1 / (if (x == 0) SMALL_NUMBER else x),
     1 / (if (y == 0) SMALL_NUMBER else y),

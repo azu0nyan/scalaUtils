@@ -41,6 +41,7 @@ class PlanarDCEL[VD, HED, FD](
   def cutPoly(poly: Seq[V2],
               newVdProvider: V2 => VD,
               newEdProvider: (Vertex, Vertex) => (HED, HED),
+              splitEdProvider: (HalfEdge, V2) => (HED, HED),
               newFdProvider: HalfEdge => FD,
              ): Seq[Vertex] = {
     var res: Seq[Vertex] = Seq()
@@ -50,7 +51,8 @@ class PlanarDCEL[VD, HED, FD](
         .orElse(
           halfEdges.find(_.asSegment.contains(pos)).map {
             e =>
-              val res = split(e, newVdProvider(pos), e.data, e.twin.data)
+              val (l, r) = splitEdProvider(e, pos)
+              val res = split(e, newVdProvider(pos), l, r)
 
               res
           }

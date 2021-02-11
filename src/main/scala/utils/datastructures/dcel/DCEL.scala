@@ -45,8 +45,8 @@ object DCEL{
                                 private[dcel] var _origin: RawVertex[VertexData, HalfEdgeData, FaceData],
                                 private[dcel] var _twin: RawHalfEdge[VertexData, HalfEdgeData, FaceData],
                                 private[dcel] var _leftFace: RawFace[VertexData, HalfEdgeData, FaceData],
-                                private[dcel] var _next: RawHalfEdge[VertexData, HalfEdgeData, FaceData],
                                 private[dcel] var _prev: RawHalfEdge[VertexData, HalfEdgeData, FaceData],
+                                private[dcel] var _next: RawHalfEdge[VertexData, HalfEdgeData, FaceData],
                               ) {
     type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
     type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
@@ -218,21 +218,21 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
   }
 
   /** e and twin become shorter, creates new vertex and two half-edges */
-  def split(e: HalfEdge, at: VertexData, newLeftData: HalfEdgeData, newRightData: HalfEdgeData): Vertex = {
-    val res = new Vertex(at, None)
+  def split(oldEdge: HalfEdge, at: VertexData, newLeftData: HalfEdgeData, newRightData: HalfEdgeData): Vertex = {
+    val res = makeVertex(at)
     onNewVertex(res)
-    val newNext = new HalfEdge(newLeftData, res, null, e.leftFace, e.next, e)
+    val newNext = new HalfEdge(newLeftData, res, null, oldEdge.leftFace, oldEdge, oldEdge._next)
     halfEdges += newNext
-    e._next = newNext
+    oldEdge._next = newNext
 
-    val newNextTwin = new HalfEdge(newRightData, e.dest, newNext, e.twin.leftFace, e.twin, e.twin.prev)
+    val newNextTwin = new HalfEdge(newRightData, oldEdge.dest, newNext, oldEdge.twin.leftFace, oldEdge.twin.prev, oldEdge.twin)
     halfEdges += newNextTwin
-    e.twin._prev = newNextTwin
+    oldEdge.twin._prev = newNextTwin
 
     res.incidentEdge = Some(newNext)
     newNext._twin = newNextTwin
-    onNewEdge(newNext)
-    onEdgeSplit((e, newNext))
+//    onNewEdge(newNext) //todo enable
+    onEdgeSplit((oldEdge, newNext))
     res
   }
 
