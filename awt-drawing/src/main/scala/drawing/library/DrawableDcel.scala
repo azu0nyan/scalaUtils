@@ -16,6 +16,13 @@ class DrawableDcel[VD <: V2, HED, FD](
                                  var angleOffset:Scalar = 10d,
                                ) extends SimpleDrawable {
   override def drawAndUpdate(g: Graphics2D, dt: Scalar): Unit = {
+
+    dcel.vertices.foreach{ v =>
+      val c = verticesColor(v.data)
+      DrawingUtils.drawCircle(dcel.pos(v), angleOffset.toFloat / 2f, g, c, true)
+
+    }
+
     dcel.innerFaces.foreach { f =>
       val c = faceColor(f.data)
       val vs = f.vertices

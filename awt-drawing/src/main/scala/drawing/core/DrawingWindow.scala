@@ -2,17 +2,20 @@ package drawing.core
 
 import java.awt.event._
 import java.awt.{Graphics2D, Toolkit}
-import java.util.concurrent.{ConcurrentSkipListMap, CopyOnWriteArrayList}
+import java.util.concurrent.{ConcurrentSkipListMap, CopyOnWriteArrayList, Semaphore}
 import java.util.logging.{Level, Logger}
-
 import drawing.library.DrawingUtils
+
 import javax.swing.{JFrame, WindowConstants}
 import utils.datastructures.IntV2
 
 import scala.jdk.CollectionConverters._
 import utils.math._
 import utils.math.planar.V2
+import utils.system.ConcurrentOps
 import utils.system.Event.Listener
+
+import java.util.concurrent.locks.ReentrantLock
 
 class DrawingWindow() extends JFrame {
 
@@ -23,6 +26,7 @@ class DrawingWindow() extends JFrame {
 
   var camera: Camera = _
 
+  var shiftControlAlt = new ShiftControlAltListener
 
   private var lastFrameEnd = 0L
 
@@ -47,6 +51,7 @@ class DrawingWindow() extends JFrame {
     createBufferStrategy(2)
     lastFrameEnd = System.currentTimeMillis
     startTime = System.currentTimeMillis
+    addKeyListener(shiftControlAlt)
 
     val drawingThread = new Thread(
       () => {
@@ -94,11 +99,14 @@ class DrawingWindow() extends JFrame {
     drawableObjectsDepthMap.asScala.values.flatMap(layer => layer.asScala.toSeq)
   }
 
+  val drawUpdateLock:ReentrantLock = new ReentrantLock(true)
   private def updateAndDraw(dt: Scalar): Unit = {
     val bs = getBufferStrategy
     val g2d = bs.getDrawGraphics.asInstanceOf[Graphics2D]
     g2d.clearRect(0, 0, getWidth, getHeight)
-    updateAndDrawObjects(g2d, dt)
+    ConcurrentOps.withLock(drawUpdateLock) {
+      updateAndDrawObjects(g2d, dt)
+    }
     g2d.dispose()
     bs.show()
     Toolkit.getDefaultToolkit.sync()
@@ -192,6 +200,9 @@ class DrawingWindow() extends JFrame {
     return listener
   }
 
+  def setCloseButton(keycode:Int = KeyEvent.VK_ESCAPE):KeyListener  = {
+    addKeyBinding(keycode, () => System.exit(0))
+  }
 
   val mousePosDrawer:DrawableObject = addDrawer(g =>{
     DrawingUtils.drawText(f"${camera.mouseInWorld.x}%.2f ${camera.mouseInWorld.y}%.2f ", camera.mouseInWorld, g, 20, scaleFont = false)

@@ -1,95 +1,165 @@
 import drawing.Drawing
-import drawing.library.{DrawableDcel, DrawingUtils}
+import drawing.core.DrawingWindow
+import drawing.library.{DrawableDcel, DrawingUtils, TimeOps}
+import utils.abstractions.EnabledDisabled
+import utils.datastructures.IntV2
 import utils.datastructures.dcel.PlanarDCEL
 import utils.math.planar.{AngleOps, V2}
 import utils.math._
+import utils.system.ConcurrentOps
 
 import java.awt.Color
-import java.awt.event.{MouseEvent, MouseListener}
+import java.awt.event.{KeyEvent, MouseEvent, MouseListener}
 import java.util.concurrent.atomic.AtomicInteger
 
 object DcelDrawing extends App {
-  Drawing.startDrawingThread()
+  implicit val w: DrawingWindow = Drawing
+  Drawing.startDrawingThread(IntV2(1920, 900), false)
+  Drawing.setCloseButton()
   //FUCK YOU
-  new Thread(()=> {
-     Thread.sleep(100)
-    Drawing.setSize(1920, 1079)
+  new Thread(() => {
+    Thread.sleep(100)
+    Drawing.setSize(Drawing.getWidth, Drawing.getHeight + 1)
   }).start()
 
+
   Drawing.camera.invertY = true
+  Drawing.camera.lookAt(V2(0, 100))
   Drawing.FpsCounter.enable()
   Drawing.camera.enableControls()
 
   val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
-  dcel.onNewFace.subscribe(f => println("new face", f.data, f.vertices.size, f.vertices.map(_.data).toSeq))
-  dcel.onNewEdge.subscribe(e => println("new edge data", e.data, e.twin.data, dcel.pos(e.origin), dcel.pos(e.ending),
-    "leftFace", e.leftFace.data, e.twin.leftFace.data, "pn tpn", e.prev.data, e.next.data, e.twin.prev.data, e.twin.next.data))
-  dcel.onNewVertex.subscribe(v => println("new vertex", v.data, dcel.pos(v), v.edgesWithOriginHere.size))
-  dcel.onEdgeCollapse.subscribe(e => println("edge collapse", e.data, e.twin.data, dcel.pos(e.origin), dcel.pos(e.ending), "leftFace", e.leftFace.data, e.twin.leftFace.data) )
-  dcel.onEdgeSplit.subscribe{case (e1, e2) =>
-    println("edge split", e1.data, e1.twin.data, dcel.pos(e1.origin), dcel.pos(e1.ending), "leftFace", e1.leftFace.data, e1.twin.leftFace.data)
-    println("edge split", e2.data, e2.twin.data, dcel.pos(e2.origin), dcel.pos(e2.ending), "leftFace", e2.leftFace.data, e2.twin.leftFace.data)
+  dcel.onNewFace.subscribe(f => {
+    println("new face", f.data, f.vertices.size, f.vertices.map(_.data).toSeq)
+    ConcurrentOps.withoutLock(w.drawUpdateLock) {
+      ConcurrentOps.withLock(w.drawUpdateLock) {
+        TimeOps.waitKey(KeyEvent.VK_SPACE)
+      }
+    }
+  })
+  dcel.onNewEdge.subscribe(e => {
+    println(s"new edge:${e.data} twin: ${e.twin.data} pos:${dcel.pos(e.origin).toProduct}->${dcel.pos(e.ending).toProduct} " +
+      s"face ${if (e.leftFace == dcel.outerFace) "outer" else e.leftFace.data.toString} " +
+      s"twinFace ${if (e.twin.leftFace == dcel.outerFace) "outer" else e.twin.leftFace.data.toString} " +
+      s"prev  ${e.prev.data} next ${e.next.data} ${e.twin.prev.data}, ${e.twin.next.data} ")
+    ConcurrentOps.withoutLock(w.drawUpdateLock) {
+      ConcurrentOps.withLock(w.drawUpdateLock) {
+        TimeOps.waitKey(KeyEvent.VK_SPACE)
+      }
+    }
+  })
+  dcel.onNewVertex.subscribe(v => {
+    val face = dcel.faceAt(dcel.pos(v))
+    println("new vertex", v.data, dcel.pos(v), v.edgesWithOriginHere.size, if(face == dcel.outerFace) "outer" else face.data.toString)
+    ConcurrentOps.withoutLock(w.drawUpdateLock) {
+      ConcurrentOps.withLock(w.drawUpdateLock) {
+        TimeOps.waitKey(KeyEvent.VK_SPACE)
+      }
+    }
+  })
+  dcel.onEdgeCollapse.subscribe(e => {
+    println("edge collapse", e.data, e.twin.data, dcel.pos(e.origin), dcel.pos(e.ending), "leftFace", e.leftFace.data, e.twin.leftFace.data)
+    ConcurrentOps.withoutLock(w.drawUpdateLock) {
+      ConcurrentOps.withLock(w.drawUpdateLock) {
+        TimeOps.waitKey(KeyEvent.VK_SPACE)
+      }
+    }
+  })
+  dcel.onEdgeSplit.subscribe { case (e1, e2) =>
+    println("SPLIT")
+    println(s"old edge:${e1.data} twin: ${e1.twin.data} pos:${dcel.pos(e1.origin).toProduct}->${dcel.pos(e1.ending).toProduct} " +
+      s"face: ${if (e1.leftFace == dcel.outerFace) "outer" else e1.leftFace.data.toString} " +
+      s"twinFace: ${if (e1.twin.leftFace == dcel.outerFace) "outer" else e1.twin.leftFace.data.toString} " +
+      s"prev:  ${e1.prev.data} next: ${e1.next.data} ${e1.twin.prev.data}, ${e1.twin.next.data} ")
+    println(s"new edge:${e2.data} twin: ${e2.twin.data} pos:${dcel.pos(e2.origin).toProduct}->${dcel.pos(e2.ending).toProduct} " +
+      s"face: ${if (e2.leftFace == dcel.outerFace) "outer" else e2.leftFace.data.toString} "  +
+      s"twinFace: ${if (e2.twin.leftFace == dcel.outerFace) "outer" else e2.twin.leftFace.data.toString} " +
+      s"prev:  ${e2.prev.data} next: ${e2.next.data} ${e2.twin.prev.data}, ${e2.twin.next.data} ")
+//    ConcurrentOps.withoutLock(w.drawUpdateLock) {
+//      ConcurrentOps.withLock(w.drawUpdateLock) {
+//        TimeOps.waitKey(KeyEvent.VK_SPACE)
+//      }
+//    }
   }
 
   val ids = new AtomicInteger()
   val ids2 = new AtomicInteger()
 
   def addPoly(s: Seq[V2]) = {
-    println("Adding poly")
-    dcel.cutPoly(s, x => x, (x, y) => (ids.getAndIncrement(), ids.getAndIncrement()), x => ids2.getAndIncrement())
-    println("Added")
+    new Thread(() => {
+      println("Adding poly")
+      ConcurrentOps.withLock(w.drawUpdateLock) {
+        dcel.cutPoly(s, x => x, (x, y) => (ids.getAndIncrement(), ids.getAndIncrement()), (x, y) => (ids.getAndIncrement(), ids.getAndIncrement()), x => ids2.getAndIncrement())
+      }
+      println("Added")
+    }, "Dcel cutting").start()
   }
 
-  Drawing.addDrawer(g => {
+  //  Drawing.addDrawer(g => {
+  //
+  //    g.setColor(Color.BLACK)
+  //    g.drawLine(200, 2000, 300, 100)
+  //  })
 
-    g.setColor(Color.BLACK)
-    g.drawLine(200, 2000, 300, 100)
-  })
+  //  val f = dcel.makeFace(1)
+  //  val v1 = dcel.makeVertex(V2(100, 100))
+  //  val v2 = dcel.makeVertex(V2(200, 500))
+  //  val v3 = dcel.makeVertex(V2(500, 500))
+  //  dcel.makeEdge(v1, v2, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
+  //  dcel.makeEdge(v2, v3, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
+  //  dcel.makeEdge(v3, v1, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
+  //
 
-//  val f = dcel.makeFace(1)
-//  val v1 = dcel.makeVertex(V2(100, 100))
-//  val v2 = dcel.makeVertex(V2(200, 500))
-//  val v3 = dcel.makeVertex(V2(500, 500))
-//  dcel.makeEdge(v1, v2, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
-//  dcel.makeEdge(v2, v3, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
-//  dcel.makeEdge(v3, v1, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
-//
-
-//  addPoly(Seq(V2(0, 0), V2(0, 100), V2(100, 100)).map(x => x * 1d - 2 * V2(100, 100)))
+  //  addPoly(Seq(V2(0, 0), V2(0, 100), V2(100, 100)).map(x => x * 1d - 2 * V2(100, 100)))
 
 
   Drawing.addDrawable(new DrawableDcel(dcel))
 
 
-  var poly:Seq[V2] = Seq()
+  var poly: Seq[V2] = Seq()
 
-  Drawing.addMouseLeftClickBinding(v => poly = poly :+ v)
-  Drawing.addMouseRightClickBinding{ v =>
+  var snapValue = 100d
+  Drawing.addMouseLeftClickBinding(v => {
+    val toAdd = if (Drawing.shiftControlAlt.shiftPressed) {
+      val x = Math.floor((v + V2(snapValue / 2)).x / snapValue) * snapValue
+      val y = Math.floor((v + V2(snapValue / 2)).y / snapValue) * snapValue
+
+      V2(x, y)
+    } else v
+
+    poly = poly :+ toAdd
+  }
+  )
+  Drawing.addMouseRightClickBinding { v =>
     addPoly(poly)
     poly = Seq()
   }
 
 
- Drawing.addDrawer{ g=>
-   /* for(x <- 0 until 16; y <- 0 until 16){
+  Drawing.addDrawer(g => {
+    /* for(x <- 0 until 16; y <- 0 until 16){
 
-      val size = 50
-      val v2 = V2(x * size * 1.1 - 400, y * size * 1.1 - 400)
-      val v1 = v2 + V2(-size / 2, 0).rotate(TWO_PI * x / 16d)
-      val v3 = v2 + V2(size / 2, 0).rotate(TWO_PI * y / 16d)
+       val size = 50
+       val v2 = V2(x * size * 1.1 - 400, y * size * 1.1 - 400)
+       val v1 = v2 + V2(-size / 2, 0).rotate(TWO_PI * x / 16d)
+       val v3 = v2 + V2(size / 2, 0).rotate(TWO_PI * y / 16d)
 
-      val offset = AngleOps.ccwBisectorPath(v1, v2, v3)
-      DrawingUtils.drawArrow(v1, v2, g, lineWidth = 2, arrowHeadSize =  size / 5)
-      DrawingUtils.drawArrow(v2, v3, g, lineWidth = 2, arrowHeadSize =  size / 5)
-      DrawingUtils.drawArrow(v2, v2 + offset * size / 2, g,Color.GREEN, lineWidth = 2, arrowHeadSize =  size / 5)
-      DrawingUtils.drawArrow(v2, v2 - offset * size / 2, g,Color.RED, lineWidth = 2, arrowHeadSize =  size / 5)
-    }*/
-
-
-    DrawingUtils.drawArrow(V2(100, 100), V2(100, 200),g = g,  color = Color.BLACK, arrowHeadSize = 10d)
+       val offset = AngleOps.ccwBisectorPath(v1, v2, v3)
+       DrawingUtils.drawArrow(v1, v2, g, lineWidth = 2, arrowHeadSize =  size / 5)
+       DrawingUtils.drawArrow(v2, v3, g, lineWidth = 2, arrowHeadSize =  size / 5)
+       DrawingUtils.drawArrow(v2, v2 + offset * size / 2, g,Color.GREEN, lineWidth = 2, arrowHeadSize =  size / 5)
+       DrawingUtils.drawArrow(v2, v2 - offset * size / 2, g,Color.RED, lineWidth = 2, arrowHeadSize =  size / 5)
+     }*/
 
 
-  }
+    for (i <- -5 to 5) {
+      DrawingUtils.drawLine(V2(500, 100 * i), V2(-500, 100 * i), g, new Color(0, 0, 0, 127), 1)
+      DrawingUtils.drawLine(V2(100 * i, 500), V2(100 * i, -500), g, new Color(0, 0, 0, 127), 1)
+    }
+
+    DrawingUtils.drawArrow(V2(0, 0), V2(500, 0), g = g, color = new Color(255, 0, 0, 127), arrowHeadSize = 10d, lineWidth = 3)
+    DrawingUtils.drawArrow(V2(0, 0), V2(0, 500), g = g, color = new Color(0, 255, 0, 127), arrowHeadSize = 10d, lineWidth = 3)
+  }, -100)
 
   //  dcel.
 }
