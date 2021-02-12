@@ -11,7 +11,7 @@ object DCEL{
 
   /**
    * @param _data        data associated with face
-   * @param incidentEdge starting point to traverse in CCW order
+   * @param _incidentEdge starting point to traverse in CCW order
    */
   class RawFace[VertexData, HalfEdgeData, FaceData] private[DCEL](
                             private[this] var _data: FaceData,
@@ -158,76 +158,91 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     res
   }
 
-  def makeFace(f: FaceData, edge: HalfEdge): Face = {
+  def makeFace(f: FaceData, edge: HalfEdge, redirectOldFaceTo:HalfEdge): Face = {
     val res = new Face(f, Some(edge))
     innerFaces += res
-    edge.traverseEdges.foreach(e => e._leftFace = res)
+    edge.traverseEdges.foreach{e =>
+      if(e.leftFace.incidentEdge.contains(e)){
+        e.leftFace._incidentEdge = Some(redirectOldFaceTo)
+      }
+      e._leftFace = res
+    }
     onNewFace(res)
     res
   }
 
-  def makeEdge(from: Vertex, to: Vertex, leftFace: Face, rightFace: Face, leftData: HalfEdgeData, rightData: HalfEdgeData): HalfEdge = {
-    val main = new HalfEdge(leftData, from, null, leftFace, null, null)
-    val twin = new HalfEdge(rightData, to, main, rightFace, null, null)
-    halfEdges += main
-    halfEdges += twin
+  def makeEdge(from: Vertex, to: Vertex, leftFace: Face, rightFace: Face, leftData: HalfEdgeData, rightData: HalfEdgeData,
+               leftPrevOpt:Option[HalfEdge] = None, leftNextOpt:Option[HalfEdge] = None, rightPrevOpt:Option[HalfEdge]= None, rightNextOpt:Option[HalfEdge]= None
+              ): HalfEdge = {
+    val leftMain = new HalfEdge(leftData, from, null, leftFace, null, null)
+    val rightTwin = new HalfEdge(rightData, to, leftMain, rightFace, null, null)
+    halfEdges += leftMain
+    halfEdges += rightTwin
 
-    main._twin = twin
+    leftMain._twin = rightTwin
 
-    val fPrev = from.edgesWithEndHere.find(_.leftFace == leftFace)
-    val fNext = to.edgesWithOriginHere.find(_.leftFace == leftFace)
-    val sPrev = to.edgesWithEndHere.find(_.leftFace == rightFace)
-    val sNext = from.edgesWithOriginHere.find(_.leftFace == rightFace)
+    val leftPrev = leftPrevOpt.orElse(from.edgesWithEndHere.find(_.leftFace == leftFace))
+    val leftNext = leftNextOpt.orElse( to.edgesWithOriginHere.find(_.leftFace == leftFace))
+    val rightPrev =rightPrevOpt.orElse( to.edgesWithEndHere.find(_.leftFace == rightFace))
+    val rightNext = rightNextOpt.orElse(from.edgesWithOriginHere.find(_.leftFace == rightFace))
 
-    fPrev match {
+    leftPrev match {
       case Some(prev) =>
-        prev._next = main
-        main._prev = prev
+        prev._next = leftMain
+        leftMain._prev = prev
       case None =>
-        main._prev = twin
+        leftMain._prev = rightTwin
     }
 
-    fNext match {
+    leftNext match {
       case Some(next) =>
-        next._prev = main
-        main._next = next
+        next._prev = leftMain
+        leftMain._next = next
       case None =>
-        main._next = twin
+        leftMain._next = rightTwin
     }
-    sPrev match {
+    rightPrev match {
       case Some(prev) =>
-        twin._prev = prev
-        prev._next = twin
+        rightTwin._prev = prev
+        prev._next = rightTwin
       case None =>
-        twin._prev = main
+        rightTwin._prev = leftMain
     }
-    sNext match {
+    rightNext match {
       case Some(next) =>
-        twin._next = next
-        next._prev = twin
+        rightTwin._next = next
+        next._prev = rightTwin
       case None =>
-        twin._next = main
+        rightTwin._next = leftMain
     }
 
-    if (from.incidentEdge.isEmpty) from.incidentEdge = Some(main)
-    if (to.incidentEdge.isEmpty) to.incidentEdge = Some(twin)
-    if (leftFace.incidentEdge.isEmpty) leftFace._incidentEdge = Some(main)
-    if (rightFace.incidentEdge.isEmpty) rightFace._incidentEdge = Some(twin)
-    onNewEdge(main)
-    main
+    if (from.incidentEdge.isEmpty) from.incidentEdge = Some(leftMain)
+    if (to.incidentEdge.isEmpty) to.incidentEdge = Some(rightTwin)
+    if (leftFace.incidentEdge.isEmpty) leftFace._incidentEdge = Some(leftMain)
+    if (rightFace.incidentEdge.isEmpty) rightFace._incidentEdge = Some(rightTwin)
+    onNewEdge(leftMain)
+    leftMain
   }
 
   /** e and twin become shorter, creates new vertex and two half-edges */
   def split(oldEdge: HalfEdge, at: VertexData, newLeftData: HalfEdgeData, newRightData: HalfEdgeData): Vertex = {
     val res = makeVertex(at)
-    onNewVertex(res)
     val newNext = new HalfEdge(newLeftData, res, null, oldEdge.leftFace, oldEdge, oldEdge._next)
     halfEdges += newNext
-    oldEdge._next = newNext
 
     val newNextTwin = new HalfEdge(newRightData, oldEdge.dest, newNext, oldEdge.twin.leftFace, oldEdge.twin.prev, oldEdge.twin)
     halfEdges += newNextTwin
+
+    oldEdge.twin._origin = res
+
+    //fix old next connection
+    oldEdge.next._prev = newNext
+
+    //fix old twin prev connection
+    oldEdge.twin._prev._next = newNextTwin
     oldEdge.twin._prev = newNextTwin
+
+    oldEdge._next = newNext
 
     res.incidentEdge = Some(newNext)
     newNext._twin = newNextTwin

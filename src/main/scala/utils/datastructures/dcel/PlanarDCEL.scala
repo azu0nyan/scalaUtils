@@ -1,9 +1,10 @@
 package utils.datastructures.dcel
 
+import utils.datastructures.dcel.DCEL.RawVertex
 import utils.math.planar.{AngleCCWPlanar, AngleOps, PointIntersection, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
 import utils.math._
 
-object PlanarDCEL{
+object PlanarDCEL {
 
 }
 
@@ -12,7 +13,9 @@ class PlanarDCEL[VD, HED, FD](
                                val extractor: VD => V2
                              ) extends DCEL[VD, HED, FD](outerFaceData) {
 
-  def pos(v:Vertex):V2 = extractor(v.data)
+  def pos(v: RawVertex[VD, HED, FD]): V2 = extractor(v.data)
+
+  def seg(e: HalfEdge): SegmentPlanar = e.asSegment
 
   implicit class PlanarVertex(f: Vertex) {
     def pos: V2 = extractor(f.data)
@@ -46,8 +49,8 @@ class PlanarDCEL[VD, HED, FD](
              ): Seq[Vertex] = {
     var res: Seq[Vertex] = Seq()
 
-    def getOrAddVertex(pos: V2): Vertex =
-      vertices.find(_.pos ~= pos)
+    def getOrAddVertex(pos: V2): Vertex = {
+      val res = vertices.find(_.pos ~= pos)
         .orElse(
           halfEdges.find(_.asSegment.contains(pos)).map {
             e =>
@@ -57,6 +60,8 @@ class PlanarDCEL[VD, HED, FD](
               res
           }
         ).getOrElse(makeVertex(newVdProvider(pos)))
+      res
+    }
 
     if (poly.size <= 1) return Seq()
 
@@ -70,14 +75,14 @@ class PlanarDCEL[VD, HED, FD](
     res = res :+ previous
 
     def popNext(): Vertex = {
-      val cur = previous.pos
-      val end = toTraverse.head
+      val cur: V2 = previous.pos
+      val end: V2 = toTraverse.head
 
-      val toTest = if (previous.incidentEdge.isEmpty) {
+      val toTest: Seq[HalfEdge] = if (previous.incidentEdge.isEmpty) {
         val face = faceAt(cur)
-        face.edges
+        face.edges.toSeq
       } else {
-        previous.edgesWithOriginHere
+        previous.edgesWithOriginHere.map(_.leftFace).distinct.flatMap(_.edges.toSeq).toSeq
       }
 
       val path = SegmentPlanar(cur, end)
@@ -86,6 +91,7 @@ class PlanarDCEL[VD, HED, FD](
           case PointIntersection(p) => !(p ~= cur)
           case _ => true
         }
+      //      println(intersections)
       if (intersections.isEmpty) {
         toTraverse = toTraverse.tail
         getOrAddVertex(end)
@@ -94,9 +100,13 @@ class PlanarDCEL[VD, HED, FD](
           case PointIntersection(p) => p
           case SegmentIntersection(SegmentPlanar(s, e)) =>
             if (s ~= cur) e
-            else if (e ~= cur) s //todo check if intersection can return degenerate segments
+            else if (e ~= cur) s
             else if (e.distance(cur) < s.distance(cur)) e else s
         }.minBy(_.distance(cur))
+
+        if (closestIntersection ~= end) {
+          toTraverse = toTraverse.tail
+        }
         getOrAddVertex(closestIntersection)
       }
     }
@@ -123,39 +133,88 @@ class PlanarDCEL[VD, HED, FD](
         makeEdge(previous, current, face, face, ld, rd)
       } else {
         //if vertices disconnected
-        if(!previous.edgesWithOriginHere.exists(e => e.ending == current)) {
+        if (!previous.edgesWithOriginHere.exists(e => e.ending == current)) {
           //we are closing chain
           val prevFaces = previous.adjacentFaces()
           val currentFaces = current.adjacentFaces()
 
-          val face = {
+          val commonFaces = prevFaces & currentFaces
+          val (ld, rd) = newEdProvider(previous, current)
+
+          if (commonFaces.isEmpty) {
+            throw new Exception("Malformed DCEL, cant find face adjacent to both sides of chain.")
+          } else if (commonFaces.size == 1) {//todo ??
+            val face = commonFaces.head
+            val newEdge = makeEdge(previous, current, face, face, ld, rd)
+            //if left and right different polys
+            if (!newEdge.traverseEdges.contains(newEdge.twin)) {
+              makeFace(newFdProvider(newEdge), newEdge, newEdge.twin)
+            }
+          } else {
+            val start = previous.pos
+            val end = current.pos
+
+            val nextEdge = current.edgesWithOriginHere.minBy { e =>
+              val v1 = start - end
+              val estart = e.origin.pos
+              val eend = e.ending.pos
+              val v2 = eend  - estart
+              //min cw
+              -AngleOps.angleFromTo(v1, v2)
+            }
+
+            val prevEdge = current.edgesWithEndHere.minBy{ e =>
+              val v1 =  end - end
+              val estart = e.origin.pos
+              val eend = e.ending.pos
+              val v2 = estart - eend
+              //min ccw
+              AngleOps.angleFromTo(v1, v2)
+            }
+
+
+            val newEdge = makeEdge(previous, current, prevEdge.leftFace, nextEdge.leftFace, ld, rd,
+              Some(prevEdge), Some(nextEdge), Some(nextEdge.prev), Some(prevEdge.next),
+            )
+            //if left and right different polys
+            if (!newEdge.traverseEdges.contains(newEdge.twin)) {
+              makeFace(newFdProvider(newEdge), newEdge, newEdge.twin)
+            }
+
+
+          }
+
+          /*val face = {
             val commonFaces = prevFaces & currentFaces
             if (commonFaces.isEmpty) {
               throw new Exception("Malformed DCEL, cant find face adjacent to both sides of chain.")
             } else if (commonFaces.size == 1) {
               commonFaces.head
             } else {
+              val start = previous.pos
               val end = current.pos
-              previous.edgesWithOriginHere.map(e => (e, e.prev.origin.pos, e.origin.pos, e.ending.pos)).find{
-                case (e, v1, v2, v3) =>
-                  val isCCWTurn = AngleOps.isCCW(v1, v2, v3)
-                  val ox = v2 - v1
-                  val oy = v3 - v2
-                  val p = end - v2
-                  val projX = ox ** p
-                  val projY = oy ** p
-                  (isCCWTurn && projX <=0  && projY >= 0) ||
-                    (!isCCWTurn &&(projX >= 0 || projY >= 0))
-              }.map(_._1.leftFace).get //todo check
-            }
-          }
+              val v1 = start - end
+              current.edgesWithOriginHere.minBy { e =>
+                val estart = e.origin.pos
+                val end = e.ending.pos
+                val v2 = estart - end
+                AngleOps.angleFromTo(v1, v2)
 
-          val (ld, rd) = newEdProvider(previous, current)
-          val newEdge = makeEdge(previous, current, face, face, ld, rd)
-          //if left and right different polys
-          if (!newEdge.traverseEdges.contains(newEdge.twin)) {
-            makeFace(newFdProvider(newEdge), newEdge)
-          }
+              }.leftFace
+              /*.map(e => (e, e.prev.origin.pos, e.origin.pos, e.ending.pos)).find{
+              case (e, v1, v2, v3) =>
+                val isCCWTurn = AngleOps.isCCW(v1, v2, v3)
+                val ox = v2 - v1
+                val oy = v3 - v2
+                val p = end - v2
+                val projX = ox ** p
+                val projY = oy ** p
+                (isCCWTurn && projX <=0  && projY >= 0) ||
+                  (!isCCWTurn &&(projX >= 0 || projY >= 0))
+            }.map(_._1.leftFace).get */
+              //todo check
+            }
+          }*/
         }
       }
       previous = current

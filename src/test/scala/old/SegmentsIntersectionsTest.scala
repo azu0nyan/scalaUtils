@@ -217,4 +217,9 @@ class SegmentsIntersectionsTest extends AnyFunSuite {
   }
 
 
+  test("segment bug") {
+    println(SegmentPlanar(V2(-100, 100), V2(-100, 0)).intersection(SegmentPlanar(V2(-100, 200), V2(-100, 400))))
+    assert(SegmentPlanar(V2(-100, 100), V2(-100, 0)).intersection(SegmentPlanar(V2(-100, 200), V2(-100, 400))).isEmpty)
+  }
+
 }

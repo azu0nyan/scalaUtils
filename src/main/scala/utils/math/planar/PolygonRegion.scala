@@ -24,7 +24,7 @@ object PolygonRegion {
      *
      * @return
      */
-    def isCw: Boolean = areaSigned < 0
+    def isCw: Boolean = areaSigned > 0
 
     def area: Scalar = Math.abs(areaSigned)
 
