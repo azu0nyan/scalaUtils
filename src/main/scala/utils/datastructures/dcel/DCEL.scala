@@ -88,8 +88,11 @@ object DCEL{
 
   class RawVertex[VertexData, HalfEdgeData, FaceData] private[dcel](
                               private[this] var _data: VertexData,
-                              private[dcel] var incidentEdge: Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = None
+                              private[dcel] var _incidentEdge: Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = None
                             ) {
+
+    def incidentEdge:Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = _incidentEdge
+
     type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
     type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
     type Face = RawFace[VertexData, HalfEdgeData, FaceData]
@@ -102,10 +105,10 @@ object DCEL{
     def adjacentFaces(): Set[Face] = edgesWithOriginHere.map(_.leftFace).toSet
 
     def edgesWithOriginHere: Iterator[HalfEdge] =
-      if (incidentEdge.isEmpty) Iterator.empty
+      if (_incidentEdge.isEmpty) Iterator.empty
       else new Iterator[HalfEdge] {
-        val start: HalfEdge = incidentEdge.get
-        var cur: HalfEdge = incidentEdge.get
+        val start: HalfEdge = _incidentEdge.get
+        var cur: HalfEdge = _incidentEdge.get
         var first: Boolean = true
 
         override def hasNext: Boolean = first || cur != start
@@ -216,8 +219,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
         rightTwin._next = leftMain
     }
 
-    if (from.incidentEdge.isEmpty) from.incidentEdge = Some(leftMain)
-    if (to.incidentEdge.isEmpty) to.incidentEdge = Some(rightTwin)
+    if (from.incidentEdge.isEmpty) from._incidentEdge = Some(leftMain)
+    if (to.incidentEdge.isEmpty) to._incidentEdge = Some(rightTwin)
     if (leftFace.incidentEdge.isEmpty) leftFace._incidentEdge = Some(leftMain)
     if (rightFace.incidentEdge.isEmpty) rightFace._incidentEdge = Some(rightTwin)
     onNewEdge(leftMain)
@@ -233,6 +236,11 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     val newNextTwin = new HalfEdge(newRightData, oldEdge.dest, newNext, oldEdge.twin.leftFace, oldEdge.twin.prev, oldEdge.twin)
     halfEdges += newNextTwin
 
+    //we should update incidentEdge
+    if(oldEdge.twin._origin.incidentEdge.contains(oldEdge.twin)){
+      oldEdge.twin._origin._incidentEdge =
+        oldEdge.twin._origin.edgesWithOriginHere.filter(_ != oldEdge.twin).nextOption()
+    }
     oldEdge.twin._origin = res
 
     //fix old next connection
@@ -244,7 +252,7 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
 
     oldEdge._next = newNext
 
-    res.incidentEdge = Some(newNext)
+    res._incidentEdge = Some(newNext)
     newNext._twin = newNextTwin
 //    onNewEdge(newNext) //todo enable
     onEdgeSplit((oldEdge, newNext))
@@ -258,9 +266,9 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     if (e.twin.leftFace.incidentEdge.contains(e.twin))
       e.twin.leftFace._incidentEdge = Option.when(e.twin.next != e)(e.twin.next)
     if (e.origin.incidentEdge.contains(e))
-      e.origin.incidentEdge = Option.when(e.nextAdjacent != e)(e.nextAdjacent)
+      e.origin._incidentEdge = Option.when(e.nextAdjacent != e)(e.nextAdjacent)
     if (e.twin.origin.incidentEdge.contains(e.twin))
-      e.twin.origin.incidentEdge = Option.when(e.twin.nextAdjacent != e.twin)(e.twin.nextAdjacent)
+      e.twin.origin._incidentEdge = Option.when(e.twin.nextAdjacent != e.twin)(e.twin.nextAdjacent)
     e.prev._next = e.next
     e.next._prev = e.prev
     e.twin.prev._next = e.twin.next
