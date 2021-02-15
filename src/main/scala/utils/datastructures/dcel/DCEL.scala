@@ -14,8 +14,9 @@ object DCEL{
    * @param _incidentEdge starting point to traverse in CCW order
    */
   class RawFace[VertexData, HalfEdgeData, FaceData] private[DCEL](
-                            private[this] var _data: FaceData,
-                            private[dcel] var _incidentEdge: Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = None
+                                                                   private[this] var _data: FaceData,
+                                                                   private[dcel] var _incidentEdge: Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = None,
+                                                                   private [dcel] var _holes:Set[RawHalfEdge[VertexData,HalfEdgeData, FaceData]],
                           ) {
     type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
     type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
@@ -27,9 +28,17 @@ object DCEL{
     }
     def incidentEdge: Option[HalfEdge] = _incidentEdge
 
+    def holes: Set[HalfEdge] = _holes
 
-    def vertices: Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
-    def edges: Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
+    def outsideVertices: Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
+    def borderEdges: Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
+
+    def holesVertices: Iterator[Vertex] = _holes.iterator.flatMap(_.traverseEdges.map(_.origin))
+    def holesEdges: Iterator[HalfEdge] = _holes.iterator.flatMap(_.traverseEdges)
+
+
+    def vertices: Iterator[Vertex] = outsideVertices ++ holesVertices
+    def edges: Iterator[HalfEdge] = borderEdges ++ holesEdges
   }
 
   /**
@@ -132,7 +141,7 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
   type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
   type Face = RawFace[VertexData, HalfEdgeData, FaceData]
 
-  val outerFace = new Face(outerFaceData, None)
+  val outerFace = new Face(outerFaceData, None, Set())
 
   val innerFaces: mutable.Set[Face] = mutable.Set[Face]()
 
@@ -155,18 +164,22 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
   }
 
   def makeFace(f: FaceData): Face = {
-    val res = new Face(f, None)
+    val res = new Face(f, None, Set())
     innerFaces += res
     onNewFace(res)
     res
   }
 
   def makeFace(f: FaceData, edge: HalfEdge, redirectOldFaceTo:HalfEdge): Face = {
-    val res = new Face(f, Some(edge))
+    val res = new Face(f, Some(edge),Set())
     innerFaces += res
     edge.traverseEdges.foreach{e =>
       if(e.leftFace.incidentEdge.contains(e)){
         e.leftFace._incidentEdge = Some(redirectOldFaceTo)
+      }
+      if(e.leftFace._holes.contains(e)){
+        e.leftFace._holes -= e
+        e.leftFace._holes += redirectOldFaceTo
       }
       e._leftFace = res
     }
