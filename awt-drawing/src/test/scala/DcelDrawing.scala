@@ -245,7 +245,7 @@ object DcelDrawing extends App {
   //  Await.result(addPoly(List(V2(0.0, -100.0), V2(200.0, -100.0), V2(200.0, 100.0), V2(0.0, 100.0))), Duration.Inf)
   //  Await.result(addPoly(List(V2(0.0, -200.0), V2(100.0, -200.0), V2(100.0, 0.0), V2(0.0, 0.0))), Duration.Inf)
 
-  Await.result(addPoly(List(V2(-100.0, -100.0), V2(0.0, -100.0), V2(0.0, 0.0), V2(-100.0, 0.0))), Duration.Inf)
+/*  Await.result(addPoly(List(V2(-100.0, -100.0), V2(0.0, -100.0), V2(0.0, 0.0), V2(-100.0, 0.0))), Duration.Inf)
   Await.result(addPoly(List(V2(-200.0, -100.0), V2(100.0, -100.0), V2(100.0, 200.0), V2(-200.0, 200.0))), Duration.Inf)
   Await.result(addPoly(List(V2(-300.0, -100.0), V2(200.0, -100.0), V2(200.0, 300.0), V2(-300.0, 300.0))), Duration.Inf)
   Await.result(addPoly(List(V2(-100.0, 100.0), V2(-100.0, 0.0), V2(0.0, 0.0), V2(0.0, 100.0))), Duration.Inf)
@@ -260,6 +260,11 @@ object DcelDrawing extends App {
   Await.result(addPoly(List(V2(-500.0, 100.0), V2(-300.0, 100.0), V2(-300.0, 300.0), V2(-500.0, 300.0))), Duration.Inf)
   pauseOnEvent.enable()
   Await.result(addPoly(List(V2(-500.0, -100.0), V2(-300.0, -100.0), V2(-300.0, 100.0), V2(-500.0, 100.0))), Duration.Inf)
+*/
 
+  Await.result(addPoly(List(V2(-300.0, 0.0), V2(-100.0, 0.0), V2(-100.0, 200.0), V2(-300.0, 200.0))), Duration.Inf)
+  Await.result(addPoly(List(V2(100.0, 0.0), V2(300.0, 0.0), V2(300.0, 200.0), V2(100.0, 200.0))), Duration.Inf)
+  pauseOnEvent.enable()
+  Await.result(addPoly(List(V2(-200.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0), V2(-200.0, 200.0))), Duration.Inf)
 
 }

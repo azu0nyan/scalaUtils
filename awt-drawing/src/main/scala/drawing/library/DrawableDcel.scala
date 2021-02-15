@@ -34,6 +34,7 @@ class DrawableDcel[VD <: V2, HED, FD](
                                        var heFaceColor: Color = new Color(30, 230, 30),
                                        val heToPolyColor: Color = new Color(240, 230, 50),
                                        val polyToHeColor: Color = new Color(80, 200, 200),
+                                       val polyToHoleColor: Color = new Color(80, 200, 80),
                                        val vertexConnectionColors: Color = new Color(20, 30, 150)
 
 
@@ -69,6 +70,15 @@ class DrawableDcel[VD <: V2, HED, FD](
           DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHeColor, 3, 20)
         }
       }
+      if(drawHeToPolyLinks){
+        for(h <- f.holesEdges){
+          val (origin, ending) = fromTo(h)
+          val onSeg = utils.math.v2Lerp(origin, ending, 0.4)
+
+          val dir = (ending - origin).rotate90CW.normalize
+          DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHoleColor, 3, 20)
+        }
+      }
     }
     if (drawPolyBorders) {
       dcel.innerFaces.foreach { f =>
@@ -90,6 +100,16 @@ class DrawableDcel[VD <: V2, HED, FD](
       DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHeColor, 4, 30)
     }
 
+
+    if(drawHeToPolyLinks) {
+      for (h <- dcel.outerFace.holes) {
+        val (origin, ending) = fromTo(h)
+        val onSeg = utils.math.v2Lerp(origin, ending, 0.4)
+
+        val dir = (ending - origin).rotate90CW.normalize
+        DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHoleColor, 3, 20)
+      }
+    }
 
     def fromTo(he: RawHalfEdge[VD, HED, FD]): (V2, V2) = {
 
