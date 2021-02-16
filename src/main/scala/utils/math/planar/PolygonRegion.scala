@@ -9,6 +9,10 @@ import utils.math.planar.patch.Path.Path
 
 object PolygonRegion {
 
+  final val BORDER = 0
+  final val OUTSIDE = -1
+  final val INSIDE = 1
+
   def from(p: Path, vertices: Int): PolygonRegion = PolygonRegion(p.toPoints(vertices))
 
 
@@ -39,9 +43,7 @@ object PolygonRegion {
     def distanceTo(point: V2): Scalar = if (contains(point)) 0 else distanceToFromSides(point)
 
 //    def
-    final val BORDER = 0
-    final val OUTSIDE = -1
-    final val INSIDE = 1
+
 
     def notContains(p:V2):Boolean = classify(p) == OUTSIDE
     def onBorder(p:V2):Boolean = classify(p) == BORDER
@@ -54,9 +56,10 @@ object PolygonRegion {
     else {
       var res = 0
       for (side <- sides) {
+
         val v1 = side.v1
         val v2 = side.v2
-        //side not horizontal and we can intersects with it
+        //side not horizontal and we can intersect it
         if((v1.y ~> p.y) != (v2.y ~> p.y)){
           //intersection x
           //no divison by 0 since
@@ -68,13 +71,14 @@ object PolygonRegion {
             if((v1.y !~= p.y) && (v2.y !~= p.y) ) {
               res += 1
               //side touches ray, other point higher
-            } else if((v1.y ~= p.y) && v2.y > p.y || (v2.y ~= p.y) && v2.y > p. y){
+            } else if((v1.y ~= p.y) && v2.y > p.y || (v2.y ~= p.y) && v1.y > p. y){
               res += 1
             }
             //side touching ray other point lower
             /*else if((v2.y ~= p.y) && v1.y > p.y)*/
           }
-        }
+        } else if((v1.y ~= p.y) && (min(v1.x, v2.x) ~<= p.x) && (p.x ~<= max(v1.x, v2.x)) )return  BORDER
+        println(side, res)
       }
       if(res % 2 == 1) INSIDE else OUTSIDE
     }
