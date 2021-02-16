@@ -30,40 +30,79 @@ object PolygonRegion {
 
     def distanceTo(point: V2): Scalar = if (contains(point)) 0 else distanceToFromSides(point)
 
-    def contains(point: V2): Boolean = {
-      if (vertices.length < 1) false
-      else if (vertices.length == 1) vertices.head ~= point
-      else if (vertices.length == 2) SegmentPlanar(vertices.head, vertices.last).collinear(point)
-      else {
-        val otherEnd: V2 = V2(aabb.max.x + 1000f, point.y)
-        val toTest: SegmentPlanar = SegmentPlanar(point, otherEnd)
-        var res: Int = 0
-        var res2: Int = 0
-        for (side <- sides) {
-          // println(toTest + " " + side + " " + toTest.intersects(side))
-          if (toTest.intersects(side)) {
-            res2 = res2 + 1
-            if (side.contains(point)) return true
-            /*
-             The issue is solved as follows: If the intersection point is a vertex of a tested polygon side,
-             then the intersection counts only if the second vertex of the side lies below the ray.
-            */
-            if (
-              (side.v1.y == point.y && side.v2.y < point.y)
-                ||
-                (side.v2.y == point.y && side.v1.y < point.y)
-                ||
-                (side.v1.y != point.y && side.v2.y != point.y)
-            ) {
-              res = res + 1
+//    def
+    final val BORDER = 0
+    final val OUTSIDE = -1
+    final val INSIDE = 1
+
+    def notContains(p:V2):Boolean = classify(p) == OUTSIDE
+    def onBorder(p:V2):Boolean = classify(p) == BORDER
+    def containsInside(p:V2): Boolean = classify(p) == INSIDE
+    def contains(p:V2) :Boolean = classify(p) >= 0
+
+    def classify(p: V2): Int = if (vertices.isEmpty) OUTSIDE
+    else if (vertices.length == 1) if(vertices.head ~= p) BORDER else OUTSIDE
+    else if (vertices.length == 2)  if(SegmentPlanar(vertices.head, vertices.last).contains(p)) BORDER else OUTSIDE
+    else {
+      var res = 0
+      for (side <- sides) {
+        val v1 = side.v1
+        val v2 = side.v2
+        //side not horizontal and we can intersects with it
+        if((v1.y ~> p.y) != (v2.y ~> p.y)){
+          //intersection x
+          //no divison by 0 since
+          val cx = v1.x + (p.y - v1.y) * (v2.x - v1.x) / (v2.y - v1.y)
+          if(cx ~= p.x) return BORDER
+          //we intersects
+          if(cx > p.x){
+             //simple intersection
+            if((v1.y !~= p.y) && (v2.y !~= p.y) ) {
+              res += 1
+              //side touches ray, other point higher
+            } else if((v1.y ~= p.y) && v2.y > p.y || (v2.y ~= p.y) && v2.y > p. y){
+              res += 1
             }
+            //side touching ray other point lower
+            /*else if((v2.y ~= p.y) && v1.y > p.y)*/
           }
         }
-
-        res % 2 == 1
       }
+      if(res % 2 == 1) INSIDE else OUTSIDE
     }
+    /* def contains(point: V2): Boolean = {
+       if (vertices.length < 1) false
+       else if (vertices.length == 1) vertices.head ~= point
+       else if (vertices.length == 2) SegmentPlanar(vertices.head, vertices.last).contains(point)
+       else {
+         val otherEnd: V2 = V2(aabb.max.x + 10000f, point.y)
+         val toTest: SegmentPlanar = SegmentPlanar(point, otherEnd)
+         var res: Int = 0
+         var res2: Int = 0
+         for (side <- sides) {
+           if (toTest.intersects(side)) {
+             res2 = res2 + 1
+             if (side.contains(point)) return true
+             /*
+              The issue is solved as follows: If the intersection point is a vertex of a tested polygon side,
+              then the intersection counts only if the second vertex of the side lies below the ray.
+             */
+             if (
+               (side.v1.y == point.y && side.v2.y < point.y)
+                 ||
+                 (side.v2.y == point.y && side.v1.y < point.y)
+                 ||
+                 (side.v1.y != point.y && side.v2.y != point.y)
+             ) {
+               res = res + 1
+             }
+           }
+         }
 
+         res % 2 == 1
+       }
+     }
+ */
     //todo  плохо работает для случаев когда ребро совпадает с границей side.v1.y == 0 && side.v2.y == 0
     def contains(s: SegmentPlanar): Boolean = {
       val translation: V2 = s.v1
