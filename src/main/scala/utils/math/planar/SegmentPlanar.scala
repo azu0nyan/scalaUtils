@@ -3,6 +3,7 @@ package utils.math.planar
 //import java.lang.StackWalker
 
 import utils.math._
+import utils.math.WithAlmostEquals
 
 object SegmentPlanar {
   def apply(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar): SegmentPlanar = new SegmentPlanar(V2(x1, y1), V2(x2, y2))
@@ -72,9 +73,26 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
   def normal: UnitV2 = body.rotate(HALF_PI)
 
-  //TODO like in Segment3
-  //def clothestPoint(point:V3)
-  def distanceTo(point: V2): Scalar = min(
+
+  def clothesPoint(point: V2): V2 = {
+    val po = point - start
+    val bodyNorm = body.normalize
+    val proj = po ** bodyNorm
+    if (proj ~< 0) start
+    else if (proj ~> body.length) end
+    else start + proj * bodyNorm
+  }
+
+  def distanceTo(point: V2): Scalar = {
+    val po = point - start
+    val bodyNorm = body.normalize
+    val proj = po ** bodyNorm
+    if (proj ~< 0) start.distance(point)
+    else if (proj ~> body.length) end.distance(point)
+    else (start + proj * bodyNorm).distance(point)
+  }
+
+  /*min(
     v1.distance(point),
     v2.distance(point),
     intersection(LinePlanar(point, normal)) match {
@@ -82,60 +100,83 @@ case class SegmentPlanar(v1: V2, v2: V2) {
       case Some(PointIntersection(p)) => if (contains(p)) p.distance(point) else BIG_NUMBER
       case None => BIG_NUMBER
     }
-  )
+  )*/
 
-  def intersection(ot: LinePlanar): Option[SegmentToSegmentPlanarIntersection] = intersection(SegmentPlanar(ot.origin - (ot.direction * BIG_NUMBER), ot.origin + (ot.direction * BIG_NUMBER)))
+
+  def receiveProjectionFrom(point: V2): Boolean = {
+    val po = point - start
+    val bodyNorm = body.normalize
+    val proj = po ** bodyNorm
+    (proj ~>= 0) && (proj ~<= body.length)
+  }
+
+  //    intersection(LinePlanar(point, normal)) match {
+  //    case Some(SegmentIntersection(_)) => contains(point)
+  //    case Some(PointIntersection(p)) => true
+  //    case None =>false
+  //  }
+
+  def intersection(ot: LinePlanar): Option[SegmentToSegmentPlanarIntersection] =
+    intersection(SegmentPlanar(ot.origin - (ot.direction * BIG_NUMBER), ot.origin + (ot.direction * BIG_NUMBER)))
+
+  //  def intersection(ot: SegmentPlanar):Option[SegmentToSegmentPlanarIntersection]
 
   def intersection(ot: SegmentPlanar): Option[SegmentToSegmentPlanarIntersection] = {
     //degenerate cases
-    if (length == 0) return if (ot.contains(v1)) Some(PointIntersection(v1)) else None
-    if (ot.length == 0) return if (contains(ot.v1)) Some(PointIntersection(ot.v1)) else None
-    //https://stackoverflow.com/a/565282
-    val q = start
-    val s = body
-    val p = ot.start
-    val r = ot.body
-
-    //u = (q − p) × r / (r × s)
-    //t = (q − p) × s / (r × s)
-
-    if ((r det s) ~= 0f) {
-      if (((q - p) det r) ~= 0f) {
-        /** If r × s = 0 and (q − p) × r = 0, then the two lines are collinear.
-          * r s  - collinear
-          * t0 = (q − p) · r / (r · r)
-          * t1 = (q + s − p) · r / (r · r) = t0 + s · r / (r · r)
-          */
-        var t0 = ((q - p) ** r) / (r ** r)
-        var t1 = ((q + s - p) ** r) / (r ** r)
-        if ((s ** r) ~< 0) {
-          val tmp = t0
-          t0 = t1
-          t1 = tmp
-        }
-        //todo check
-        if (t1 ~< 0) None
-        if (t1 ~= 0f) PointIntersection(p)
-        if (t0 ~> 1) None
-        if (t0 ~= 1f) PointIntersection(p + r)
-        val l_ = p + r * Math.max(t0, 0)
-        val r_ = p + r * Math.min(t1, 1)
-        if (l_ ~= r_) return Some(PointIntersection(l_))
-        else return Some(SegmentIntersection(SegmentPlanar(l_, r_)))
-      } else {
-        //If r × s = 0 and (q − p) × r ≠ 0, then the two lines are parallel and non-intersecting.
-        return None
-      }
+    if (length == 0) {
+      if (ot.contains(v1)) Some(PointIntersection(v1)) else None
+    } else if (ot.length == 0) {
+      if (contains(ot.v1)) Some(PointIntersection(ot.v1)) else None
     } else {
+      //https://stackoverflow.com/a/565282
+      val q = start
+      val s = body
+      val p = ot.start
+      val r = ot.body
+
       //u = (q − p) × r / (r × s)
       //t = (q − p) × s / (r × s)
-      val u: Scalar = ((q - p) det r) / (r det s)
-      val t: Scalar = ((q - p) det s) / (r det s)
 
-      if ((0d ~<= u) && (u ~<= 1d) && (0d ~<= t) && (t ~<= 1d)) {
-        return Some(PointIntersection(p + t * r))
+      if ((r det s) ~= 0f) {
+        if (((q - p) det r) ~= 0f) {
+          /** If r × s = 0 and (q − p) × r = 0, then the two lines are collinear.
+           * r s  - collinear
+           * t0 = (q − p) · r / (r · r)
+           * t1 = (q + s − p) · r / (r · r) = t0 + s · r / (r · r)
+           */
+          var t0 = ((q - p) ** r) / (r ** r)
+          var t1 = ((q + s - p) ** r) / (r ** r)
+          if ((s ** r) ~< 0) {
+            val tmp = t0
+            t0 = t1
+            t1 = tmp
+          }
+          //todo check
+          if (t1 ~< 0) None
+          else if (t1 ~= 0f) Some(PointIntersection(p))
+          else if (t0 ~> 1) None
+          else if (t0 ~= 1f) Some(PointIntersection(p + r))
+          else {
+            val l_ = p + r * Math.max(t0, 0)
+            val r_ = p + r * Math.min(t1, 1)
+            if (l_ ~= r_)  Some(PointIntersection(l_))
+            else  Some(SegmentIntersection(SegmentPlanar(l_, r_)))
+          }
+        } else {
+          //If r × s = 0 and (q − p) × r ≠ 0, then the two lines are parallel and non-intersecting.
+          return None
+        }
       } else {
-        return None
+        //u = (q − p) × r / (r × s)
+        //t = (q − p) × s / (r × s)
+        val u: Scalar = ((q - p) det r) / (r det s)
+        val t: Scalar = ((q - p) det s) / (r det s)
+
+        if ((0d ~<= u) && (u ~<= 1d) && (0d ~<= t) && (t ~<= 1d)) {
+          return Some(PointIntersection(p + t * r))
+        } else {
+          return None
+        }
       }
     }
   }

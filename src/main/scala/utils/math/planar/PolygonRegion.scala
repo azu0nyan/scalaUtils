@@ -13,6 +13,14 @@ object PolygonRegion {
 
 
   trait PolygonRegionOps[MYTYPE <: PolygonRegionOps[MYTYPE]] extends PolygonalChainOps[MYTYPE] {
+
+
+
+
+    lazy  val center:V2 = vertices.reduce(_ + _) * ( 1d / vertices.size)
+
+
+
     final override def closed: Boolean = true
 
     def areaSign: Int = math.signum(areaSigned).toInt
@@ -24,7 +32,7 @@ object PolygonRegion {
      *
      * @return
      */
-    def isCw: Boolean = areaSigned < 0
+    def isCw: Boolean = areaSigned > 0
 
     def area: Scalar = Math.abs(areaSigned)
 
@@ -220,6 +228,7 @@ case class PolygonRegionWithCache(vertices: Seq[V2]) extends PolygonRegionOps[Po
 
 
 case class PolygonRegion(vertices: Seq[V2]) extends PolygonRegionOps[PolygonRegion] {
+
 
 
   override def replacePoints(vertices: Seq[V2]): PolygonRegion = PolygonRegion(vertices)

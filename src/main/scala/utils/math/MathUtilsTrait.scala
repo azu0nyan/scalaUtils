@@ -204,7 +204,7 @@ trait MathUtilsTrait {
     else x1Value * (x2 - point) / diff + x2Value * (point - x1) / diff
   }
 
-  def lerpUnit(f0: Scalar, f1: Scalar, x: Scalar): Scalar = f0 * x + f1 * (1 - x)
+  def lerpUnit(f0: Scalar, f1: Scalar, x: Scalar): Scalar = f0 * (1 - x) + f1 *  x
 
   def bilerpUnit(x1: Scalar, y1: Scalar,
                  x2: Scalar, y2: Scalar,

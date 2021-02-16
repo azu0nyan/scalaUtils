@@ -29,6 +29,18 @@ object AngleOps {
     }
   }
 
+  @inline def to0twoPi(a:Scalar) :Scalar = {
+    if(a < 0) a % (TWO_PI) + TWO_PI
+    else if(a >= TWO_PI) a % TWO_PI
+    else a
+  }
+
+
+  /** from v1 to v2 */
+  @inline def ccwAngleFromTo(v1: V2, v2: V2): Scalar = {
+    to0twoPi(v2.angleToOX - v1.angleToOX)
+  }
+
   /** from v1 to v2 */
   @inline def angleFromTo(v1: V2, v2: V2): Scalar = {
     v2.angleToOX - v1.angleToOX
