@@ -82,7 +82,6 @@ class DrawableDcel[VD <: V2, HED, FD](
     }
     if (drawPolyBorders) {
       dcel.innerFaces.foreach { f =>
-        val c = faceColor(f.data)
         val vs = f.vertices
 
         DrawingUtils.drawPolygon(PolygonRegion(vs.map(v => dcel.extractor(v.data)).toSeq), g, false, polyBorderColor, 2)
