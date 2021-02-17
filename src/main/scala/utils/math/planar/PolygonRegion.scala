@@ -60,22 +60,25 @@ object PolygonRegion {
         val v1 = side.v1
         val v2 = side.v2
         //side not horizontal and we can intersect it
-        if((v1.y ~> p.y) != (v2.y ~> p.y)){
-          //intersection x
-          //no divison by 0 since
-          val cx = v1.x + (p.y - v1.y) * (v2.x - v1.x) / (v2.y - v1.y)
-          if(cx ~= p.x) return BORDER
-          //we intersects
-          if(cx > p.x){
-             //simple intersection
-            if((v1.y !~= p.y) && (v2.y !~= p.y) ) {
-              res += 1
-              //side touches ray, other point higher
-            } else if((v1.y ~= p.y) && v2.y > p.y || (v2.y ~= p.y) && v1.y > p. y){
-              res += 1
+//        if((v1.y ~> p.y) != (v2.y ~> p.y)){
+        if(v1.y !~= v2.y ){
+          if((v1.y ~<= p.y) && (p.y ~<= v2.y) || (v2.y ~<= p.y) && (p.y ~<= v1.y)) {
+            //intersection x
+            //no division by 0 since
+            val cx = v1.x + (p.y - v1.y) * (v2.x - v1.x) / (v2.y - v1.y)
+            if (cx ~= p.x) return BORDER
+            //we intersects
+            if (cx > p.x) {
+              //simple intersection
+              if ((v1.y !~= p.y) && (v2.y !~= p.y)) {
+                res += 1
+                //side touches ray, other point higher
+              } else if ((v1.y ~= p.y) && v2.y > p.y || (v2.y ~= p.y) && v1.y > p.y) {
+                res += 1
+              }
+              //side touching ray other point lower
+              /*else if((v2.y ~= p.y) && v1.y > p.y)*/
             }
-            //side touching ray other point lower
-            /*else if((v2.y ~= p.y) && v1.y > p.y)*/
           }
         } else if((v1.y ~= p.y) && (min(v1.x, v2.x) ~<= p.x) && (p.x ~<= max(v1.x, v2.x)) )return  BORDER
         println(side, res)
