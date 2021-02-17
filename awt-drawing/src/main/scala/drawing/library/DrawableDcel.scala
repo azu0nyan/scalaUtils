@@ -34,7 +34,7 @@ class DrawableDcel[VD <: V2, HED, FD](
                                        var heFaceColor: Color = new Color(30, 230, 30),
                                        val heToPolyColor: Color = new Color(240, 230, 50),
                                        val polyToHeColor: Color = new Color(80, 200, 200),
-                                       val polyToHoleColor: Color = new Color(80, 200, 80),
+                                       val polyToHoleColor: Color = new Color(142, 50, 230),
                                        val vertexConnectionColors: Color = new Color(20, 30, 150)
 
 
@@ -54,16 +54,16 @@ class DrawableDcel[VD <: V2, HED, FD](
 
     dcel.innerFaces.foreach { f =>
       val c = faceColor(f.data)
-      val vs = f.vertices
+      val vs = f.outsideVertices
       DrawingUtils.drawPolygon(PolygonRegion(vs.map(v => dcel.extractor(v.data)).toSeq), g, true, c)
-      if (drawPolyBorders) {
-        DrawingUtils.drawPolygon(PolygonRegion(vs.map(v => dcel.extractor(v.data)).toSeq), g, false, polyBorderColor, 3)
-      }
+//      if (drawPolyBorders) {
+//        DrawingUtils.drawPolygon(PolygonRegion(vs.map(v => dcel.extractor(v.data)).toSeq), g, false, polyBorderColor, 3)
+//      }
       if (drawHeToPolyLinks && f.incidentEdge.nonEmpty) {
         val (origin, ending) = fromTo(f.incidentEdge.get)
         val onSeg = utils.math.v2Lerp(origin, ending, 0.3)
-        val c = dcel.poly(f).center
-        if (dcel.poly(f).contains(c)) {
+        val c = dcel.outerContour(f).center
+        if (dcel.outerContour(f).contains(c)) {
           DrawingUtils.drawArrow(c, onSeg, g, polyToHeColor, 3, 20)
         } else {
           val dir = (ending - origin).rotate90CW.normalize
@@ -71,18 +71,19 @@ class DrawableDcel[VD <: V2, HED, FD](
         }
       }
       if(drawHeToPolyLinks){
-        for(h <- f.holesEdges){
+        for(h <- f.holes){
           val (origin, ending) = fromTo(h)
           val onSeg = utils.math.v2Lerp(origin, ending, 0.4)
 
           val dir = (ending - origin).rotate90CW.normalize
           DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHoleColor, 3, 20)
+          DrawingUtils.drawText(if(h.leftFace == dcel.outerFace)"outer" else h.leftFace.data.toString, onSeg + dir * 50, g,20)
         }
       }
     }
     if (drawPolyBorders) {
       dcel.innerFaces.foreach { f =>
-        val vs = f.vertices
+        val vs = f.outsideVertices
 
         DrawingUtils.drawPolygon(PolygonRegion(vs.map(v => dcel.extractor(v.data)).toSeq), g, false, polyBorderColor, 2)
       }
@@ -107,6 +108,7 @@ class DrawableDcel[VD <: V2, HED, FD](
 
         val dir = (ending - origin).rotate90CW.normalize
         DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHoleColor, 3, 20)
+        DrawingUtils.drawText(if(h.leftFace == dcel.outerFace)"outer" else h.leftFace.data.toString, onSeg + dir * 50, g,20)
       }
     }
 
@@ -152,7 +154,7 @@ class DrawableDcel[VD <: V2, HED, FD](
         }
         if (drawHeToPolyLinks) {
           val middle = (origin + ending) * HALF
-          val poly = dcel.poly(he.leftFace)
+          val poly = dcel.outerContour(he.leftFace)
           if (he.leftFace != dcel.outerFace && poly.contains(poly.center)) {
             val polyCenter = poly.center
             val from = utils.math.v2Lerp(middle, polyCenter, 0.1)

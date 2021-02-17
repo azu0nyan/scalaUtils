@@ -138,11 +138,11 @@ object DcelDrawing extends App {
   val drawableDcel = Drawing.addDrawable(new DrawableDcel(dcel)).asInstanceOf[DrawableDcel[V2, Int, Int]]
   Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_1), V2(50, 30), V2(30, 30), "PAU", {pauseOnEvent.enable()}, {pauseOnEvent.disable()}))
   Drawing.addDrawable(new ToggleableDrawable(Some(false),Some(KeyEvent.VK_2), V2(100, 30), V2(30, 30), "IDS", {drawableDcel.drawHeData = true}, {drawableDcel.drawHeData = false}))
-  Drawing.addDrawable(new ToggleableDrawable(Some(false),Some(KeyEvent.VK_3), V2(150, 30), V2(30, 30), "HEC", {drawableDcel.drawHeConnections = true}, {drawableDcel.drawHeConnections = false}))
-  Drawing.addDrawable(new ToggleableDrawable(Some(false),Some(KeyEvent.VK_4), V2(200, 30), V2(30, 30), "POL", {drawableDcel.drawHeToPolyLinks = true}, {drawableDcel.drawHeToPolyLinks = false}))
-  Drawing.addDrawable(new ToggleableDrawable(Some(false),Some(KeyEvent.VK_5), V2(250, 30), V2(30, 30), "VTS", {drawableDcel.drawVertexConnections = true}, {drawableDcel.drawVertexConnections = false}))
+  Drawing.addDrawable(new ToggleableDrawable(Some(true),Some(KeyEvent.VK_3), V2(150, 30), V2(30, 30), "HEC", {drawableDcel.drawHeConnections = true}, {drawableDcel.drawHeConnections = false}))
+  Drawing.addDrawable(new ToggleableDrawable(Some(true),Some(KeyEvent.VK_4), V2(200, 30), V2(30, 30), "POL", {drawableDcel.drawHeToPolyLinks = true}, {drawableDcel.drawHeToPolyLinks = false}))
+  Drawing.addDrawable(new ToggleableDrawable(Some(true),Some(KeyEvent.VK_5), V2(250, 30), V2(30, 30), "VTS", {drawableDcel.drawVertexConnections = true}, {drawableDcel.drawVertexConnections = false}))
   Drawing.addDrawable(new ToggleableDrawable(Some(true),Some(KeyEvent.VK_6), V2(300, 30), V2(30, 30), "BOR", {drawableDcel.drawPolyBorders = true}, {drawableDcel.drawPolyBorders = false}))
-  Drawing.addDrawable(new ToggleableDrawable(Some(false),Some(KeyEvent.VK_7), V2(350, 30), V2(30, 30), "HE", {drawableDcel.drawHalfEdges = true}, {drawableDcel.drawHalfEdges = false}))
+  Drawing.addDrawable(new ToggleableDrawable(Some(true),Some(KeyEvent.VK_7), V2(350, 30), V2(30, 30), "HE", {drawableDcel.drawHalfEdges = true}, {drawableDcel.drawHalfEdges = false}))
 
 
 
@@ -262,9 +262,16 @@ object DcelDrawing extends App {
   Await.result(addPoly(List(V2(-500.0, -100.0), V2(-300.0, -100.0), V2(-300.0, 100.0), V2(-500.0, 100.0))), Duration.Inf)
 */
 
-  Await.result(addPoly(List(V2(-300.0, 0.0), V2(-100.0, 0.0), V2(-100.0, 200.0), V2(-300.0, 200.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(100.0, 0.0), V2(300.0, 0.0), V2(300.0, 200.0), V2(100.0, 200.0))), Duration.Inf)
-  pauseOnEvent.enable()
-  Await.result(addPoly(List(V2(-200.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0), V2(-200.0, 200.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(-300.0, 0.0), V2(-100.0, 0.0), V2(-100.0, 200.0), V2(-300.0, 200.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(100.0, 0.0), V2(300.0, 0.0), V2(300.0, 200.0), V2(100.0, 200.0))), Duration.Inf)
+//  pauseOnEvent.enable()
+//  Await.result(addPoly(List(V2(-200.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0), V2(-200.0, 200.0))), Duration.Inf)
 
+
+  /*
+  Await.result(addPoly(List(V2(-300.0, 300.0), V2(-300.0, -100.0), V2(300.0, -100.0), V2(300.0, 300.0))), Duration.Inf)
+  Await.result(addPoly(List(V2(-200.0, 200.0), V2(-200.0, 0.0), V2(200.0, 0.0), V2(200.0, 200.0))), Duration.Inf)
+  Await.result(addPoly(List(V2(-107.0, 115.0), V2(-66.0, 64.0), V2(118.0, 97.0), V2(108.0, 145.0))), Duration.Inf)
+  pauseOnEvent.enable()
+  Await.result(addPoly(List(V2(144.0, 58.0), V2(133.0, 25.0), V2(159.0, 33.0), V2(167.0, 57.0))), Duration.Inf)*/
 }
