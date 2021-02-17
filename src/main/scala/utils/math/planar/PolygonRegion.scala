@@ -19,10 +19,7 @@ object PolygonRegion {
   trait PolygonRegionOps[MYTYPE <: PolygonRegionOps[MYTYPE]] extends PolygonalChainOps[MYTYPE] {
 
 
-
-
-    lazy  val center:V2 = vertices.reduce(_ + _) * ( 1d / vertices.size)
-
+    lazy val center: V2 = vertices.reduce(_ + _) * (1d / vertices.size)
 
 
     final override def closed: Boolean = true
@@ -42,17 +39,25 @@ object PolygonRegion {
 
     def distanceTo(point: V2): Scalar = if (contains(point)) 0 else distanceToFromSides(point)
 
-//    def
+    //    def
 
 
-    def notContains(p:V2):Boolean = classify(p) == OUTSIDE
-    def onBorder(p:V2):Boolean = classify(p) == BORDER
-    def containsInside(p:V2): Boolean = classify(p) == INSIDE
-    def contains(p:V2) :Boolean = classify(p) >= 0
+    def notContains(p: V2): Boolean = classify(p) == OUTSIDE
+    def onBorder(p: V2): Boolean = classify(p) == BORDER
+    def containsInside(p: V2): Boolean = classify(p) == INSIDE
+    def contains(p: V2): Boolean = classify(p) >= 0
 
+    /**
+     *
+     * @param p
+     * BORDER = 0
+     * OUTSIDE = -1
+     * INSIDE = 1
+     * @return
+     */
     def classify(p: V2): Int = if (vertices.isEmpty) OUTSIDE
-    else if (vertices.length == 1) if(vertices.head ~= p) BORDER else OUTSIDE
-    else if (vertices.length == 2)  if(SegmentPlanar(vertices.head, vertices.last).contains(p)) BORDER else OUTSIDE
+    else if (vertices.length == 1) if (vertices.head ~= p) BORDER else OUTSIDE
+    else if (vertices.length == 2) if (SegmentPlanar(vertices.head, vertices.last).contains(p)) BORDER else OUTSIDE
     else {
       var res = 0
       for (side <- sides) {
@@ -60,9 +65,9 @@ object PolygonRegion {
         val v1 = side.v1
         val v2 = side.v2
         //side not horizontal and we can intersect it
-//        if((v1.y ~> p.y) != (v2.y ~> p.y)){
-        if(v1.y !~= v2.y ){
-          if((v1.y ~<= p.y) && (p.y ~<= v2.y) || (v2.y ~<= p.y) && (p.y ~<= v1.y)) {
+        //        if((v1.y ~> p.y) != (v2.y ~> p.y)){
+        if (v1.y !~= v2.y) {
+          if ((v1.y ~<= p.y) && (p.y ~<= v2.y) || (v2.y ~<= p.y) && (p.y ~<= v1.y)) {
             //intersection x
             //no division by 0 since
             val cx = v1.x + (p.y - v1.y) * (v2.x - v1.x) / (v2.y - v1.y)
@@ -80,9 +85,9 @@ object PolygonRegion {
               /*else if((v2.y ~= p.y) && v1.y > p.y)*/
             }
           }
-        } else if((v1.y ~= p.y) && (min(v1.x, v2.x) ~<= p.x) && (p.x ~<= max(v1.x, v2.x)) )return  BORDER
+        } else if ((v1.y ~= p.y) && (min(v1.x, v2.x) ~<= p.x) && (p.x ~<= max(v1.x, v2.x))) return BORDER
       }
-      if(res % 2 == 1) INSIDE else OUTSIDE
+      if (res % 2 == 1) INSIDE else OUTSIDE
     }
     /* def contains(point: V2): Boolean = {
        if (vertices.length < 1) false
@@ -234,7 +239,6 @@ case class PolygonRegionWithCache(vertices: Seq[V2]) extends PolygonRegionOps[Po
 
 
 case class PolygonRegion(vertices: Seq[V2]) extends PolygonRegionOps[PolygonRegion] {
-
 
 
   override def replacePoints(vertices: Seq[V2]): PolygonRegion = PolygonRegion(vertices)

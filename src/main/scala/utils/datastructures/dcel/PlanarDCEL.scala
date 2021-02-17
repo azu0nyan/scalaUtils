@@ -17,7 +17,7 @@ class PlanarDCEL[VD, HED, FD](
 
   def seg(e: HalfEdge): SegmentPlanar = e.asSegment
 
-  def poly(f: Face): PolygonRegion = PolygonRegion(f.vertices.map(_.pos).toSeq)
+  def outerContour(f: Face): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.pos).toSeq)
 
   implicit class PlanarVertex(f: Vertex) {
     def pos: V2 = extractor(f.data)
@@ -26,19 +26,25 @@ class PlanarDCEL[VD, HED, FD](
   }
 
   implicit class PlanarFace(f: Face) {
-    def polygon: PolygonRegion = PolygonRegion(f.vertices.map(v => extractor(v.data)).toSeq)
+    def polygon: PolygonRegion = PolygonRegion(f.outsideVertices.map(v => extractor(v.data)).toSeq)
   }
 
   implicit class PlanarEdge(e: HalfEdge) {
     def asSegment: SegmentPlanar = SegmentPlanar(extractor(e.origin.data), extractor(e.dest.data))
   }
 
-  def faceAt(pos: V2): Face = innerFaces.filter(_._holes.isEmpty).find(_.polygon.contains(pos)).getOrElse {
-    val cont = innerFaces.filter(_._holes.nonEmpty).filter(_.polygon.contains(pos))
-    if (cont.isEmpty) outerFace
-    else if (cont.size == 1) cont.head
-    else cont.minBy(_.polygon.area)
+  def faceAt(pos: V2): Face = {
+    innerFaces.find(f => f.polygon.contains(pos) &&
+      !f.holesContours.exists(c => PolygonRegion(c.map(_.origin.pos).toSeq).contains(pos))).getOrElse(outerFace)
   }
+
+  /*innerFaces.filter(_._holes.isEmpty).find(_.polygon.contains(pos)).getOrElse {
+  val cont = innerFaces.filter(_._holes.nonEmpty).filter(_.polygon.contains(pos))
+  if (cont.isEmpty) outerFace
+  else if (cont.size == 1) cont.head
+  else cont.minBy(_.polygon.area)
+}*/
+
 
   /**
    *
@@ -70,6 +76,43 @@ class PlanarDCEL[VD, HED, FD](
       res
     }
 
+    //finds
+    /*  def orderAsHoleIfNeeded(f: Face): Option[Face] = {
+        val poly = PolygonRegion(f.outsideVertices.map(_.pos).toSeq)
+
+        def descentPlaceHole(outer: Face) = {
+          val childs = outer.holes.filter(h => h.traverseEdges.map(_.origin.pos).forall(hv => poly.containsInside(hv)))
+          //if we have childs inside outer then we cant be child of its childs
+          if (childs.nonEmpty) {
+            childs.foreach { c =>
+              c._leftFace._holes -= c
+              f._holes += c
+            }
+            outer.h
+          } else {
+            //we can be child of some outer's childs
+            val containingHole = outer.holes.find {
+              h =>
+                val p = PolygonRegion(h.traverseEdges.map(_.origin.pos).toSeq)
+                f.vertices.forall(v => p.containsInside(v.pos))
+            }
+            if(containingHole.nonEmpty){
+              containingHole.get.allReachableFaces().find { f =>
+                val p = f.polygon
+                f.vertices.forall(v => p.classify(v.pos) == PolygonRegion.INSIDE)
+              } match {
+                case Some(containing) =>
+
+                case None =>
+              }
+            }
+          }
+
+        }
+
+        descentPlaceHole(outerFace)
+      }
+  */
     if (poly.size <= 1) return Seq()
 
     var toTraverse = poly.tail :+ poly.head
@@ -219,7 +262,19 @@ class PlanarDCEL[VD, HED, FD](
             )
             //if left and right different polys
             if (!newEdge.traverseEdges.contains(newEdge.twin)) {
-              makeFace(newFdProvider(newEdge), newEdge, newEdge.twin)
+              val f = makeFace(newFdProvider(newEdge), newEdge, newEdge.twin)
+              val fPoly = f.polygon
+              f.incidentEdge.flatMap(_.traverseAllReachableEdges().filter(_.isHoleHalfSide).nextOption()) match {
+                case Some(holeSide) =>
+                  holeSide.leftFace.holes.filter(h => h.traverseEdges.map(_.origin.pos).forall(v => fPoly.classify(v) == PolygonRegion.INSIDE)).foreach {
+                    hole =>
+                      holeSide.leftFace._holes -= hole
+                      f._holes += hole
+
+                  }
+                case None =>
+              }
+
             } else {
               //we probably connected two holes
               if (newEdge.leftFace == newEdge.twin.leftFace) {
