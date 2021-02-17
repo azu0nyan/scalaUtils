@@ -81,7 +81,6 @@ object PolygonRegion {
             }
           }
         } else if((v1.y ~= p.y) && (min(v1.x, v2.x) ~<= p.x) && (p.x ~<= max(v1.x, v2.x)) )return  BORDER
-        println(side, res)
       }
       if(res % 2 == 1) INSIDE else OUTSIDE
     }
