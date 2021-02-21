@@ -18,5 +18,5 @@ scalacOptions ++= Seq(
 
 
 
-lazy val utilsLib = RootProject(file("../utils"))
+lazy val utilsLib = RootProject(file("../scalaUtils"))
 val main = Project(id = "application", base = file(".")).dependsOn(utilsLib)

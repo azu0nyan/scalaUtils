@@ -155,7 +155,7 @@ class DrawableDcel[VD <: V2, HED, FD](
         if (drawHeToPolyLinks) {
           val middle = (origin + ending) * HALF
           val poly = dcel.outerContour(he.leftFace)
-          if (he.leftFace != dcel.outerFace && poly.contains(poly.center)) {
+          if (he.leftFace != dcel.outerFace && poly.contains(poly.center) && !he.isHoleHalfSide) {
             val polyCenter = poly.center
             val from = utils.math.v2Lerp(middle, polyCenter, 0.1)
             val to = utils.math.v2Lerp(middle, polyCenter, 0.9)
