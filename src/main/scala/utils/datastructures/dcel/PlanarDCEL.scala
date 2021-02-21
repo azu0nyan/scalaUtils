@@ -47,13 +47,13 @@ class PlanarDCEL[VD, HED, FD](
 
 
   /**
-   *
-   * @param poly
-   * @param newVdProvider     maps new vertex position to VertexData
-   * @param newEdProvider     newHalfEdges to its halfEdgeData's
-   * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with HED copied from args. Provide new EdgeData if needed.
-   * @param splitFaceListener calls on face split, takes egde that splits face as parameter, its leftFace is newly created face with twin.leftFace FD copied. Provide new FaceData if needed.
-   */
+    *
+    * @param poly
+    * @param newVdProvider     maps new vertex position to VertexData
+    * @param newEdProvider     newHalfEdges to its halfEdgeData's
+    * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with HED copied from args. Provide new EdgeData if needed.
+    * @param splitFaceListener calls on face split, takes egde that splits face as parameter, its leftFace is newly created face with twin.leftFace FD copied. Provide new FaceData if needed.
+    */
   def cutPoly(poly: Seq[V2],
               newVdProvider: V2 => VD,
               newEdProvider: (Vertex, Vertex) => (HED, HED),
@@ -262,28 +262,39 @@ class PlanarDCEL[VD, HED, FD](
             )
             //if left and right different polys
             if (!newEdge.traverseEdges.contains(newEdge.twin)) {
+              println("Making new face")
               val f = makeFace(newFdProvider(newEdge), newEdge, newEdge.twin)
               val fPoly = f.polygon
               f.incidentEdge.flatMap(_.traverseAllReachableEdges().filter(_.isHoleHalfSide).nextOption()) match {
                 case Some(holeSide) =>
-                  holeSide.leftFace.holes.filter(h => h.traverseEdges.map(_.origin.pos).forall(v => fPoly.classify(v) == PolygonRegion.INSIDE)).foreach {
+                  println(s"Face can contain holes ${holeSide.data} ${holeSide.leftFace.holes.map(_.data)}")
+                  holeSide.leftFace.holes.filter(h =>
+                    h.traverseEdges.map(_.origin.pos).forall(v => fPoly.classify(v) == PolygonRegion.INSIDE)
+                  ).foreach {
                     hole =>
+                      println(s"Found hole ${hole.data}")
                       holeSide.leftFace._holes -= hole
                       f._holes += hole
+                      println(holeSide.leftFace._holes.map(_.data))
+                      println(f._holes.map(_.data))
+                      println("Overriding old parent")
+                      hole.traverseEdges.foreach(he => he._leftFace = f)
 
                   }
                 case None =>
+                  throw new Exception("Malformed DCEL, cant find hole side")
               }
 
             } else {
-              //we probably connected two holes
+              //connected something inside leftFace, probably  two holes
               if (newEdge.leftFace == newEdge.twin.leftFace) {
-                val face = newEdge.leftFace
-                val holes = face._holes.toSeq
+                println("Connecting holes")
+                val leftFace = newEdge.leftFace
+                val holes = leftFace._holes.toSeq
                 if (holes.nonEmpty) {
-                  face.borderEdges.find(he => holes.contains(he)) match {
+                  leftFace.borderEdges.find(he => holes.contains(he)) match {
                     //if hole become part of border
-                    case Some(edge) => face._holes = face._holes.filter(_ != edge)
+                    case Some(edge) => leftFace._holes = leftFace._holes.filter(_ != edge)
                     case None =>
                       var badHoles: Set[HalfEdge] = Set()
 
@@ -293,7 +304,7 @@ class PlanarDCEL[VD, HED, FD](
                         }
                       }
 
-                      face._holes = face._holes &~ badHoles
+                      leftFace._holes = leftFace._holes &~ badHoles
                   }
                 }
               }
