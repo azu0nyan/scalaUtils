@@ -262,8 +262,11 @@ class PlanarDCEL[VD, HED, FD](
             )
             //if left and right different polys
             if (!newEdge.traverseEdges.contains(newEdge.twin)) {
-              println("Making new face")
-              val f = makeFace(newFdProvider(newEdge), newEdge, newEdge.twin)
+              //if we cut part of outer we should start from inner edge
+              val startFaceFrom = if(PolygonRegion(newEdge.traverseEdges.map(_.origin.pos).toSeq).isCcw) newEdge else newEdge.twin
+
+              println(s"Making new face starting from ${startFaceFrom.data}")
+              val f = makeFace(newFdProvider(startFaceFrom), startFaceFrom, startFaceFrom.twin)
               val fPoly = f.polygon
               f.incidentEdge.flatMap(_.traverseAllReachableEdges().filter(_.isHoleHalfSide).nextOption()) match {
                 case Some(holeSide) =>
