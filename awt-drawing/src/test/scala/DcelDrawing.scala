@@ -123,22 +123,6 @@ object DcelDrawing extends App {
   }
 
 
-  //  Drawing.addDrawer(g => {
-  //
-  //    g.setColor(Color.BLACK)
-  //    g.drawLine(200, 2000, 300, 100)
-  //  })
-
-  //  val f = dcel.makeFace(1)
-  //  val v1 = dcel.makeVertex(V2(100, 100))
-  //  val v2 = dcel.makeVertex(V2(200, 500))
-  //  val v3 = dcel.makeVertex(V2(500, 500))
-  //  dcel.makeEdge(v1, v2, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
-  //  dcel.makeEdge(v2, v3, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
-  //  dcel.makeEdge(v3, v1, f, dcel.outerFace, ids.getAndIncrement(), ids.getAndIncrement())
-  //
-
-  //  addPoly(Seq(V2(0, 0), V2(0, 100), V2(100, 100)).map(x => x * 1d - 2 * V2(100, 100)))
 
   val drawableDcel = Drawing.addDrawable(new DrawableDcel(dcel)).asInstanceOf[DrawableDcel[V2, Int, Int]]
   Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_1), V2(50, 30), V2(30, 30), "PAU", {
@@ -161,7 +145,7 @@ object DcelDrawing extends App {
   }, {
     drawableDcel.drawHeToPolyLinks = false
   }))
-  Drawing.addDrawable(new ToggleableDrawable(Some(true), Some(KeyEvent.VK_5), V2(250, 30), V2(30, 30), "VTS", {
+  Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_5), V2(250, 30), V2(30, 30), "VTS", {
     drawableDcel.drawVertexConnections = true
   }, {
     drawableDcel.drawVertexConnections = false
@@ -171,7 +155,7 @@ object DcelDrawing extends App {
   }, {
     drawableDcel.drawPolyBorders = false
   }))
-  Drawing.addDrawable(new ToggleableDrawable(Some(true), Some(KeyEvent.VK_7), V2(350, 30), V2(30, 30), "HE", {
+  Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_7), V2(350, 30), V2(30, 30), "HE", {
     drawableDcel.drawHalfEdges = true
   }, {
     drawableDcel.drawHalfEdges = false
@@ -244,18 +228,15 @@ object DcelDrawing extends App {
     DrawingUtils.drawArrow(V2(0, 0), V2(0, 500), g = g, color = new Color(0, 255, 0, 127), arrowHeadSize = 10d, lineWidth = 3)
   }, -100)
 
-  //  Await.result(addPoly(List(V2(-300.0, -200.0), V2(300.0, -200.0), V2(300.0, 400.0), V2(-300.0, 400.0))), Duration.Inf)
-  //  pauseOnEvent.enable()
-  //  Await.result(addPoly(List(V2(100.0, 100.0), V2(300.0, 100.0), V2(300.0, 400.0), V2(100.0, 400.0))), Duration.Inf)
 
-  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, 300.0), V2(-100.0, 300.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(0.0, 100.0), V2(-100.0, 300.0), V2(-200.0, 300.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(0.0, 100.0), V2(-200.0, 100.0), V2(-200.0, 0.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(0.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, -100.0), V2(100.0, -100.0))), Duration.Inf)
-  pauseOnEvent.enable()
-  Await.result(addPoly(List(V2(100.0, 300.0), V2(100.0, 0.0), V2(-100.0, -100.0), V2(-100.0, -200.0), V2(300.0, -200.0), V2(300.0, 300.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(-300.0, 200.0), V2(0.0, 200.0), V2(100.0, 200.0), V2(100.0, 300.0), V2(100.0, 400.0), V2(-200.0, 400.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, 300.0), V2(-100.0, 300.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(0.0, 100.0), V2(-100.0, 300.0), V2(-200.0, 300.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(0.0, 100.0), V2(-200.0, 100.0), V2(-200.0, 0.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(0.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, -100.0), V2(100.0, -100.0))), Duration.Inf)
+//  pauseOnEvent.enable()
+//  Await.result(addPoly(List(V2(100.0, 300.0), V2(100.0, 0.0), V2(-100.0, -100.0), V2(-100.0, -200.0), V2(300.0, -200.0), V2(300.0, 300.0))), Duration.Inf)
+//  Await.result(addPoly(List(V2(-300.0, 200.0), V2(0.0, 200.0), V2(100.0, 200.0), V2(100.0, 300.0), V2(100.0, 400.0), V2(-200.0, 400.0))), Duration.Inf)
 
 
 
