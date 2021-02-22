@@ -18,15 +18,15 @@ class ArrayBufferGraph[NodeData, EdgeData](
   /**nodeid -> id of nodes having edges directed to given*/
   protected val nodesWithEdgesToMe:ArrayBuffer[ArrayBuffer[NodeId]] = ArrayBuffer()
 
-  override protected def nodeIds: Iterator[NodeId] = nodeDatas.indices.iterator
+  override  def nodeIds: Iterator[NodeId] = nodeDatas.indices.iterator
 
-  @inline override protected def nodeById(id: Int): Node = nodeDatas(id)
+  @inline override  def nodeById(id: Int): Node = nodeDatas(id)
 
   protected val nodeDataToID: mutable.Map[NodeData, NodeId] = mutable.Map()
 
 
 
-  override protected def nodeId(node: NodeData): NodeId = nodeDataToID.getOrElse(node, -1)
+  override  def nodeId(node: NodeData): NodeId = nodeDataToID.getOrElse(node, -1)
 
   //inits
   /** ignores 'bidirectional' flag */

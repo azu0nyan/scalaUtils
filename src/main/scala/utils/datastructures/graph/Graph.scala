@@ -39,13 +39,13 @@ object Graph {
     @inline protected def nodeByData(node: NodeData): Node = nodeById(nodeId(node))
 
     /** return -1 if not found override for more efficient implementation */
-    protected def nodeId(node: NodeData): NodeId = nodes.indexOf(node)
+    def nodeId(node: NodeData): NodeId = nodes.indexOf(node)
+    /***/
+    def nodeIds: Iterator[NodeId]
 
-    protected def nodeIds: Iterator[NodeId]
+    def innerNodes:Iterator[Node] = nodeIds.map(nodeById)
 
-    protected def innerNodes:Iterator[Node] = nodeIds.map(nodeById)
-
-    @inline protected def nodeById(id: Int): Node
+    @inline def nodeById(id: Int): Node
 
 
     //PUBLIC interface

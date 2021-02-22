@@ -38,6 +38,8 @@ object DCEL {
 
     def holes: Set[HalfEdge] = _holes
 
+    def neighbourFaces:Iterator[Face] = edges.map(_.twin.leftFace).distinct
+
     def outsideVertices: Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
     def borderEdges: Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
 
@@ -173,6 +175,7 @@ object DCEL {
 class DCEL[VertexData, HalfEdgeData, FaceData](
                                                 outerFaceData: FaceData
                                               ) {
+  type Dcel = DCEL[VertexData, HalfEdgeData, FaceData]
   type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
   type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
   type Face = RawFace[VertexData, HalfEdgeData, FaceData]

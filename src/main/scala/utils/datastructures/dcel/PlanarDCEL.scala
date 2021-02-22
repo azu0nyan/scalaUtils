@@ -1,17 +1,34 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.RawVertex
-import utils.math.planar.{AngleCCWPlanar, AngleOps, PointIntersection, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
+import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
+import utils.datastructures.dcel.PlanarDCEL._
+import utils.math.planar.{AngleCCWPlanar, AngleOps, PointIntersection, Polygon, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
 import utils.math._
 
-object PlanarDCEL {
 
+object PlanarDCEL {
+  implicit class PlanarVertex[VD, HED, FD](f: RawVertex[VD, HED, FD])(implicit extractor:VD =>V2 ) {
+    def pos: V2 = extractor(f.data)
+    /** If vertex has no connected edges return face containing vertex */
+    def insideFace(implicit dcel: PlanarDCEL[VD, HED, FD]): Option[RawFace[VD, HED, FD]] = Option.when(f.incidentEdge.isEmpty)(dcel.faceAt(pos))
+  }
+
+  implicit class PlanarFace[VD, HED, FD](f: RawFace[VD, HED, FD]) (implicit extractor:VD =>V2 ){
+    def polygon: PolygonRegion = PolygonRegion(f.outsideVertices.map(v => extractor(v.data)).toSeq)
+  }
+
+  implicit class PlanarEdge[VD, HED, FD](e: RawHalfEdge[VD, HED, FD])(implicit extractor:VD =>V2 ) {
+    def asSegment: SegmentPlanar = SegmentPlanar(extractor(e.origin.data), extractor(e.dest.data))
+
+  }
 }
 
 class PlanarDCEL[VD, HED, FD](
                                outerFaceData: FD,
-                               val extractor: VD => V2
+                               implicit val extractor: VD => V2
                              ) extends DCEL[VD, HED, FD](outerFaceData) {
+
+
 
   def pos(v: RawVertex[VD, HED, FD]): V2 = extractor(v.data)
 
@@ -19,19 +36,9 @@ class PlanarDCEL[VD, HED, FD](
 
   def outerContour(f: Face): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.pos).toSeq)
 
-  implicit class PlanarVertex(f: Vertex) {
-    def pos: V2 = extractor(f.data)
-    /** If vertex has no connected edges return face containing vertex */
-    def insideFace: Option[Face] = Option.when(f.incidentEdge.isEmpty)(faceAt(pos))
-  }
+  def polygon(f: Face): Polygon = Polygon(outerContour(f) +: f.holes.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.pos).toSeq)))
 
-  implicit class PlanarFace(f: Face) {
-    def polygon: PolygonRegion = PolygonRegion(f.outsideVertices.map(v => extractor(v.data)).toSeq)
-  }
 
-  implicit class PlanarEdge(e: HalfEdge) {
-    def asSegment: SegmentPlanar = SegmentPlanar(extractor(e.origin.data), extractor(e.dest.data))
-  }
 
   def faceAt(pos: V2): Face = {
     innerFaces.find(f => f.polygon.contains(pos) &&
