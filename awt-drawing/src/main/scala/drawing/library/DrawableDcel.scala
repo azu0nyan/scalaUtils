@@ -6,6 +6,7 @@ import drawing.library.ColorOps
 import utils.datastructures.dcel.DCEL.RawHalfEdge
 import utils.datastructures.dcel.PlanarDCEL
 import utils.datastructures.dcel.PlanarDCEL
+import utils.datastructures.dcel.PlanarDCEL._
 import utils.math.{HALF, Scalar}
 import utils.math.planar.{AngleOps, PolygonRegion, V2}
 
