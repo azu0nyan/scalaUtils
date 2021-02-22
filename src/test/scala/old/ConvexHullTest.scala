@@ -1,6 +1,6 @@
 package old
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite
 import org.scalatest.funsuite.AnyFunSuite
 import utils.math.planar.V2
 import utils.math.planar.algo.ConvexHull

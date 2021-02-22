@@ -1,7 +1,7 @@
 package old
 
 import org.scalatest.AppendedClues._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite
 import org.scalatest.funsuite.AnyFunSuite
 import utils.datastructures.containers.ThreadedAVLTree.ThreadedAVLTree
 import utils.math._

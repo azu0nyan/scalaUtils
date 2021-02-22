@@ -2,7 +2,7 @@ package old
 
 import org.scalatest.AppendedClues._
 import org.scalatest.AppendedClues._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite
 import org.scalatest.funsuite.AnyFunSuite
 import utils.math._
 import utils.math.space.intersections.Intersects

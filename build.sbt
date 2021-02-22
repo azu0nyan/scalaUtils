@@ -15,4 +15,5 @@ scalacOptions ++= Seq(
   "-language:postfixOps"
 )
 
-libraryDependencies += "org.scalatest" % "scalatest_2.13" % "3.1.2" % "test"
+//libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.2"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.2" % "test"

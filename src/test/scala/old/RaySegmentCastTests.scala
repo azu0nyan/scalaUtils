@@ -1,6 +1,6 @@
 package old
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite
 import org.scalatest.AppendedClues._
 import org.scalatest.funsuite.AnyFunSuite
 import utils.datastructures.spatial.GridRasterization

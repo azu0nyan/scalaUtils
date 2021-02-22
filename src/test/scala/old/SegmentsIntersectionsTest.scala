@@ -2,7 +2,7 @@ package old
 
 import java.io.{File, PrintWriter}
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite
 import org.scalatest.AppendedClues._
 import org.scalatest.funsuite.AnyFunSuite
 import utils.datastructures.IntV2

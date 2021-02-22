@@ -1,8 +1,8 @@
 package old
 
-//import org.scalatest.FunSuite
+//import org.scalatest.funsuite
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite
 import org.scalatest.funsuite.AnyFunSuite
 import utils.math.space.{Quat, Rotations, Segment, Transform, V3}
 import utils.math._
