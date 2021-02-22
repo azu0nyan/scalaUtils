@@ -96,14 +96,14 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
 
   def bindToWindow(window: DrawingWindow): Unit = {
     correspondingWindow = Some(window)
-    window.addKeyBinding(zoomIN, () => if (controlsEnabled) cameraZoom = Math.min(cameraZoom + 1, zooms.size - 1))
-    window.addKeyBinding(zoomOUT, () => if (controlsEnabled) cameraZoom = Math.max(cameraZoom - 1, 0))
-    window.addKeyBinding(moveUP, () => if (controlsEnabled)
+    window.addKeyBinding(zoomIN,  if (controlsEnabled) cameraZoom = Math.min(cameraZoom + 1, zooms.size - 1))
+    window.addKeyBinding(zoomOUT,  if (controlsEnabled) cameraZoom = Math.max(cameraZoom - 1, 0))
+    window.addKeyBinding(moveUP, if (controlsEnabled)
       lookAt(cameraCenterInWorld + V2(0, if (invertY) 1 else -1) * screenToWorld(screenResolution.length * screenPartPerScroll)))
-    window.addKeyBinding(moveDOWN, () => if (controlsEnabled)
+    window.addKeyBinding(moveDOWN,  if (controlsEnabled)
       lookAt(cameraCenterInWorld + V2(0, if (invertY) -1 else 1) * screenToWorld(screenResolution.length * screenPartPerScroll)))
-    window.addKeyBinding(moveLEFT, () => if (controlsEnabled) lookAt(cameraCenterInWorld + V2(-1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
-    window.addKeyBinding(moveRIGHT, () => if (controlsEnabled) lookAt(cameraCenterInWorld + V2(1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
+    window.addKeyBinding(moveLEFT, if (controlsEnabled) lookAt(cameraCenterInWorld + V2(-1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
+    window.addKeyBinding(moveRIGHT, if (controlsEnabled) lookAt(cameraCenterInWorld + V2(1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
 
     window.addMouseMotionListener(new MouseMotionListener {
       override def mouseDragged(e: MouseEvent): Unit = {

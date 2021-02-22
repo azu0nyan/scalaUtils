@@ -33,9 +33,9 @@ object DcelDrawing extends App {
 
   }).start()
 
-  Drawing.addKeyBinding(KeyEvent.VK_F2, () => {Drawing.setSize(Drawing.getWidth, Drawing.getHeight + 1)})
+  Drawing.addKeyBinding(KeyEvent.VK_F2, {Drawing.setSize(Drawing.getWidth, Drawing.getHeight + 1)})
 
-  Drawing.addKeyBinding(KeyEvent.VK_F1, () => {
+  Drawing.addKeyBinding(KeyEvent.VK_F1, {
     println(Drawing.getLocation.x)
     Drawing.setLocation(if (Drawing.getLocation.x == 0) 1920 else 0, 0)
   })

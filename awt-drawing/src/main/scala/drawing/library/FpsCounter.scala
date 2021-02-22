@@ -20,7 +20,7 @@ class FpsCounter(d:DrawingWindow) extends SimpleDrawable() with EnabledDisabled{
 
   override val initialEnabled = false
 
-  addKeyBinding(KeyEvent.VK_F5, () => toggle() )
+  addKeyBinding(KeyEvent.VK_F5, toggle() )
   log.info("FpsCounter init ...")
   onEnabled.subscribe { _ =>
     log.info("FpsCounter enabled")

@@ -26,7 +26,7 @@ class ToggleableDrawable( val initial:Option[Boolean],
 
   initial.foreach(b => if(b) enable() else disable())
   hotkey.foreach { hk =>
-    w.addKeyBinding(hk, () => toggle())
+    w.addKeyBinding(hk, toggle())
   }
 
 

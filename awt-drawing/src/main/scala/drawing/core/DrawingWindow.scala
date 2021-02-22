@@ -143,19 +143,19 @@ class DrawingWindow() extends JFrame {
     * @param pressed true событие реагирует на нажате клавиши, false на отпускание
     * @param action
     */
-  def addKeyBinding(keyCode: Int, action: () => Unit, pressed: Boolean = true): KeyListener = {
+  def addKeyBinding(keyCode: Int, action: => Unit, pressed: Boolean = true): KeyListener = {
     val listener = new KeyListener {
       override def keyTyped(e: KeyEvent): Unit = {}
 
       override def keyPressed(e: KeyEvent): Unit = {
         if (pressed && e.getKeyCode == keyCode) {
-          action.apply()
+          action
         }
       }
 
       override def keyReleased(e: KeyEvent): Unit = {
         if (!pressed && e.getKeyCode == keyCode) {
-          action.apply()
+          action
         }
       }
     }
@@ -201,7 +201,7 @@ class DrawingWindow() extends JFrame {
   }
 
   def setCloseButton(keycode:Int = KeyEvent.VK_ESCAPE):KeyListener  = {
-    addKeyBinding(keycode, () => System.exit(0))
+    addKeyBinding(keycode, System.exit(0))
   }
 
   val mousePosDrawer:DrawableObject = addDrawer(g =>{

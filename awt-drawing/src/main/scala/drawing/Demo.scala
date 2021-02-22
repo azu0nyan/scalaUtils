@@ -9,7 +9,7 @@ object Demo extends App {
     g.setColor(Color.RED)
     g.drawLine(100, 100, 400, 400)
   })
-  Drawing.addKeyBinding(KeyEvent.VK_SPACE, () => d.toggle())
+  Drawing.addKeyBinding(KeyEvent.VK_SPACE, d.toggle())
 
 
 }
