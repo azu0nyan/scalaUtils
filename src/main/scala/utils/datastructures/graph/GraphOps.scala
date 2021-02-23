@@ -79,7 +79,7 @@ object GraphOps {
     }
 
     val toId = -1
-    val toIds: Map[Int, Cost] = to.map { f =>
+    val toIdToCost: Map[Int, Cost] = to.map { f =>
       (graph.nodeId(f._1), f._2)
     }.toMap
     //   val fromNode = graph.nodeById(fromId)
@@ -110,7 +110,7 @@ object GraphOps {
     def reconstructPath(): Path[NodeData, EdgeData] = {
       var path: Seq[PathNode[NodeData, EdgeData]] = Seq()
       var currentNode = toId
-      while (currentNode >= 0 && !fromIds.contains(currentNode)) {
+      while (!fromIds.contains(currentNode)) {
         //skip mock node
         if (currentNode != toId) {
           path = PathNode[NodeData, EdgeData](
@@ -128,12 +128,12 @@ object GraphOps {
       val currentId = openQueue.poll()
       if (currentId == toId) {
         return Some(reconstructPath())
-      } else if (toIds.contains(currentId)) {
+      } else if (toIdToCost.contains(currentId)) {
         val curNode = graph.nodeById(currentId)
         val curNodeScore = knownBest(currentId)
-        val costWithCurrentEdge = curNodeScore + toIds(currentId)
+        val costWithCurrentEdge = curNodeScore + toIdToCost(currentId)
         val toNode = toId
-        quenedBestGuesses(toNode) = costWithCurrentEdge + nodeHeuristic(graph.nodeById(toNode).data)
+        quenedBestGuesses(toNode) = costWithCurrentEdge //+ nodeHeuristic(graph.nodeById(toNode).data) == 0 since its end
         cameFrom(toNode) = currentId
         //        cameBy(toNode) = edge.data
         if (openQueue.contains(toNode)) openQueue.onOrderingChangedFor(toNode)
