@@ -121,6 +121,10 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   @inline def collinear(other: V2): Boolean = (normalize ~= other.normalize) || (normalize ~= other.normalize.opposite)
 
+  //todo optimize and check
+//  @inline def sameDirection(other: V2): Boolean = y == 0 && other.y == 0 || (x / y ~= other.x / other.y)
+  @inline def sameDirection(other: V2): Boolean = normalize ~= other.normalize
+
 
 }
 

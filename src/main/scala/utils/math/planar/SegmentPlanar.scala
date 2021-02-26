@@ -2,6 +2,7 @@ package utils.math.planar
 
 //import java.lang.StackWalker
 
+import sun.java2d.pipe.OutlineTextRenderer
 import utils.math._
 import utils.math.WithAlmostEquals
 
@@ -18,6 +19,8 @@ object SegmentPlanar {
 
 
 case class SegmentPlanar(v1: V2, v2: V2) {
+  def containsSegment(other : SegmentPlanar): Boolean = contains(other.v1) && contains(other.v2)
+
   def center: V2 = (v1 + v2) * HALF
   /** calculate x(y) using corresponding line equation x = k_y * y + b_y */
   def xFromY(y: Scalar): Option[Scalar] = kY.flatMap(k => bY.map(b => k * y + b))
