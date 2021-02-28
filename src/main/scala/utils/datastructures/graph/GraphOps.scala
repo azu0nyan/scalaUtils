@@ -66,7 +66,7 @@ object GraphOps {
   def shortestPath[NodeData, EdgeData](
                                         graph: Graph[NodeData, EdgeData],
                                         from: Seq[(NodeData, Cost)], to: Seq[(NodeData, Cost)],
-                                        pathCost: EdgeData => Cost = (ed:EdgeData) => 1d,
+                                        pathCost: EdgeData => Cost,
                                         nodeHeuristic: NodeData => Cost = (nd:NodeData) => 0d,
                                         maxCost: Option[Cost] = None
                                       ): Option[Path[NodeData, EdgeData]] = {
