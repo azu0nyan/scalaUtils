@@ -163,6 +163,27 @@ object GraphOps {
   }
 
 
+  def topologicalSort[ND, ED](graph:Graph[ND, ED]) :Seq[ND] = {
+    val used:mutable.Set[ND] = mutable.Set()
+    val ans:mutable.Buffer[ND] = mutable.Buffer()
+    def dfs(n:ND): Unit ={
+      used += n
+      graph.edgesAndNeighboursFor(n).foreach{
+        case (ed, nd) =>
+          if(!used.contains(nd)){
+            dfs(nd)
+          }
+      }
+      ans += n
+    }
+
+    for(m <- graph.nodes){
+      if(!used(m))dfs(m)
+    }
+
+    ans.toSeq.reverse
+  }
+
 
 
 

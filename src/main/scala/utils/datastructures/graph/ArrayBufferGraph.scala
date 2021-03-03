@@ -61,6 +61,16 @@ class ArrayBufferGraph[NodeData, EdgeData](
     }
   }
 
+  def removeEdge(from: NodeData, to: NodeData, edge: EdgeData): Unit = {
+    val fromId = nodeId(from)
+    val toId = nodeId(to)
+    removeEdgeById(fromId, toId, edge)
+    if (bidirectional) {
+      removeEdgeById(toId, fromId, edge)
+    }
+  }
+
+
   def updateEdge(from: NodeData, to: NodeData, newData: EdgeData):Unit = {
     val fromId = nodeId(from)
     val toId = nodeId(to)
@@ -72,6 +82,13 @@ class ArrayBufferGraph[NodeData, EdgeData](
     val old = nodeDatas(fromId)
     nodeDatas(fromId) = old.copy(outEdges = old.outEdges :+ Edge(edge, fromId, toId))
     nodesWithEdgesToMe(toId) += fromId
+  }
+
+
+  protected def removeEdgeById(fromId: NodeId, toId: NodeId, edge: EdgeData): Unit = {
+    val old = nodeDatas(fromId)
+    nodeDatas(fromId) = old.copy(outEdges = old.outEdges.filter(e => e!= Edge(edge, fromId, toId)))
+    nodesWithEdgesToMe(toId) -= fromId
   }
 
 }
