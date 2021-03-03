@@ -61,7 +61,12 @@ class PlanarDCEL[VD, HED, FD](
     * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with HED copied from args. Provide new EdgeData if needed.
     * @param splitFaceListener calls on face split, takes egde that splits face as parameter, its leftFace is newly created face with twin.leftFace FD copied. Provide new FaceData if needed.
     */
-  def cutPoly(poly: Seq[V2],
+  def cutPoly(poly: Seq[V2], newVdProvider: V2 => VD,
+              newEdProvider: (Vertex, Vertex) => (HED, HED),
+              splitEdProvider: (HalfEdge, V2) => (HED, HED),
+              newFdProvider: HalfEdge => FD,
+             ): Seq[Vertex] = cut(poly :+ poly.head, newVdProvider, newEdProvider, splitEdProvider, newFdProvider )
+  def cut(poly: Seq[V2],
               newVdProvider: V2 => VD,
               newEdProvider: (Vertex, Vertex) => (HED, HED),
               splitEdProvider: (HalfEdge, V2) => (HED, HED),
@@ -122,7 +127,7 @@ class PlanarDCEL[VD, HED, FD](
   */
     if (poly.size <= 1) return Seq()
 
-    var toTraverse = poly.tail :+ poly.head
+    var toTraverse = poly.tail
     val startPosition = poly.head
 
 
