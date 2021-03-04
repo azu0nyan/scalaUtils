@@ -1,8 +1,18 @@
 package utils.math.planar
 
 import utils.math._
+import utils.math.linalg.LinearSystemSolver
 
 case class LinePlanar(origin: V2, direction: UnitV2) {
+  def intersection(s: LinePlanar): Option[V2] = {
+    LinearSystemSolver.solve(Seq(
+      Seq(direction.x, -s.direction.x, s.origin.x - origin.x),
+      Seq(direction.y, -s.direction.y, s.origin.y- origin.y),
+    )) map {
+      case Seq(a, b) => V2(a,b)
+    }
+  }
+
   def parallel(other:LinePlanar):Boolean = direction.collinear(other.direction)
 
   def inLineCoordinates(f:Scalar): V2 = origin + f * direction
