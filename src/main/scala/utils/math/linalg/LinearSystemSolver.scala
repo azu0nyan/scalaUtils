@@ -52,7 +52,7 @@ object LinearSystemSolver {
     }
     return ArraySeq.unsafeWrapArray(xs)
   }
-  //matrix nx(n+1) where last column is fre coeffs
+  //matrix nx(n+1) where last column is free coeffs
   def solve(system: Seq[Seq[Scalar]]): Option[Seq[Scalar]] = {
     val n = system.size
     val arr = Array.tabulate(n, n + 1)((x, y) => system(x)(y))

@@ -19,7 +19,7 @@ object SegmentPlanar {
 
 
 case class SegmentPlanar(v1: V2, v2: V2) {
-  def containsSegment(other : SegmentPlanar): Boolean = contains(other.v1) && contains(other.v2)
+  def containsSegment(other: SegmentPlanar): Boolean = contains(other.v1) && contains(other.v2)
 
   def center: V2 = (v1 + v2) * HALF
   /** calculate x(y) using corresponding line equation x = k_y * y + b_y */
@@ -76,6 +76,10 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
   def normal: UnitV2 = body.rotate(HALF_PI)
 
+  def toLeftNormal: V2 = body.normalize.rotate90CCW
+
+  def toRightNormal: V2 = body.normalize.rotate90CW
+
 
   def clothesPoint(point: V2): V2 = {
     val po = point - start
@@ -122,6 +126,9 @@ case class SegmentPlanar(v1: V2, v2: V2) {
   def intersection(ot: LinePlanar): Option[SegmentToSegmentPlanarIntersection] =
     intersection(SegmentPlanar(ot.origin - (ot.direction * BIG_NUMBER), ot.origin + (ot.direction * BIG_NUMBER)))
 
+  def intersection(ot: RayPlanar): Option[SegmentToSegmentPlanarIntersection] =
+    intersection(SegmentPlanar(ot.origin , ot.origin + (ot.direction * BIG_NUMBER)))
+
   //  def intersection(ot: SegmentPlanar):Option[SegmentToSegmentPlanarIntersection]
 
   def intersection(ot: SegmentPlanar): Option[SegmentToSegmentPlanarIntersection] = {
@@ -162,8 +169,8 @@ case class SegmentPlanar(v1: V2, v2: V2) {
           else {
             val l_ = p + r * Math.max(t0, 0)
             val r_ = p + r * Math.min(t1, 1)
-            if (l_ ~= r_)  Some(PointIntersection(l_))
-            else  Some(SegmentIntersection(SegmentPlanar(l_, r_)))
+            if (l_ ~= r_) Some(PointIntersection(l_))
+            else Some(SegmentIntersection(SegmentPlanar(l_, r_)))
           }
         } else {
           //If r × s = 0 and (q − p) × r ≠ 0, then the two lines are parallel and non-intersecting.
