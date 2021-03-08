@@ -4,13 +4,20 @@ import utils.math._
 import utils.math.linalg.LinearSystemSolver
 
 case class LinePlanar(origin: V2, direction: UnitV2) {
+  //todo optimize
   def intersection(s: LinePlanar): Option[V2] = {
-    LinearSystemSolver.solve(Seq(
+    SegmentPlanar(origin - direction * KINDA_BIG_NUMBER, origin + direction * KINDA_BIG_NUMBER).intersection(
+      SegmentPlanar(s.origin - s.direction * KINDA_BIG_NUMBER, s.origin + s.direction * KINDA_BIG_NUMBER)
+    ).flatMap{
+      case PointIntersection(p) => Some(p)
+      case _ => None
+    }
+    /*LinearSystemSolver.solve(Seq(
       Seq(direction.x, -s.direction.x, s.origin.x - origin.x),
       Seq(direction.y, -s.direction.y, s.origin.y- origin.y),
     )) map {
       case Seq(a, b) => V2(a,b)
-    }
+    }*/
   }
 
   def parallel(other:LinePlanar):Boolean = direction.collinear(other.direction)

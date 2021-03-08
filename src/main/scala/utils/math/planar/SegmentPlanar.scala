@@ -124,10 +124,10 @@ case class SegmentPlanar(v1: V2, v2: V2) {
   //  }
 
   def intersection(ot: LinePlanar): Option[SegmentToSegmentPlanarIntersection] =
-    intersection(SegmentPlanar(ot.origin - (ot.direction * BIG_NUMBER), ot.origin + (ot.direction * BIG_NUMBER)))
+    intersection(SegmentPlanar(ot.origin - (ot.direction * KINDA_BIG_NUMBER), ot.origin + (ot.direction * KINDA_BIG_NUMBER)))
 
   def intersection(ot: RayPlanar): Option[SegmentToSegmentPlanarIntersection] =
-    intersection(SegmentPlanar(ot.origin , ot.origin + (ot.direction * BIG_NUMBER)))
+    intersection(SegmentPlanar(ot.origin , ot.origin + (ot.direction * KINDA_BIG_NUMBER)))
 
   //  def intersection(ot: SegmentPlanar):Option[SegmentToSegmentPlanarIntersection]
 

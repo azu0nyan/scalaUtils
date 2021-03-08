@@ -87,9 +87,9 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   @inline def distance(v: V2): Scalar = (this - v).length
 
-  @inline def rotate90CW:V2 = V2(-y, x)
+  @inline def rotate90CCW:V2 = V2(-y, x)
 
-  @inline def rotate90CCW:V2 = V2(y, -x)
+  @inline def rotate90CW:V2 = V2(y, -x)
 
   @inline def rotate(a: Scalar):V2 = V2(x * cos(a) - y * sin(a), x * sin(a) + y * cos(a))
 

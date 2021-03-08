@@ -8,9 +8,9 @@ import utils.math._
 
 object PlanarDCEL {
   implicit class PlanarVertex[VD, HED, FD](f: RawVertex[VD, HED, FD])(implicit extractor: VD => V2) {
-    def pos: V2 = extractor(f.data)
+    def position: V2 = extractor(f.data)
     /** If vertex has no connected edges return face containing vertex */
-    def insideFace(implicit dcel: PlanarDCEL[VD, HED, FD]): Option[RawFace[VD, HED, FD]] = Option.when(f.incidentEdge.isEmpty)(dcel.faceAt(pos))
+    def insideFace(implicit dcel: PlanarDCEL[VD, HED, FD]): Option[RawFace[VD, HED, FD]] = Option.when(f.incidentEdge.isEmpty)(dcel.faceAt(position))
   }
 
   implicit class PlanarFace[VD, HED, FD](f: RawFace[VD, HED, FD])(implicit extractor: VD => V2) {
@@ -33,14 +33,14 @@ class PlanarDCEL[VD, HED, FD](
 
   def seg(e: HalfEdge): SegmentPlanar = e.asSegment
 
-  def outerContour(f: Face): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.pos).toSeq)
+  def outerContour(f: Face): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.position).toSeq)
 
-  def polygon(f: Face): Polygon = Polygon(outerContour(f) +: f.holes.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.pos).toSeq)))
+  def polygon(f: Face): Polygon = Polygon(outerContour(f) +: f.holes.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
 
 
   def faceAt(pos: V2): Face = {
     innerFaces.find(f => f.polygon.contains(pos) &&
-      !f.holesContours.exists(c => PolygonRegion(c.map(_.origin.pos).toSeq).contains(pos))).getOrElse(outerFace)
+      !f.holesContours.exists(c => PolygonRegion(c.map(_.origin.position).toSeq).contains(pos))).getOrElse(outerFace)
   }
 
   /*innerFaces.filter(_._holes.isEmpty).find(_.polygon.contains(pos)).getOrElse {
@@ -67,7 +67,7 @@ class PlanarDCEL[VD, HED, FD](
 
 
   def getOrAddVertex(pos: V2, newVdProvider: V2 => VD, splitEdProvider: (HalfEdge, V2) => (HED, HED)): Vertex = {
-    val res = vertices.find(_.pos ~= pos)
+    val res = vertices.find(_.position ~= pos)
       .orElse(
         halfEdges.find(_.asSegment.contains(pos)).map {
           e =>
@@ -108,7 +108,7 @@ class PlanarDCEL[VD, HED, FD](
     res = res :+ previous
 
     def popNext(): Vertex = {
-      val cur: V2 = previous.pos
+      val cur: V2 = previous.position
       val end: V2 = toTraverse.head
 
       val toTest: Seq[HalfEdge] = if (previous.incidentEdge.isEmpty) {
@@ -153,27 +153,27 @@ class PlanarDCEL[VD, HED, FD](
 
       res = res :+ current
 
-      val start = previous.pos
-      val end = current.pos
+      val start = previous.position
+      val end = current.position
       //      println(s"from $start to $end")
 
       if (previous.incidentEdge.isEmpty && current.incidentEdge.isEmpty) {
         //        println("1")
         //no edges or faces, we inside some face
-        val face = faceAt(previous.pos)
+        val face = faceAt(previous.position)
         val (ld, rd) = newEdProvider(previous, current)
         val he = makeEdge(previous, current, face, face, ld, rd)
         face._holes += he
       } else if (previous.incidentEdge.nonEmpty && current.incidentEdge.isEmpty) {
         //        println("2")
         //we are going inside face
-        val face = faceAt(current.pos)
+        val face = faceAt(current.position)
         //
         //
         val prevEdge = previous.edgesWithEndHere.minBy { e =>
           val v1 = end - start
-          val estart = e.origin.pos
-          val eend = e.ending.pos
+          val estart = e.origin.position
+          val eend = e.ending.position
           val v2 = estart - eend
           //min ccw
           val res = AngleOps.ccwAngleFromTo(v1, v2)
@@ -190,7 +190,7 @@ class PlanarDCEL[VD, HED, FD](
       } else if (previous.incidentEdge.isEmpty && current.incidentEdge.nonEmpty) {
         //        println("3")
         //we are going to edge from inside face
-        val face = faceAt(previous.pos)
+        val face = faceAt(previous.position)
         val (ld, rd) = newEdProvider(previous, current)
         makeEdge(previous, current, face, face, ld, rd)
       } else {
@@ -218,8 +218,8 @@ class PlanarDCEL[VD, HED, FD](
 
             val nextEdge = current.edgesWithOriginHere.minBy { e =>
               val v1 = start - end
-              val estart = e.origin.pos
-              val eend = e.ending.pos
+              val estart = e.origin.position
+              val eend = e.ending.position
               val v2 = eend - estart
               //min cw
               val res = -AngleOps.ccwAngleFromTo(v1, v2)
@@ -229,8 +229,8 @@ class PlanarDCEL[VD, HED, FD](
             //            println(s"next ${nextEdge.data}")
             val prevEdge = previous.edgesWithEndHere.minBy { e =>
               val v1 = end - start
-              val estart = e.origin.pos
-              val eend = e.ending.pos
+              val estart = e.origin.position
+              val eend = e.ending.position
               val v2 = estart - eend
               //min ccw
               val res = AngleOps.ccwAngleFromTo(v1, v2)
@@ -246,7 +246,7 @@ class PlanarDCEL[VD, HED, FD](
             //if left and right different polys
             if (!newEdge.traverseEdges.contains(newEdge.twin)) {
               //if we cut part of outer we should start from inner edge
-              val startFaceFrom = if (PolygonRegion(newEdge.traverseEdges.map(_.origin.pos).toSeq).isCcw) newEdge else newEdge.twin
+              val startFaceFrom = if (PolygonRegion(newEdge.traverseEdges.map(_.origin.position).toSeq).isCcw) newEdge else newEdge.twin
 
               //              println(s"Making new face starting from ${startFaceFrom.data}")
               val f = makeFace(newFdProvider(startFaceFrom), startFaceFrom, startFaceFrom.twin)
@@ -255,7 +255,7 @@ class PlanarDCEL[VD, HED, FD](
                 case Some(holeSide) =>
                   //                  println(s"Face can contain holes ${holeSide.data} ${holeSide.leftFace.holes.map(_.data)}")
                   holeSide.leftFace.holes.filter(h =>
-                    h.traverseEdges.map(_.origin.pos).forall(v => fPoly.classify(v) == PolygonRegion.INSIDE)
+                    h.traverseEdges.map(_.origin.position).forall(v => fPoly.classify(v) == PolygonRegion.INSIDE)
                   ).foreach {
                     hole =>
                       //                      println(s"Found hole ${hole.data}")
