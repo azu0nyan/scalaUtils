@@ -32,7 +32,7 @@ package object math
   val THIRD: Scalar = 1f / 3f
 
   val SMALL_NUMBER: Scalar = 0.00001d
-  val KINDA_BIG_NUMBER: Scalar = 10000000000d
+  val KINDA_BIG_NUMBER: Scalar = Integer.MAX_VALUE.toDouble
   val BIG_NUMBER: Scalar = Float.MaxValue
   val SMALL_V3: V3 = V3(SMALL_NUMBER, SMALL_NUMBER, SMALL_NUMBER)
 

@@ -85,6 +85,14 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   @inline def angle(v: V2): Scalar = (math.atan2(v.y, v.x) - math.atan2(y, x))
 
+  @inline def angleClampedToPi(v: V2): Scalar = {
+    var a = angle(v)
+    a =  a % TWO_PI
+    a = (a + TWO_PI) % TWO_PI;
+    if (a > PI) a - TWO_PI
+    else a
+  }
+
   @inline def distance(v: V2): Scalar = (this - v).length
 
   @inline def rotate90CCW:V2 = V2(-y, x)

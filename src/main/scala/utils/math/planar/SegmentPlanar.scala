@@ -3,8 +3,7 @@ package utils.math.planar
 //import java.lang.StackWalker
 
 import sun.java2d.pipe.OutlineTextRenderer
-import utils.math._
-import utils.math.WithAlmostEquals
+import utils.math.{WithAlmostEquals, planar, _}
 
 object SegmentPlanar {
   def apply(x1: Scalar, y1: Scalar, x2: Scalar, y2: Scalar): SegmentPlanar = new SegmentPlanar(V2(x1, y1), V2(x2, y2))
@@ -123,13 +122,54 @@ case class SegmentPlanar(v1: V2, v2: V2) {
   //    case None =>false
   //  }
 
-  def intersection(ot: LinePlanar): Option[SegmentToSegmentPlanarIntersection] =
-    intersection(SegmentPlanar(ot.origin - (ot.direction * KINDA_BIG_NUMBER), ot.origin + (ot.direction * KINDA_BIG_NUMBER)))
+  def intersects(ot: LinePlanar): Boolean = {
+    val toS = start - ot.origin
+    val toE = end - ot.origin
+    val a1 = ot.direction.angleClampedToPi(toE)
+    val a2 = ot.direction.angleClampedToPi(toS)
+    (a1 ~= 0) || (a2 ~= 0) || (a1 ~= PI) || (a2 ~= PI) || (math.signum(a1) != math.signum(a2))
+  }
 
-  def intersection(ot: RayPlanar): Option[SegmentToSegmentPlanarIntersection] =
-    intersection(SegmentPlanar(ot.origin , ot.origin + (ot.direction * KINDA_BIG_NUMBER)))
+  def intersection(ot: LinePlanar): Option[SegmentToSegmentPlanarIntersection] = {
+    val toS = start - ot.origin
+    val toE = end - ot.origin
+    val a1 = ot.direction.angleClampedToPi(toE)
+    val a2 = ot.direction.angleClampedToPi(toS)
+    if ((a1 ~= 0) || (a1 ~= PI)) {
+      if ((a2 ~= 0) || (a2 ~= PI)) {
+        if (start != end) Some(SegmentIntersection(SegmentPlanar(start, end)))
+        else Some(PointIntersection(start))
+      } else Some(PointIntersection(a1))
+    } else if ((a2 ~= 0) || (a2 ~= PI)) Some(PointIntersection(end))
+    else if (math.signum(a1) != math.signum(a2)) ot.intersection(line).map(PointIntersection)
+    else None
 
-  //  def intersection(ot: SegmentPlanar):Option[SegmentToSegmentPlanarIntersection]
+  }
+
+  def intersection(ot: RayPlanar): Option[SegmentToSegmentPlanarIntersection] = {
+    val toS = start - ot.origin
+    val toE = end - ot.origin
+    val a1 = ot.direction.angleClampedToPi(toE)
+    val a2 = ot.direction.angleClampedToPi(toS)
+    println(a1, a2, toS, toE, this,  ot.line.intersection(line),  ot.line.intersection(line))
+    if (((a1 ~> HALF_PI) || (a1 ~< -HALF_PI)) && ((a2 ~> HALF_PI) || (a1 ~< -HALF_PI)))  None
+    else if (a1 ~= 0)
+      if (a2 ~= 0)
+        if (start != end) Some(SegmentIntersection(SegmentPlanar(start, end)))
+        else Some(PointIntersection(start))
+      else if (a2 ~= PI) Some(SegmentIntersection(SegmentPlanar(ot.origin, start)))
+      else Some(PointIntersection(start))
+    else if(a2 ~= 0)
+      if(a1 ~= PI)  Some(SegmentIntersection(SegmentPlanar(ot.origin, end)))
+      else Some(PointIntersection(end))
+    else {
+      ot.line.intersection(line).flatMap{ p =>
+        if((p - ot.origin).sameDirection(ot.direction) )Some(PointIntersection(p))
+        else None
+      }
+    }
+  }
+
 
   def intersection(ot: SegmentPlanar): Option[SegmentToSegmentPlanarIntersection] = {
     //degenerate cases
