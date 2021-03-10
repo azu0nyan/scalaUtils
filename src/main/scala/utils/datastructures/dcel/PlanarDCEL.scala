@@ -157,14 +157,14 @@ class PlanarDCEL[VD, HED, FD](
       val end = current.position
 
       if (previous.incidentEdge.isEmpty && current.incidentEdge.isEmpty) {
-                println("1")
+//                println("1")
         //no edges or faces, we inside some face
         val face = faceAt(previous.position)
         val (ld, rd) = newEdProvider(previous, current)
         val he = makeEdge(previous, current, face, face, ld, rd)
         face._holes += he
       } else if (previous.incidentEdge.nonEmpty && current.incidentEdge.isEmpty) {
-                println("2")
+//                println("2")
         //we are going inside face
         val face = faceAt(current.position)
         //
@@ -187,7 +187,7 @@ class PlanarDCEL[VD, HED, FD](
         //        val (ld, rd) = newEdProvider(previous, current)
         //        makeEdge(previous, current, face, face, ld, rd)
       } else if (previous.incidentEdge.isEmpty && current.incidentEdge.nonEmpty) {
-                println("3")
+//                println("3")
         //we are going to edge from inside face
         val nextEdge = current.edgesWithOriginHere.minBy { e =>
           val v1 = start - end
@@ -204,7 +204,7 @@ class PlanarDCEL[VD, HED, FD](
         val (ld, rd) = newEdProvider(previous, current)
         makeEdge(previous, current, face, face, ld, rd,  None, Some(nextEdge), Some(nextEdge.prev), None)
       } else {
-                println("4")
+//                println("4")
         //if vertices disconnected
         if (!previous.edgesWithOriginHere.exists(e => e.ending == current)) {
           //we are closing chain
