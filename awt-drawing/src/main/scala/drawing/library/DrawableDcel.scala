@@ -67,7 +67,7 @@ class DrawableDcel[VD <: V2, HED, FD](
         if (dcel.outerContour(f).contains(c)) {
           DrawingUtils.drawArrow(c, onSeg, g, polyToHeColor, 3, 20)
         } else {
-          val dir = (ending - origin).rotate90CW.normalize
+          val dir = (ending - origin).rotate90CCW.normalize
           DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHeColor, 3, 20)
         }
       }
@@ -76,7 +76,7 @@ class DrawableDcel[VD <: V2, HED, FD](
           val (origin, ending) = fromTo(h)
           val onSeg = utils.math.v2Lerp(origin, ending, 0.4)
 
-          val dir = (ending - origin).rotate90CW.normalize
+          val dir = (ending - origin).rotate90CCW.normalize
           DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHoleColor, 3, 20)
           DrawingUtils.drawText(if(h.leftFace == dcel.outerFace)"outer" else h.leftFace.data.toString, onSeg + dir * 50, g,20)
         }
@@ -95,7 +95,7 @@ class DrawableDcel[VD <: V2, HED, FD](
       val f = dcel.outerFace
       val (origin, ending) = fromTo(f.incidentEdge.get)
       val onSeg = utils.math.v2Lerp(origin, ending, 0.3)
-      val dir = (ending - origin).rotate90CW.normalize
+      val dir = (ending - origin).rotate90CCW.normalize
 
 
       DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHeColor, 4, 30)
@@ -107,7 +107,7 @@ class DrawableDcel[VD <: V2, HED, FD](
         val (origin, ending) = fromTo(h)
         val onSeg = utils.math.v2Lerp(origin, ending, 0.4)
 
-        val dir = (ending - origin).rotate90CW.normalize
+        val dir = (ending - origin).rotate90CCW.normalize
         DrawingUtils.drawArrow(onSeg + dir * 30, onSeg, g, polyToHoleColor, 3, 20)
         DrawingUtils.drawText(if(h.leftFace == dcel.outerFace)"outer" else h.leftFace.data.toString, onSeg + dir * 50, g,20)
       }
@@ -162,7 +162,7 @@ class DrawableDcel[VD <: V2, HED, FD](
             val to = utils.math.v2Lerp(middle, polyCenter, 0.9)
             DrawingUtils.drawArrow(from, to, g, heToPolyColor, 2, 10)
           } else {
-            val dir = (ending - origin).rotate90CW.normalize * 10d
+            val dir = (ending - origin).rotate90CCW.normalize * 10d
             val from = utils.math.v2Lerp(middle, middle + dir, 0d)
             val to = utils.math.v2Lerp(middle, middle + dir, 4d)
             DrawingUtils.drawArrow(from, to, g, heToPolyColor, 2, 10)

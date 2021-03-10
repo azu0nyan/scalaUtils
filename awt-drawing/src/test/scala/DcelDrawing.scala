@@ -251,11 +251,11 @@ object DcelDrawing extends App {
 
 
 
-
-  Await.result(addPoly(AARectangle(V2(-64, -64), V2(64, 64)).toPolygon.vertices), Duration.Inf)
-  Await.result(addChain(Seq(V2(4.0, -32.0) , V2(-30.782608695652172, 64.0))), Duration.Inf)
-    pauseOnEvent.enable()
-    Await.result(addChain(Seq(V2(34.0, 39.0) ,V2(-64.0, -15.06896551724138))), Duration.Inf)
+  Await.result(addPoly(AARectangle(V2(-64*10, -64*10), V2(64*10, 64*10)).toPolygon.vertices), Duration.Inf)
+  pauseOnEvent.enable()
+  Await.result(addChain(Seq(V2(-16.5*10, 31.20927970918268*10) ,  V2(38.96171633544622*10, -64.0*10))), Duration.Inf)
+  Await.result(addChain(Seq(V2(19.5*10, 28.20927970918268*10) ,  V2(-33.31890779458037*10, -64.0*10))), Duration.Inf)
+  Await.result(addChain(Seq(V2(29.0*10, 1.709279709182681*10) ,  V2(-18.634080222389713*10, 64.0*10))), Duration.Inf)
 
   //  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, 300.0), V2(-100.0, 300.0))), Duration.Inf)
   //  Await.result(addPoly(List(V2(0.0, 100.0), V2(-100.0, 300.0), V2(-200.0, 300.0))), Duration.Inf)
