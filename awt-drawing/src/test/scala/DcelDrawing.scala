@@ -12,6 +12,7 @@ import java.awt.Color
 import java.awt.event.{KeyEvent, MouseEvent, MouseListener}
 import java.util.concurrent.atomic.AtomicInteger
 import drawing.library.ColorOps._
+import utils.datastructures.spatial.AARectangle
 
 import java.io.{File, FileInputStream, FileOutputStream, PrintWriter}
 import scala.concurrent.duration.Duration
@@ -19,7 +20,7 @@ import scala.concurrent.{Await, Future, Promise}
 import scala.util.Using
 
 object DcelDrawing extends App {
-  Using(new PrintWriter(new FileOutputStream(new File("polys.txt"), true))) { pw =>
+  Using(new PrintWriter(new FileOutputStream(new File("zpolys.txt"), true))) { pw =>
     pw.println(s"--------")
   }
 
@@ -122,6 +123,26 @@ object DcelDrawing extends App {
     prom.future
   }
 
+  def addChain(s: Seq[V2]): Future[Unit] = {
+    val prom = Promise[Unit]
+    new Thread(() => try {
+      println("Adding chain")
+
+      Using(new PrintWriter(new FileOutputStream(new File("polys.txt"), true))) { pw =>
+        pw.println(s"Await.result(addChain($s), Duration.Inf)")
+      }
+      ConcurrentOps.withLock(w.drawUpdateLock) {
+        dcel.cutPoly(s, x => x, (x, y) => (heIds.getAndIncrement(), heIds.getAndIncrement()), (x, y) => (heIds.getAndIncrement(), heIds.getAndIncrement()), x => faceIds.getAndIncrement())
+      }
+      //      dcel.halfEdges.foreach(he => println(s"${he.data.toString} ${he.prev.data.toString} ${he.next.data.toString}"))
+      println("Added")
+      prom.success(())
+    } catch {
+      case t: Throwable => prom.failure(t)
+    }, "Dcel cutting").start()
+    prom.future
+  }
+
 
 
   val drawableDcel = Drawing.addDrawable(new DrawableDcel(dcel)).asInstanceOf[DrawableDcel[V2, Int, Int]]
@@ -130,7 +151,7 @@ object DcelDrawing extends App {
   }, {
     pauseOnEvent.disable()
   }))
-  Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_2), V2(100, 30), V2(30, 30), "IDS", {
+  Drawing.addDrawable(new ToggleableDrawable(Some(true), Some(KeyEvent.VK_2), V2(100, 30), V2(30, 30), "IDS", {
     drawableDcel.drawHeData = true
   }, {
     drawableDcel.drawHeData = false
@@ -155,7 +176,7 @@ object DcelDrawing extends App {
   }, {
     drawableDcel.drawPolyBorders = false
   }))
-  Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_7), V2(350, 30), V2(30, 30), "HE", {
+  Drawing.addDrawable(new ToggleableDrawable(Some(true), Some(KeyEvent.VK_7), V2(350, 30), V2(30, 30), "HE", {
     drawableDcel.drawHalfEdges = true
   }, {
     drawableDcel.drawHalfEdges = false
@@ -229,12 +250,18 @@ object DcelDrawing extends App {
   }, -100)
 
 
-//  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, 300.0), V2(-100.0, 300.0))), Duration.Inf)
-//  Await.result(addPoly(List(V2(0.0, 100.0), V2(-100.0, 300.0), V2(-200.0, 300.0))), Duration.Inf)
-//  Await.result(addPoly(List(V2(0.0, 100.0), V2(-200.0, 100.0), V2(-200.0, 0.0))), Duration.Inf)
-//  Await.result(addPoly(List(V2(0.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0))), Duration.Inf)
-//  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, -100.0), V2(100.0, -100.0))), Duration.Inf)
-//  pauseOnEvent.enable()
+
+
+  Await.result(addPoly(AARectangle(V2(-64, -64), V2(64, 64)).toPolygon.vertices), Duration.Inf)
+  Await.result(addChain(Seq(V2(4.0, -32.0) , V2(-30.782608695652172, 64.0))), Duration.Inf)
+    pauseOnEvent.enable()
+    Await.result(addChain(Seq(V2(34.0, 39.0) ,V2(-64.0, -15.06896551724138))), Duration.Inf)
+
+  //  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, 300.0), V2(-100.0, 300.0))), Duration.Inf)
+  //  Await.result(addPoly(List(V2(0.0, 100.0), V2(-100.0, 300.0), V2(-200.0, 300.0))), Duration.Inf)
+  //  Await.result(addPoly(List(V2(0.0, 100.0), V2(-200.0, 100.0), V2(-200.0, 0.0))), Duration.Inf)
+  //  Await.result(addPoly(List(V2(0.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0))), Duration.Inf)
+  //  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, -100.0), V2(100.0, -100.0))), Duration.Inf)
 //  Await.result(addPoly(List(V2(100.0, 300.0), V2(100.0, 0.0), V2(-100.0, -100.0), V2(-100.0, -200.0), V2(300.0, -200.0), V2(300.0, 300.0))), Duration.Inf)
 //  Await.result(addPoly(List(V2(-300.0, 200.0), V2(0.0, 200.0), V2(100.0, 200.0), V2(100.0, 300.0), V2(100.0, 400.0), V2(-200.0, 400.0))), Duration.Inf)
 
