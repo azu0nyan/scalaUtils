@@ -23,7 +23,7 @@ object Drawing extends DrawingWindow {
     super.startDrawingThread(size, decorated, camera )
   }
 
-  val  FpsCounter : EnabledDisabled = new FpsCounter(this)
+  val  FpsCounter : FpsCounter = new FpsCounter(this)
 
 
 

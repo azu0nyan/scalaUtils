@@ -17,6 +17,7 @@ class FpsCounter(d:DrawingWindow) extends SimpleDrawable() with EnabledDisabled{
   var dy: Int = 30
   var framesCount: Int = 0
   var lastFrames: Seq[Long] = Seq()
+  var layer = Int.MaxValue
 
   override val initialEnabled = false
 
@@ -24,7 +25,7 @@ class FpsCounter(d:DrawingWindow) extends SimpleDrawable() with EnabledDisabled{
   log.info("FpsCounter init ...")
   onEnabled.subscribe { _ =>
     log.info("FpsCounter enabled")
-    d.addDrawable(this)
+    d.addDrawable(this, layer)
   }
   onDisabled.subscribe{ _ =>
     log.info("FpsCounter disabled")

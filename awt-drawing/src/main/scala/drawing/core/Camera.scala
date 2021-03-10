@@ -1,7 +1,8 @@
 package drawing.core
 
-import java.awt.event.{KeyEvent, MouseEvent, MouseMotionListener}
+import utils.datastructures.spatial.AARectangle
 
+import java.awt.event.{KeyEvent, MouseEvent, MouseMotionListener}
 import utils.math._
 import utils.math.planar.V2
 import utils.system.Event
@@ -59,6 +60,15 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
   var mouseOnScreen: V2 = new V2(0.0D, 0.0D)
 
   var correspondingWindow: Option[DrawingWindow] = None
+
+  def viewArea:AARectangle = {
+    val v1 = screenToWorld(V2(0, 0))
+    val v2 = screenToWorld(correspondingWindow.map(w => V2(w.getWidth, w.getHeight)).getOrElse(V2(0, 0)))
+    AARectangle(
+      V2(min(v1.x, v2.x), min(v1.y, v2.y)),
+      V2(max(v1.x, v2.x), max(v1.y, v2.y)),
+    )
+  }
 
   def screenResolution: V2 = resolution
 
