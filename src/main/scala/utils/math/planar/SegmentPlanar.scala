@@ -18,6 +18,8 @@ object SegmentPlanar {
 
 
 case class SegmentPlanar(v1: V2, v2: V2) {
+  def sampleAt(fraction: Scalar):V2 = start + body * fraction
+
   def containsSegment(other: SegmentPlanar): Boolean = contains(other.v1) && contains(other.v2)
 
   def center: V2 = (v1 + v2) * HALF
