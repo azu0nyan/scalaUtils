@@ -47,6 +47,7 @@ object DrawingUtils {
     val w = camera.worldToScreen(rect.width).toInt
     val h = camera.worldToScreen(rect.height).toInt
     val xy = camera.worldToScreen(rect.min).toIntV2
+    //todo fix for inverted y
     g.setColor(color)
     if (fill) {
       g.fillRect(xy.x, xy.y, w, h )
