@@ -77,6 +77,8 @@ object Graph {
 
     def edgesFrom(n: NodeData): Seq[EdgeData] = nodeByData(n).outEdges.map(_.data)
 
+    def edgesFromTo(from: NodeData, to:NodeData): Seq[EdgeData] = nodeByData(from).outEdges.filter(e => nodeById(e.to) == nodeByData(to)).map(_.data)
+
     /** default implementation highly inefficient */
     def edgesDirectedTo(to:NodeData):Seq[(EdgeData, NodeData)] = {
       val toId = nodeId(to)
