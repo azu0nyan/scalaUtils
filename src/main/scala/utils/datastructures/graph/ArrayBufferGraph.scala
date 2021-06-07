@@ -8,7 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 class ArrayBufferGraph[NodeData, EdgeData](
-                                            val bidirectional: Boolean
+//                                            val bidirectional: Boolean
                                           ) extends Graph[NodeData, EdgeData] {
 
 
@@ -28,6 +28,12 @@ class ArrayBufferGraph[NodeData, EdgeData](
 
   override  def nodeId(node: NodeData): NodeId = nodeDataToID.getOrElse(node, -1)
 
+  def getOrElseAddNodeId(node: NodeData): NodeId = {
+    val id = nodeId(node)
+    if(id < 0) addNode(node)
+    else id
+  }
+
   //inits
   /** ignores 'bidirectional' flag */
   def fillFastUnsafe(nodes: AdjacencyList[NodeData, EdgeData]): this.type = {
@@ -43,39 +49,46 @@ class ArrayBufferGraph[NodeData, EdgeData](
     this
   }
 
-  def addNode(node: NodeData): Unit = {
+  def addNode(node: NodeData): NodeId = {
     nodeDatas += Node(node, Seq())
     nodesWithEdgesToMe += ArrayBuffer()
-    nodeDataToID += node -> (nodeDatas.size - 1)
+    val nodeId = nodeDatas.size - 1
+    nodeDataToID += node -> nodeId
+    nodeId
   }
 
 
 
 
   def addEdge(from: NodeData, to: NodeData, edge: EdgeData): Unit = {
-    val fromId = nodeId(from)
-    val toId = nodeId(to)
+    val fromId = getOrElseAddNodeId(from)
+    val toId = getOrElseAddNodeId(to)
     addEdgeById(fromId, toId, edge)
-    if (bidirectional) {
+  /*  if (bidirectional) {
       addEdgeById(toId, fromId, edge)
-    }
+    }*/
   }
 
   def removeEdge(from: NodeData, to: NodeData, edge: EdgeData): Unit = {
     val fromId = nodeId(from)
     val toId = nodeId(to)
     removeEdgeById(fromId, toId, edge)
-    if (bidirectional) {
+   /* if (bidirectional) {
       removeEdgeById(toId, fromId, edge)
-    }
+    }*/
   }
 
 
-  def updateEdge(from: NodeData, to: NodeData, newData: EdgeData):Unit = {
-    val fromId = nodeId(from)
-    val toId = nodeId(to)
-    val old = nodeDatas(fromId)
-    nodeDatas(fromId) = old.copy(outEdges = old.outEdges.map(e => if(e.to == toId) e.copy(data = newData) else e ))
+  def addOrUpdateEdge(from: NodeData, to: NodeData, newData: EdgeData):Unit = {
+    findEdge(from, to) match {
+      case Some(value) =>
+        val fromId = getOrElseAddNodeId(from)
+        val toId = getOrElseAddNodeId(to)
+        val old = nodeDatas(fromId)
+        nodeDatas(fromId) = old.copy(outEdges = old.outEdges.map(e => if(e.to == toId) e.copy(data = newData) else e ))
+      case None =>
+        addEdge(from, to, newData)
+    }
   }
 
   protected def addEdgeById(fromId: NodeId, toId: NodeId, edge: EdgeData): Unit = {

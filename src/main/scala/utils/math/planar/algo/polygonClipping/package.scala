@@ -13,7 +13,7 @@ import utils.math.planar.V2
   */
 package object polygonClipping {
 
-  val log:Logger = Logger.getLogger("PolygonClipping")
+  private [polygonClipping] val log:Logger = Logger.getLogger("PolygonClipping")
 
   type Region = Seq[V2]
 

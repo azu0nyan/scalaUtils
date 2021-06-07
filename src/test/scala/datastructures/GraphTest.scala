@@ -11,7 +11,7 @@ class GraphTest extends AnyFunSuite {
 
   test("Array Buffer Graph traversal"){
     val nodes = (0 until 10) toSeq
-    val g:ArrayBufferGraph[Int, Unit] = new ArrayBufferGraph[Int,Unit](false).fillFastUnsafe(GraphGenUtils.fullGraph(nodes))
+    val g:ArrayBufferGraph[Int, Unit] = new ArrayBufferGraph[Int,Unit]().fillFastUnsafe(GraphGenUtils.fullGraph(nodes))
     for(i<- nodes){
       val bft = g.bft(i).toSet
       assert(bft == nodes.toSet) withClue s"bft failed traversal from $i traversed ${bft} should travese ${nodes.toSet}"
@@ -22,7 +22,7 @@ class GraphTest extends AnyFunSuite {
 
   test("Graph find path"){
     val nodes = (0 until 10) toSeq
-    val g:ArrayBufferGraph[Int, Unit] = new ArrayBufferGraph[Int,Unit](false).fillFastUnsafe(GraphGenUtils.fullGraph(nodes))
+    val g:ArrayBufferGraph[Int, Unit] = new ArrayBufferGraph[Int,Unit]().fillFastUnsafe(GraphGenUtils.fullGraph(nodes))
     for(i<- nodes; j <- nodes){
       if(i != j){
         assert(g.shortestPath(i, j).nonEmpty) withClue s"$i $j empty"
@@ -36,14 +36,14 @@ class GraphTest extends AnyFunSuite {
 
   test("no path bug"){
     val nodes = (0 until 10) toSeq
-    val g:ArrayBufferGraph[Int, Unit] = new ArrayBufferGraph[Int,Unit](false).fillFastUnsafe(GraphGenUtils.fullGraph(nodes))
+    val g:ArrayBufferGraph[Int, Unit] = new ArrayBufferGraph[Int,Unit]().fillFastUnsafe(GraphGenUtils.fullGraph(nodes))
     println(GraphGenUtils.fullGraph(nodes))
     assert(g.shortestPath(0, 2).nonEmpty)
   }
 
   test("find path on  cycle 1"){
     val nodesAndEdges = (0 until 10).map(x => (x, 1))
-    val g = new ArrayBufferGraph[Int, Int](bidirectional = false).fillFastUnsafe(GraphGenUtils.cycleGraph(nodesAndEdges))
+    val g = new ArrayBufferGraph[Int, Int]().fillFastUnsafe(GraphGenUtils.cycleGraph(nodesAndEdges))
     for(
       i <- 0 until 10;
       j <- 1 to 9){
@@ -57,7 +57,7 @@ class GraphTest extends AnyFunSuite {
   }
 
   test("find path on weighted graph"){
-    val g = new ArrayBufferGraph[Int, Int](bidirectional = false)
+    val g = new ArrayBufferGraph[Int, Int]()
     g.addNode(0)
     g.addNode(1)
     g.addNode(2)

@@ -151,7 +151,6 @@ object Star {
         val topSecondCp = top + topTangent * outerFlatLength
         val endCp = end - endTangent * innerFlatLength
         val midEnd = (topSecondCp + endCp) * HALF
-        println(start)
         res = res ++ customRayShape(start,startCp, midStart,topFirstCp,
           top, topSecondCp, midEnd, endCp, end,
           startTangent, topTangent, endTangent,

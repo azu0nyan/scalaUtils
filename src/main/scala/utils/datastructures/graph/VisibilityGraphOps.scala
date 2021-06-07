@@ -8,28 +8,27 @@ import scala.collection.mutable
 
 object VisibilityGraphOps {
 
-  def bodyIntersection(s1: V2, e1: V2, s2: V2, e2: V2): Boolean = {
-    val seg1 = SegmentPlanar(s1, e1)
-    val seg2 = SegmentPlanar(s2, e2)
-    seg1.intersection(seg2) match {
-      case Some(PointIntersection(p)) => !(p ~= s1) && !(p ~= s2) && !(p ~= e1) && !(p ~= e2)
-      case None => false
+  def bodyIntersection(vis1: V2, vis2: V2, side1: V2, side2: V2): Boolean = {
+    val seg1 = SegmentPlanar(vis1, vis2)
+    val side = SegmentPlanar(side1, side2)
+    val res = seg1.intersection(side) match {
+      case Some(PointIntersection(p)) => !(p ~= vis1) && !(p ~= vis2)
       case Some(SegmentIntersection(_)) => true
+      case None => false
     }
+    res
   }
 
   /** outerFace in CW order polys shouldn't touch eachother */
   def buildVisibilityGraph(polys: Seq[PolygonRegion], additionalPoints: Seq[V2]): ArrayBufferGraph[V2, Scalar] = {
     val goodPolys = polys.filter(p => p.area > 0)
-    val res = new ArrayBufferGraph[V2, Scalar](false)
+    val res = new ArrayBufferGraph[V2, Scalar]()
     val addedNodes: mutable.Set[(V2, V2)] = mutable.Set()
     for (p <- polys; v <- p.vertices) res.addNode(v)
     for (v <- additionalPoints) res.addNode(v)
-
     val verticesTotal: Seq[V2] = res.nodes.toSeq
 
     val sides = polys.flatMap(_.sides)
-
 
     def checkForIntersectionsAndAdd(from: V2, to: V2): Unit = {
       val seg = SegmentPlanar(from, to)
@@ -105,7 +104,6 @@ object VisibilityGraphOps {
         checkForIntersectionsAndAdd(from, to)
       }
     }
-
     res
 
   }

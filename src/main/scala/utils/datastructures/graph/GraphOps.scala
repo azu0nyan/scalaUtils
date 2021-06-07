@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 object GraphOps {
   def minimumSpanningTree[ND, ED](g: Graph[ND, ED], length: ED => Scalar): Graph[ND, ED] = {
-    val res = new ArrayBufferGraph[ND, ED](false)
+    val res = new ArrayBufferGraph[ND, ED]()
     val set = new DisjointSet[ND]
     for (v <- g.nodes) {
       set.makeSet(v)
@@ -43,7 +43,7 @@ object GraphOps {
   }
 
   def fromAdjacencyMatrix[ND, ED](nodes: IndexedSeq[ND], edges: IndexedSeq[IndexedSeq[Option[ED]]]): Graph[ND, ED] = {
-    val g = new ArrayBufferGraph[ND, ED](false)
+    val g = new ArrayBufferGraph[ND, ED]()
     nodes.foreach(n => g.addNode(n))
 
     for (i <- edges.indices; j <- edges(i).indices; e <- edges(i)(j)) {

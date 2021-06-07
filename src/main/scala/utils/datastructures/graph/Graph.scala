@@ -36,17 +36,21 @@ object Graph {
     }
 
 
+    @inline protected def nodeByDataOpt(node: NodeData): Option[Node] = {
+      val id = nodeId(node)
+      Option.when(id >= 0)(nodeById(id))
+    }
+
     @inline protected def nodeByData(node: NodeData): Node = nodeById(nodeId(node))
 
     /** return -1 if not found override for more efficient implementation */
     def nodeId(node: NodeData): NodeId = nodes.indexOf(node)
-    /***/
+    /** */
     def nodeIds: Iterator[NodeId]
 
-    def innerNodes:Iterator[Node] = nodeIds.map(nodeById)
+    def innerNodes: Iterator[Node] = nodeIds.map(nodeById)
 
     @inline def nodeById(id: Int): Node
-
 
     //PUBLIC interface
     def nodes: Iterator[NodeData] = for (i <- nodeIds) yield nodeById(i).data
@@ -57,30 +61,36 @@ object Graph {
         e <- nodeById(i).outEdges iterator
       ) yield e.data
 
-    def findEdge(from:NodeData, to:NodeData):Option[EdgeData] = {
+    def findEdge(from: NodeData, to: NodeData): Option[EdgeData] = {
       val toId = nodeId(to)
       val fromId = nodeId(from)
-      if(toId >= 0 && fromId >= 0) {
+      if (toId >= 0 && fromId >= 0) {
         nodeById(fromId).outEdges.find(_.to == toId).map(_.data)
       } else None
     }
 
 
+    def neighbours(n: NodeData): Seq[NodeData] =
+      nodeByData(n).outEdges.map(e => nodeById(e.to).data)
 
+    def edgesAndNeighbours: Iterator[(NodeData, EdgeData, NodeData)] =
+      nodes.flatMap(nd => nodeById(nodeId(nd)).outEdges.map(e => (nd, e.data, nodeById(e.to).data)))
 
-
-    def neighbours(n: NodeData): Seq[NodeData] = nodeByData(n).outEdges.map(e => nodeById(e.to).data)
-
-    def edgesAndNeighbours: Iterator[(NodeData, EdgeData, NodeData)] = nodes.flatMap(nd => nodeById(nodeId(nd)).outEdges.map(e => (nd, e.data, nodeById(e.to).data)))
-
-    def edgesAndNeighboursFor(n: NodeData): Seq[(EdgeData, NodeData)] = nodeByData(n).outEdges.map(e => (e.data, nodeById(e.to).data))
+    def edgesAndNeighboursFor(n: NodeData): Seq[(EdgeData, NodeData)] =
+      nodeByData(n).outEdges.map(e => (e.data, nodeById(e.to).data))
 
     def edgesFrom(n: NodeData): Seq[EdgeData] = nodeByData(n).outEdges.map(_.data)
 
-    def edgesFromTo(from: NodeData, to:NodeData): Seq[EdgeData] = nodeByData(from).outEdges.filter(e => nodeById(e.to) == nodeByData(to)).map(_.data)
+//    def edgesFromTo(from: NodeData, to: NodeData): Seq[EdgeData] = {
+//       for (
+//        fromNode <- nodeByDataOpt(from).toSeq;
+//        toNode <- nodeByDataOpt(to).toSeq;
+//        e <- fromNode.outEdges.toSeq if nodeById(e.to) == toNode
+//      ) yield e.data
+//    }
 
     /** default implementation highly inefficient */
-    def edgesDirectedTo(to:NodeData):Seq[(EdgeData, NodeData)] = {
+    def edgesDirectedTo(to: NodeData): Seq[(EdgeData, NodeData)] = {
       val toId = nodeId(to)
       innerNodes.filter(_.outEdges.exists(_.to == toId)).map(x => (x.outEdges.find(_.to == toId).get.data, x.data)).toSeq
     }

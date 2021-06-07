@@ -189,10 +189,10 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
   val vertices: mutable.Set[Vertex] = mutable.Set[Vertex]()
 
   val onNewFace: Event[Face] = new EventImpl[Face]
-  val onNewEdge: Event[HalfEdge] = new EventImpl[HalfEdge]
+  val onNewHalfEdge: Event[HalfEdge] = new EventImpl[HalfEdge]
   val onNewVertex: Event[Vertex] = new EventImpl[Vertex]
   val onEdgeSplit: Event[(HalfEdge, HalfEdge)] = new EventImpl[(HalfEdge, HalfEdge)]
-  val onEdgeCollapse: Event[HalfEdge] = new EventImpl[HalfEdge]
+  val onHalfEdgeCollapse: Event[HalfEdge] = new EventImpl[HalfEdge]
 
 
   def makeVertex(d: VertexData): Vertex = {
@@ -275,7 +275,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     if (to.incidentEdge.isEmpty) to._incidentEdge = Some(rightTwin)
     if (outerFace != leftFace && leftFace.incidentEdge.isEmpty) leftFace._incidentEdge = Some(leftMain)
     if (outerFace != rightFace && rightFace.incidentEdge.isEmpty) rightFace._incidentEdge = Some(rightTwin)
-    onNewEdge(leftMain)
+    onNewHalfEdge(leftMain)
+    onNewHalfEdge(rightTwin)
     leftMain
   }
 
@@ -306,7 +307,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
 
     res._incidentEdge = Some(newNext)
     newNext._twin = newNextTwin
-    //    onNewEdge(newNext) //todo enable
+    onNewHalfEdge(newNext)
+    onNewHalfEdge(newNextTwin)
     onEdgeSplit((oldEdge, newNext))
     res
   }
@@ -327,7 +329,8 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     e.twin.next._prev = e.twin.prev
     halfEdges -= e
     halfEdges -= e.twin
-    onEdgeCollapse(e)
+    onHalfEdgeCollapse(e)
+    onHalfEdgeCollapse(e.twin)
   }
 
 
