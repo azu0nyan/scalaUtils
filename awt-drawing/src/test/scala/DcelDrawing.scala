@@ -69,7 +69,7 @@ object DcelDrawing extends App {
     println("new face", f.data, f.vertices.size, f.vertices.map(_.data).toSeq)
     waitIdNeeded()
   })
-  dcel.onNewEdge.subscribe(e => {
+  dcel.onNewHalfEdge.subscribe(e => {
     println(s"new edge:${e.data} twin: ${e.twin.data} pos:${dcel.pos(e.origin).toProduct}->${dcel.pos(e.ending).toProduct} " +
       s"face ${if (e.leftFace == dcel.outerFace) "outer" else e.leftFace.data.toString} " +
       s"twinFace ${if (e.twin.leftFace == dcel.outerFace) "outer" else e.twin.leftFace.data.toString} " +
@@ -80,7 +80,7 @@ object DcelDrawing extends App {
     println("new vertex", v.data, dcel.pos(v), v.edgesWithOriginHere.size, if (face == dcel.outerFace) "outer" else face.data.toString)
     waitIdNeeded()
   })
-  dcel.onEdgeCollapse.subscribe(e => {
+  dcel.onHalfEdgeCollapse.subscribe(e => {
     println("edge collapse", e.data, e.twin.data, dcel.pos(e.origin), dcel.pos(e.ending), "leftFace", e.leftFace.data, e.twin.leftFace.data)
     waitIdNeeded()
   })
