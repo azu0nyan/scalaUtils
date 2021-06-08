@@ -162,6 +162,9 @@ object Polygon {
  * outermost CCW, holes CW, can be CUT to eliminate holes
  */
 case class Polygon(override val regions: Seq[PolygonRegion]) extends PolygonOps[Polygon] {
+  lazy val (containers, holes) = regions.partition(_.areaSign >= 0)
+
+  def contains(point:V2):Boolean = containers.count(_.contains(point)) > holes.count(_.containsInside(point))
 
   def reverse: Polygon = Polygon(regions.map(_.reverse))
 
