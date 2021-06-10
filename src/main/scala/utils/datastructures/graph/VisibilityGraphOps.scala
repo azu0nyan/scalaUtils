@@ -33,6 +33,7 @@ object VisibilityGraphOps {
     def checkForIntersectionsAndAdd(from: V2, to: V2): Unit = {
       val seg = SegmentPlanar(from, to)
       val intersectionExists = sides.exists(side => side != seg && side != seg.flip && bodyIntersection(seg.start, seg.end, side.start, side.end))
+      println(from, to, intersectionExists)
       if (!intersectionExists) {
         res.addEdge(from, to, to.distance(from))
         res.addEdge(to, from, to.distance(from))
@@ -41,27 +42,44 @@ object VisibilityGraphOps {
 
     for (
       p <- goodPolys;
-      Seq(vfrom1, from, vfrom3) <- (p.vertices :+ p.vertices(0) :+ p.vertices(1)).sliding(3);
+      Seq(prevFrom, from, nextFrom) <- (p.vertices :+ p.vertices(0) :+ p.vertices(1)).sliding(3);
       ot <- goodPolys;
-      Seq(vto1, to, vto3) <- (ot.vertices :+ ot.vertices(0) :+ ot.vertices(1)).sliding(3) if to != from
+      Seq(prevTo, to, nextTo) <- (ot.vertices :+ ot.vertices(0) :+ ot.vertices(1)).sliding(3) if to != from
     ) {
-      if (to == vfrom3 || to == vfrom1) {
+      println(from, to)
+      if (to == nextFrom || to == prevFrom) {
         if (res.findEdge(from, to).isEmpty) {
           res.addEdge(from, to, to.distance(from))
           res.addEdge(to, from, to.distance(from))
         }
       } else if (res.findEdge(from, to).isEmpty) {
-        val a1 = TrianglePlanar(vfrom1, from, to).ccw
-        val a2 = TrianglePlanar(from, vfrom3, to).ccw
+        //todo fix
+        val s1From = prevFrom - from
+        val s2From = nextFrom - from
+        val toOtFrom = to - from
+        val betweenWallsFrom = AngleOps.ccwAngleFromTo(s2From, s1From)
+        val betweenOtherFrom = AngleOps.ccwAngleFromTo(toOtFrom, s1From)
 
-        val a3 = TrianglePlanar(vto1, to, from).ccw
-        val a4 = TrianglePlanar(to, vto3, from).ccw
-
-        //if edge going outside both polys
-        if (!a1 && !a2 && !a3 && !a4) {
-          //!!! double checked
+        val s1To = prevTo - to
+        val s2To = nextTo - to
+        val toOtTo = from - to
+        val betweenWallsTo = AngleOps.ccwAngleFromTo(s2To, s1To)
+        val betweenOtherTo = AngleOps.ccwAngleFromTo(toOtTo, s1To)
+        //println(from, to, betweenWallsFrom, betweenOtherFrom, betweenWallsTo, betweenOtherTo)
+        if(betweenWallsFrom >= betweenOtherFrom && betweenWallsTo >= betweenOtherTo){
           checkForIntersectionsAndAdd(from, to)
         }
+        //        val a1 = TrianglePlanar(prevFrom, from, to).ccw
+        //        val a2 = TrianglePlanar(from, nextFrom, to).ccw
+        //
+        //        val a3 = TrianglePlanar(prevTo, to, from).ccw
+        //        val a4 = TrianglePlanar(to, nextTo, from).ccw
+        //        println(from, to, a1, a2, a3, a4)
+        //if edge going outside both polys
+        //        if (!a1 && !a2 && !a3 && !a4) {
+        //!!! double checked
+        //          checkForIntersectionsAndAdd(from, to)
+        //        }
       }
     }
 
