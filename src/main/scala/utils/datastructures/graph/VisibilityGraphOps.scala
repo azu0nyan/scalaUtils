@@ -53,33 +53,22 @@ object VisibilityGraphOps {
           res.addEdge(to, from, to.distance(from))
         }
       } else if (res.findEdge(from, to).isEmpty) {
-        //todo fix
-        val s1From = prevFrom - from
-        val s2From = nextFrom - from
-        val toOtFrom = to - from
-        val betweenWallsFrom = AngleOps.ccwAngleFromTo(s2From, s1From)
-        val betweenOtherFrom = AngleOps.ccwAngleFromTo(toOtFrom, s1From)
-
-        val s1To = prevTo - to
-        val s2To = nextTo - to
-        val toOtTo = from - to
-        val betweenWallsTo = AngleOps.ccwAngleFromTo(s2To, s1To)
-        val betweenOtherTo = AngleOps.ccwAngleFromTo(toOtTo, s1To)
-        //println(from, to, betweenWallsFrom, betweenOtherFrom, betweenWallsTo, betweenOtherTo)
-        if(betweenWallsFrom >= betweenOtherFrom && betweenWallsTo >= betweenOtherTo){
-          checkForIntersectionsAndAdd(from, to)
+        val fromGood = {
+          val fp = to - from
+          val a = prevFrom - from
+          val b = nextFrom - from
+          if(TrianglePlanar(prevFrom, from, nextFrom).ccw) a ** fp <= 0 || b ** fp <= 0
+          else  a ** fp >= 0 && b ** fp >= 0
         }
-        //        val a1 = TrianglePlanar(prevFrom, from, to).ccw
-        //        val a2 = TrianglePlanar(from, nextFrom, to).ccw
-        //
-        //        val a3 = TrianglePlanar(prevTo, to, from).ccw
-        //        val a4 = TrianglePlanar(to, nextTo, from).ccw
-        //        println(from, to, a1, a2, a3, a4)
-        //if edge going outside both polys
-        //        if (!a1 && !a2 && !a3 && !a4) {
-        //!!! double checked
-        //          checkForIntersectionsAndAdd(from, to)
-        //        }
+        val toGood = {
+          val fp = from - to
+          val a = prevTo - to
+          val b = nextTo - to
+          if(TrianglePlanar(prevTo, to, nextTo).ccw) a ** fp <= 0 || b ** fp <= 0
+          else  a ** fp >= 0 && b ** fp >= 0
+        }
+        if(fromGood && toGood)
+          checkForIntersectionsAndAdd(from, to)
       }
     }
 

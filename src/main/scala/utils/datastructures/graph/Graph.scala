@@ -21,7 +21,7 @@ object Graph {
     def edges: Seq[EdgeData] = otherNodes.map(_.by)
 
     def toNextNode: Option[Path[NodeData, EdgeData]] = Option.when(otherNodes.nonEmpty)(Path(otherNodes.head.to, otherNodes.tail))
-    def length(implicit edgeLength: EdgeData => Cost = ed => 1d): Cost = otherNodes.map(pathNode => edgeLength(pathNode.by)).reduceOption(_ + _).getOrElse(0d)
+    def length(implicit edgeLength: EdgeData => Cost): Cost = otherNodes.map(pathNode => edgeLength(pathNode.by)).reduceOption(_ + _).getOrElse(0d)
   }
 
   /** Graph data interface anf generic implementations, override any method for more efficient implementation

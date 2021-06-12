@@ -26,10 +26,10 @@ class GraphTest extends AnyFunSuite {
     for(i<- nodes; j <- nodes){
       if(i != j){
         assert(g.shortestPath(i, j).nonEmpty) withClue s"$i $j empty"
-        assert(g.shortestPath(i, j).get.length == 1d)
+        assert(g.shortestPath(i, j).get.length(x => 1d) == 1d)
       } else {
         assert(g.shortestPath(i, i).nonEmpty)
-        assert(g.shortestPath(i, i).get.length == 0d)
+        assert(g.shortestPath(i, i).get.length(x => 1d) == 0d)
       }
     }
   }
@@ -51,7 +51,7 @@ class GraphTest extends AnyFunSuite {
       val t = (i + j) % 10
       val path = g.shortestPath(f, t)
       assert(path.nonEmpty)
-      assert(path.get.length() == j)
+      assert(path.get.length(x => 1d) == j)
       assert(path.get.nodes == (i to (i + j)).map(_ % 10))
     }
   }

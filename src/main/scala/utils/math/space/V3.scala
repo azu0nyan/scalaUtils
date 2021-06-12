@@ -95,20 +95,20 @@ case class V3(x: Scalar, y: Scalar, z: Scalar) {
 
   @inline def opposite: V3 = V3(-x, -y, -z)
 
-  @inline def +(v: V3) = V3(x + v.x, y + v.y, z + v.z)
+  @inline def +(v: V3):V3 = V3(x + v.x, y + v.y, z + v.z)
 
-  @inline def -(v: V3) = V3(x - v.x, y - v.y, z - v.z)
+  @inline def -(v: V3):V3 = V3(x - v.x, y - v.y, z - v.z)
 
-  @inline def *(v: V3) = V3(x * v.x, y * v.y, z * v.z)
+  @inline def *(v: V3):V3 = V3(x * v.x, y * v.y, z * v.z)
 
-  @inline def *(s: Scalar) = V3(x * s, y * s, z * s)
+  @inline def *(s: Scalar):V3 = V3(x * s, y * s, z * s)
 
-  @inline def /(v: V3) = V3(x / v.x, y / v.y, z / v.z)
+  @inline def /(v: V3):V3 = V3(x / v.x, y / v.y, z / v.z)
 
   @inline def -(): V3 = V3(-x, -y, -z)
 
-  /** vector product */
-  @inline def ^(v: V3) = V3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x)
+  /** vector(cross) product */
+  @inline def ^(v: V3):V3 = V3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x)
 
   /** scalar product */
   @inline def **(v: V3): Scalar = x * v.x + y * v.y + z * v.z

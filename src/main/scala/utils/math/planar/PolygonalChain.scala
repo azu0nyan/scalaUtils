@@ -40,6 +40,7 @@ object PolygonalChain {
 
     def sideAngles: Seq[AngleCCWPlanar] = CircullarOps.toCyclicPairs(sides).map(s12 => AngleCCWPlanar(s12._1.v1, s12._1.v2, s12._2.v2))
 
+    def length:Scalar = sides.map(_.length).sum
 
   }
 

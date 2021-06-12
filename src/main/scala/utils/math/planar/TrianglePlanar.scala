@@ -6,9 +6,23 @@ import utils.math.space.{Triangle, V3}
 
 object TrianglePlanar {
   implicit def toPoly(t: TrianglePlanar): PolygonRegion = PolygonRegion(Seq(t.v1, t.v2, t.v3))
+
+  def toBarycentric(a:V2, b:V2, c:V2, p:V2):V3 = {
+    val ab = b - a
+    val ac = c - a
+    val pa = a - p
+    val x = V3(ab.x, ac.x, pa.x)
+    val y = V3(ab.y, ac.y, pa.y)
+    val uv_ = x ^ y
+    val uv = uv_ * (1d / uv_.z)
+    V3(1d - uv.x - uv.y, uv.x, uv.y)
+  }
+
 }
 
 case class TrianglePlanar(v1: V2, v2: V2, v3: V2) {
+
+
 
   @inline def toTriangle3(f: V2 => V3): Triangle = space.Triangle(f(v1), f(v2), f(v3))
 
