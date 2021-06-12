@@ -129,20 +129,22 @@ object GraphOps {
       if (currentId == toId) {
         return Some(reconstructPath())
       } else if (toIdToCost.contains(currentId)) {
-        val curNode = graph.nodeById(currentId)
+        //val curNode = graph.nodeById(currentId)
         val curNodeScore = knownBest(currentId)
-        val costWithCurrentEdge = curNodeScore + toIdToCost(currentId)
         val toNode = toId
-        quenedBestGuesses(toNode) = costWithCurrentEdge //+ nodeHeuristic(graph.nodeById(toNode).data) == 0 since its end
-        cameFrom(toNode) = currentId
-        //        cameBy(toNode) = edge.data
-        if (openQueue.contains(toNode)) openQueue.onOrderingChangedFor(toNode)
-        else openQueue.add(toNode)
-
+        val costWithCurrentEdge = curNodeScore + toIdToCost(currentId)
+        if(!knownBest.contains(toNode) || knownBest(toNode) > costWithCurrentEdge){
+          knownBest(toNode) = costWithCurrentEdge
+          quenedBestGuesses(toNode) = costWithCurrentEdge //+ nodeHeuristic(graph.nodeById(toNode).data) == 0 since its end
+          cameFrom(toNode) = currentId
+//          cameBy(toNode) = edge.data
+          if (openQueue.contains(toNode)) openQueue.onOrderingChangedFor(toNode)
+          else openQueue.add(toNode)
+        }
       } else {
         val curNode = graph.nodeById(currentId)
         val curNodeScore = knownBest(currentId)
-        curNode.outEdges.foreach { edge =>
+        for ( edge <- curNode.outEdges){
           val toNode = edge.to
           val costWithCurrentEdge = curNodeScore + pathCost(edge.data)
           // we encountered `toNode` first time || found better way, `>` filters paths with same cost
