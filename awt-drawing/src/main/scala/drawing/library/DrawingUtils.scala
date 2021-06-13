@@ -76,7 +76,8 @@ object DrawingUtils {
   def drawArrow(from: V2, to: V2, g: Graphics2D, color: Color = Color.BLACK, lineWidth: Int = 1, arrowHeadSize: Scalar = 0.5f): Unit = {
     val f = camera.worldToScreen(from)
     val t = camera.worldToScreen(to)
-    val tfDelta: V2 = (f - t).normalize * camera.worldToScreen(arrowHeadSize).toFloat
+    val tfDist = f.distance(t)
+    val tfDelta: V2 = (f - t).normalize * math.min(camera.worldToScreen(arrowHeadSize) , tfDist * .5).toFloat
     val arrowEnd1 = tfDelta.rotate(EIGHT_PI) + t
     val arrowEnd2 = tfDelta.rotate(-EIGHT_PI) + t
 
