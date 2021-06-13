@@ -33,7 +33,7 @@ object VisibilityGraphOps {
     def checkForIntersectionsAndAdd(from: V2, to: V2): Unit = {
       val seg = SegmentPlanar(from, to)
       val intersectionExists = sides.exists(side => side != seg && side != seg.flip && bodyIntersection(seg.start, seg.end, side.start, side.end))
-      println(from, to, intersectionExists)
+//      println(from, to, intersectionExists)
       if (!intersectionExists) {
         res.addEdge(from, to, to.distance(from))
         res.addEdge(to, from, to.distance(from))
@@ -46,7 +46,7 @@ object VisibilityGraphOps {
       ot <- goodPolys;
       Seq(prevTo, to, nextTo) <- (ot.vertices :+ ot.vertices(0) :+ ot.vertices(1)).sliding(3) if to != from
     ) {
-      println(from, to)
+//      println(from, to)
       if (to == nextFrom || to == prevFrom) {
         if (res.findEdge(from, to).isEmpty) {
           res.addEdge(from, to, to.distance(from))

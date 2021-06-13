@@ -153,7 +153,7 @@ case class SegmentPlanar(v1: V2, v2: V2) {
     val toE = end - ot.origin
     val a1 = ot.direction.angleClampedToPi(toE)
     val a2 = ot.direction.angleClampedToPi(toS)
-    println(a1, a2, toS, toE, this,  ot.line.intersection(line),  ot.line.intersection(line))
+//    println(a1, a2, toS, toE, this,  ot.line.intersection(line),  ot.line.intersection(line))
     if (((a1 ~> HALF_PI) || (a1 ~< -HALF_PI)) && ((a2 ~> HALF_PI) || (a1 ~< -HALF_PI)))  None
     else if (a1 ~= 0)
       if (a2 ~= 0)
