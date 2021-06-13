@@ -61,7 +61,7 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
   def length: Scalar = v1.distance(v2)
 
-  def contains(v2: V2): Boolean = collinear(v2) && onSegmentIfCollinear(v2)
+  def contains(v2: V2): Boolean = collinear(v2) && inBoudingBox(v2)
 
   def collinear(v: V2): Boolean = TrianglePlanar(v1, v2, v).degenerate
 
@@ -110,6 +110,13 @@ case class SegmentPlanar(v1: V2, v2: V2) {
     }
   )*/
 
+
+  def projectionUnit(point:V2):Scalar = {
+    val po = point - start
+    val bodyNorm = body.normalize
+    val proj = po ** bodyNorm
+    proj / body.length
+  }
 
   def receiveProjectionFrom(point: V2): Boolean = {
     val po = point - start
@@ -234,7 +241,7 @@ case class SegmentPlanar(v1: V2, v2: V2) {
   }
 
 
-  def onSegmentIfCollinear(q: V2): Boolean =
+  def inBoudingBox(q: V2): Boolean =
     (q.x ~<= max(v1.x, v2.x)) && (q.x ~>= min(v1.x, v2.x)) &&
       (q.y ~<= max(v1.y, v2.y)) && (q.y ~>= min(v1.y, v2.y))
 
@@ -246,10 +253,10 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
     if (o1 != o2 && o3 != o4) return true
 
-    if (o1 == 0 && onSegmentIfCollinear(o.v1)) return true
-    if (o2 == 0 && onSegmentIfCollinear(o.v2)) return true
-    if (o3 == 0 && o.onSegmentIfCollinear(v1)) return true
-    if (o4 == 0 && o.onSegmentIfCollinear(v2)) return true
+    if (o1 == 0 && inBoudingBox(o.v1)) return true
+    if (o2 == 0 && inBoudingBox(o.v2)) return true
+    if (o3 == 0 && o.inBoudingBox(v1)) return true
+    if (o4 == 0 && o.inBoudingBox(v2)) return true
 
     return false
   }
