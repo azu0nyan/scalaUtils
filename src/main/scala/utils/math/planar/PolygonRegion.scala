@@ -21,6 +21,11 @@ object PolygonRegion {
 
     lazy val center: V2 = vertices.reduce(_ + _) * (1d / vertices.size)
 
+    def offsetInside(value:Scalar):PolygonRegion = PolygonRegion(
+      (vertices.last +: vertices :+ vertices.head).sliding(3).map{
+        case Seq(p, c, n) => AngleOps.offsetLeft(p, c, n, value)
+      }.toSeq
+    )
 
     final override def closed: Boolean = true
 
@@ -90,39 +95,7 @@ object PolygonRegion {
       }
       if (res % 2 == 1) INSIDE else OUTSIDE
     }
-    /* def contains(point: V2): Boolean = {
-       if (vertices.length < 1) false
-       else if (vertices.length == 1) vertices.head ~= point
-       else if (vertices.length == 2) SegmentPlanar(vertices.head, vertices.last).contains(point)
-       else {
-         val otherEnd: V2 = V2(aabb.max.x + 10000f, point.y)
-         val toTest: SegmentPlanar = SegmentPlanar(point, otherEnd)
-         var res: Int = 0
-         var res2: Int = 0
-         for (side <- sides) {
-           if (toTest.intersects(side)) {
-             res2 = res2 + 1
-             if (side.contains(point)) return true
-             /*
-              The issue is solved as follows: If the intersection point is a vertex of a tested polygon side,
-              then the intersection counts only if the second vertex of the side lies below the ray.
-             */
-             if (
-               (side.v1.y == point.y && side.v2.y < point.y)
-                 ||
-                 (side.v2.y == point.y && side.v1.y < point.y)
-                 ||
-                 (side.v1.y != point.y && side.v2.y != point.y)
-             ) {
-               res = res + 1
-             }
-           }
-         }
 
-         res % 2 == 1
-       }
-     }
- */
     //todo  плохо работает для случаев когда ребро совпадает с границей side.v1.y == 0 && side.v2.y == 0
     def contains(s: SegmentPlanar): Boolean = {
       val translation: V2 = s.v1

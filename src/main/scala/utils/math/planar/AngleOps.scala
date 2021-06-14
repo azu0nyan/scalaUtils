@@ -3,7 +3,18 @@ package utils.math.planar
 import utils.math._
 
 object AngleOps {
-//  @inline def isCCWSmallest(v1: V2, v2: V2): Boolean = v1.x * v2.y - v2.x * v1.y >= 0
+
+
+
+  def offsetLeft(l: V2, c: V2, r: V2, offset:Scalar): V2 = {
+    val cr: V2 = r - c
+    val halved = ccwAngleFromTo(r, c, l) *.5f
+    val res = c + (cr.normalize.rotate(halved) * offset)
+    println(l, c, r, res, halved)
+    res
+  }
+
+  //  @inline def isCCWSmallest(v1: V2, v2: V2): Boolean = v1.x * v2.y - v2.x * v1.y >= 0
   //todo optimize if needed
   @inline def isCCW(v1: V2, v2: V2, v3: V2): Boolean = TrianglePlanar(v1, v2, v3).ccw
 
@@ -35,6 +46,8 @@ object AngleOps {
     else a
   }
 
+
+  @inline def ccwAngleFromTo(f:V2, c:V2, t:V2):Scalar = ccwAngleFromTo(f - c, t - c)
 
   /** from v1 to v2 */
   @inline def ccwAngleFromTo(v1: V2, v2: V2): Scalar = {
