@@ -10,7 +10,6 @@ object AngleOps {
     val cr: V2 = r - c
     val halved = ccwAngleFromTo(r, c, l) *.5f
     val res = c + (cr.normalize.rotate(halved) * offset)
-    println(l, c, r, res, halved)
     res
   }
 
