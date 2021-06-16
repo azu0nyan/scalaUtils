@@ -19,9 +19,9 @@ case class Transform2D(
 
   def setTranslation(tr: V2): Transform2D = Transform2D(tr, rotation, scale)
 
-  def setV2(sc: V2): Transform2D = Transform2D(translation, rotation, sc)
+  def setScale(sc: V2): Transform2D = Transform2D(translation, rotation, sc)
 
-  def setScalar(rot: Scalar): Transform2D = Transform2D(translation, rot, scale)
+  def setRotation(rot: Scalar): Transform2D = Transform2D(translation, rot, scale)
 
   def move(dPos: V2): Transform2D = Transform2D(translation + dPos, rotation, scale)
 
@@ -32,6 +32,8 @@ case class Transform2D(
   def transformPoint(p: V2): V2 = (scale * p).rotate(rotation) + translation
 
   def transformVector(v: V2): V2 =(scale * v).rotate(rotation)
+
+  def apply(v:V2):V2 = transformPoint(v)
 
   def transformScalar(r: Scalar): Scalar = rotation * r
 
@@ -49,9 +51,9 @@ case class Transform2D(
     lazy val matrix:Matrix4x4 = Matrix4x4.translation(translation) * Matrix4x4.rotationMatrix(rotation)
   */
   override def toString: String = {
-    val idT = V2(1d)
+    val idT = V2.ZERO
     val idR = 0d
-    val idS = V2(1d)
+    val idS = V2(1d, 1d)
     s"Transform2D(${
       (translation, rotation, scale) match {
         case (`idT`, `idR`, `idS`) => ""
