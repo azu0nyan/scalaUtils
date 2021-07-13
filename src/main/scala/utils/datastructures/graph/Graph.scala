@@ -14,19 +14,26 @@ object Graph {
   type Cost = Scalar
   type AdjacencyList[NodeData, EdgeData] = Seq[(NodeData, Seq[(EdgeData, NodeData)])]
   /** represents single part of path, with finish but without start */
-  case class PathNode[NodeData, EdgeData](to: NodeData, by: EdgeData)
+  case class PathNode[+NodeData, +EdgeData](to: NodeData, by: EdgeData)
 
-  case class Path[NodeData, EdgeData](start: NodeData, otherNodes: Seq[PathNode[NodeData, EdgeData]]) {
+  case class Path[+NodeData, +EdgeData](start: NodeData, otherNodes: Seq[PathNode[NodeData, EdgeData]]) {
     def nodes: Seq[NodeData] = start +: otherNodes.map(_.to)
     def edges: Seq[EdgeData] = otherNodes.map(_.by)
 
+    def fromByTo: Seq[(NodeData, EdgeData, NodeData)] =
+      if (otherNodes.size == 1)
+        Seq((start, otherNodes.head.by, otherNodes.head.to))
+      else if (otherNodes.size > 1) {
+        (start, otherNodes.head.by, otherNodes.head.to) +:
+          otherNodes.sliding(2).map { case Seq(p, n) => (p.to, n.by, n.to) }.toSeq
+      } else Seq()
     def toNextNode: Option[Path[NodeData, EdgeData]] = Option.when(otherNodes.nonEmpty)(Path(otherNodes.head.to, otherNodes.tail))
     def length(implicit edgeLength: EdgeData => Cost): Cost = otherNodes.map(pathNode => edgeLength(pathNode.by)).reduceOption(_ + _).getOrElse(0d)
   }
 
   /** Graph data interface anf generic implementations, override any method for more efficient implementation
-   * NodeData serves as unique id of node, provided by user
-   * */
+    * NodeData serves as unique id of node, provided by user
+    * */
   trait Graph[NodeData, EdgeData] {
 
     protected case class Edge(data: EdgeData, from: NodeId, to: NodeId)
@@ -81,13 +88,13 @@ object Graph {
 
     def edgesFrom(n: NodeData): Seq[EdgeData] = nodeByData(n).outEdges.map(_.data)
 
-//    def edgesFromTo(from: NodeData, to: NodeData): Seq[EdgeData] = {
-//       for (
-//        fromNode <- nodeByDataOpt(from).toSeq;
-//        toNode <- nodeByDataOpt(to).toSeq;
-//        e <- fromNode.outEdges.toSeq if nodeById(e.to) == toNode
-//      ) yield e.data
-//    }
+    //    def edgesFromTo(from: NodeData, to: NodeData): Seq[EdgeData] = {
+    //       for (
+    //        fromNode <- nodeByDataOpt(from).toSeq;
+    //        toNode <- nodeByDataOpt(to).toSeq;
+    //        e <- fromNode.outEdges.toSeq if nodeById(e.to) == toNode
+    //      ) yield e.data
+    //    }
 
     /** default implementation highly inefficient */
     def edgesDirectedTo(to: NodeData): Seq[(EdgeData, NodeData)] = {
@@ -125,14 +132,14 @@ object Graph {
     }
 
     /**
-     * Finds shortest path with A*
-     *
-     * @param from          start
-     * @param to            finish
-     * @param pathCost      , mapping of edge to it's cost
-     * @param nodeHeuristic heuristic for distance left to finish from given node
-     * @return path or None if not found
-     */
+      * Finds shortest path with A*
+      *
+      * @param from          start
+      * @param to            finish
+      * @param pathCost      , mapping of edge to it's cost
+      * @param nodeHeuristic heuristic for distance left to finish from given node
+      * @return path or None if not found
+      */
     def shortestPath(
                       from: NodeData, to: NodeData,
                       pathCost: EdgeData => Cost = ed => 1d,
