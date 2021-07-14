@@ -82,7 +82,7 @@ class DrawingWindow() extends JFrame {
     return toAdd
   }
 
-  def addDrawable(drawable: DrawableUpdatable, depth: Int = 0): DrawableUpdatable = {
+  def addDrawable[T<:DrawableUpdatable](drawable: T, depth: Int = 0): T = {
     drawableObjectsDepthMap
       .computeIfAbsent(depth, _ => new CopyOnWriteArrayList[DrawableUpdatable]())
       .add(drawable)
