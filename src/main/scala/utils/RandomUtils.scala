@@ -1,10 +1,21 @@
 package utils
 
+import utils.datastructures.spatial.AARectangle
+import utils.math.planar.V2
+
 import scala.util.Random
 
 object RandomUtils extends RandomUtils
 
 trait RandomUtils {
+
+  def randomInRectangle(rect:AARectangle)(implicit seed:Int):V2 =
+    randomBetween(rect.min, rect.max)
+
+  def randomBetween(min:V2, max:V2)(implicit seed:Int):V2 = {
+    val r = new Random(seed)
+    V2(min.x + r.nextDouble() * (max.x - min.x), min.y + r.nextDouble() * (max.y - min.y))
+  }
 
   def randomInt(fromInc:Int, toUninc:Int)(implicit seed: Int):Int = new Random(seed).nextInt(toUninc - fromInc) + fromInc
 
