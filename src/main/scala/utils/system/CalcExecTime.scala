@@ -5,7 +5,8 @@ import utils.math.Scalar
 object CalcExecTime {
 
 
-  class CalcTimeStats(name:Option[String] = None, warmupResetRun:Option[Int] = None) {
+  class CalcTimeStats(name:Option[String] = None,
+                      private var warmupResetRun:Option[Int] = None) {
 
     var runs: Long = 0
     var timeTotalMs: Long = 0
@@ -27,6 +28,7 @@ object CalcExecTime {
         runs = 0
         timeTotalMs = 0
         timeTotalNS = 0
+        warmupResetRun = None
       }
       runs += 1
       timeTotalMs += lastSample.dt.dt
