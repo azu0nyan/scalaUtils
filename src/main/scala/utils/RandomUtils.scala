@@ -13,7 +13,7 @@ trait RandomUtils {
     randomBetween(rect.min, rect.max)
 
   def randomBetween(min:V2, max:V2)(implicit seed:Int):V2 = {
-    val r = new Random(seed)
+    val r = new Random(seed*19433293)
     V2(min.x + r.nextDouble() * (max.x - min.x), min.y + r.nextDouble() * (max.y - min.y))
   }
 
