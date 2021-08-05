@@ -1,7 +1,7 @@
 package utils
 
 import utils.datastructures.spatial.AARectangle
-import utils.math.planar.V2
+import utils.math.planar.{Polygon, V2}
 
 import scala.util.Random
 
@@ -9,6 +9,17 @@ object RandomUtils extends RandomUtils
 
 trait RandomUtils {
 
+  def randomInPolygon(polygon: Polygon)(implicit seed:Int):V2 = {
+    var x = seed * 2342
+    val rect = polygon.aabb
+    LazyList.continually{
+      x += 1
+      randomInRectangle(rect)(x)
+    }.dropWhile(!polygon.contains(_))
+  }.head
+    
+  
+  
   def randomInRectangle(rect:AARectangle)(implicit seed:Int):V2 =
     randomBetween(rect.min, rect.max)
 
