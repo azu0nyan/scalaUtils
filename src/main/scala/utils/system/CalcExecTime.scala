@@ -13,19 +13,24 @@ object CalcExecTime {
     var timeTotalNanos: Long = 0
     var maxMillis: Long = 0
     var minMillis: Long = Int.MaxValue
-    var maxNanos:Long = 0
-    var minNanos:Long = Int.MaxValue
+    var maxNanos: Long = 0
+    var minNanos: Long = Int.MaxValue
 
     var lastSample: StopwatchSample = _
 
     def avgNanos: Scalar = timeTotalNanos / runs.toDouble
+
     def avgMillis: Scalar = timeTotalMillis / runs.toDouble
+
     def avgMsStr: String = f"$avgMillis%.2f ms"
+
     def avgNanosStr: String = f"$avgNanos%.0f us"
 
-    def statsStr: String = s"${name.getOrElse("")} runs: $runs last: ${lastSample.msStr} avg: $avgMsStr"
+    def statsStr: String =
+      if (runs == 0) "no info"
+      else s"${name.getOrElse("")} runs: $runs last: ${lastSample.msStr} avg: $avgMsStr"
 
-    def longStatsStr:String = statsStr + f" min: $minMillis ms max: $maxMillis ms " +
+    def longStatsStr: String = statsStr + f" min: $minMillis ms max: $maxMillis ms " +
       (if (avgMillis < 20) s"$avgNanosStr min $minNanos max $maxNanos" else " ")
 
     def apply[T](code: => T): T = {
