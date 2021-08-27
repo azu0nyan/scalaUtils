@@ -9,14 +9,14 @@ object RandomUtils extends RandomUtils
 
 trait RandomUtils {
 
-  def randomInPolygon(polygon: Polygon)(implicit seed:Int):V2 = {
+  def randomInPolygon(polygon: Polygon, retryCount:Int = 1000)(implicit seed:Int):Option[V2] = {
     var x = seed * 2342
     val rect = polygon.aabb
     LazyList.continually{
       x += 1
       randomInRectangle(rect)(x)
-    }.dropWhile(!polygon.contains(_))
-  }.head
+    }.take(retryCount).dropWhile(!polygon.contains(_))
+  }.headOption
     
   
   
