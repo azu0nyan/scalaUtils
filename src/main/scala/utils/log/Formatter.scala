@@ -15,7 +15,7 @@ class ConsoleFormatter extends Formatter {
   def sourceFormat(record: LogRecord): String =
     f"${if (record.getSourceClassName != null) record.getSourceClassName else record.getLoggerName}%35.35s:${record.getSourceMethodName}%-20.20s "
 
-  def threadFormat(record: LogRecord):String =  f"${Thread.getAllStackTraces.keySet().asScala.find(_.getId == record.getThreadID).map(_.getName).getOrElse("Unknown")}%-15.15s"
+  def threadFormat(record: LogRecord):String =  f"${Thread.getAllStackTraces.keySet().asScala.find(_.getId == record.getLongThreadID).map(_.getName).getOrElse("Unknown")}%-15.15s"
 
 
 
@@ -41,7 +41,7 @@ class FileFormatter extends Formatter {
   def sourceFormat(record: LogRecord): String =
     f"${if (record.getSourceClassName != null) record.getSourceClassName else record.getLoggerName}%60.60s:${record.getSourceMethodName}%-30.30s"
 
-  def threadFormat(record: LogRecord):String =  f"${Thread.getAllStackTraces.keySet().asScala.find(_.getId == record.getThreadID).map(_.getName).getOrElse("Unknown")}%-15.15s"
+  def threadFormat(record: LogRecord):String =  f"${Thread.getAllStackTraces.keySet().asScala.find(_.getId == record.getLongThreadID).map(_.getName).getOrElse("Unknown")}%-15.15s"
 
   override def format(record: LogRecord): String =
     f"[${df.format(new Date(record.getMillis))}][${sourceFormat(record)}][${threadFormat(record)}][${record.getLevel}%-6.6s] ${record.getMessage}\n" + {
