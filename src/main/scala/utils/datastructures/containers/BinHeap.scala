@@ -96,9 +96,7 @@ class BinHeap[T](implicit o: Ordering[T]) {
     } else {
       data.remove(data.size - 1)
     }
-
     res
-
   }
 
 
