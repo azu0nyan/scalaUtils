@@ -18,7 +18,13 @@ class DoubleBinHeap[T] {
       binHeap.add(t)
     }
   }
-  
+  def pollWithValue():(T, Double) = {
+    val res1 = binHeap.poll()
+    val res2 = map(res1)
+    map -= res1
+    (res1, res2)
+  }
+
   def poll():T  = {
     val res = binHeap.poll()
     map -= res 
