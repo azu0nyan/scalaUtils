@@ -35,6 +35,7 @@ trait Grid[T] {
 
   @inline def valuesCount: Int = resolution.i * resolution.j
 
+  def indicesAndValues: Iterator[(IntV2, T)] = for (i <- 0 until resolution.i iterator; j <- 0 until resolution.j iterator) yield (IntV2(i, j), valueAtUnsafeXY(i, j))
   def indices: Iterator[IntV2] = for (i <- 0 until resolution.i iterator; j <- 0 until resolution.j iterator) yield IntV2(i, j)
   def flatIndices: Iterator[Int] = for (i <- 0 until resolution.area iterator) yield i
 
