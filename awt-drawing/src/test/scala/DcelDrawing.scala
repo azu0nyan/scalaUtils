@@ -13,6 +13,7 @@ import java.awt.event.{KeyEvent, MouseEvent, MouseListener}
 import java.util.concurrent.atomic.AtomicInteger
 import drawing.library.ColorOps._
 import utils.datastructures.spatial.AARectangle
+import utils.sugar.SeqOps
 
 import java.io.{File, FileInputStream, FileOutputStream, PrintWriter}
 import scala.concurrent.duration.Duration
@@ -34,7 +35,9 @@ object DcelDrawing extends App {
 
   }).start()
 
-  Drawing.addKeyBinding(KeyEvent.VK_F2, {Drawing.setSize(Drawing.getWidth, Drawing.getHeight + 1)})
+  Drawing.addKeyBinding(KeyEvent.VK_F2, {
+    Drawing.setSize(Drawing.getWidth, Drawing.getHeight + 1)
+  })
 
   Drawing.addKeyBinding(KeyEvent.VK_F1, {
     println(Drawing.getLocation.x)
@@ -144,7 +147,6 @@ object DcelDrawing extends App {
   }
 
 
-
   val drawableDcel = Drawing.addDrawable(new DrawableDcel(dcel)).asInstanceOf[DrawableDcel[V2, Int, Int]]
   Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_1), V2(50, 30), V2(30, 30), "PAU", {
     pauseOnEvent.enable()
@@ -251,23 +253,45 @@ object DcelDrawing extends App {
 
 
 
-//  Await.result(addPoly(AARectangle(V2(-64*10, -64*10), V2(64*10, 64*10)).toPolygon.vertices), Duration.Inf)
-//  pauseOnEvent.enable()
-//  Await.result(addChain(Seq(V2(-16.5*10, 31.20927970918268*10) ,  V2(38.96171633544622*10, -64.0*10))), Duration.Inf)
-//  Await.result(addChain(Seq(V2(19.5*10, 28.20927970918268*10) ,  V2(-33.31890779458037*10, -64.0*10))), Duration.Inf)
-//  Await.result(addChain(Seq(V2(29.0*10, 1.709279709182681*10) ,  V2(-18.634080222389713*10, 64.0*10))), Duration.Inf)
-//
+  //  Await.result(addPoly(AARectangle(V2(-64*10, -64*10), V2(64*10, 64*10)).toPolygon.vertices), Duration.Inf)
+  //  Await.result(addPoly(AARectangle(V2(-64*10, -64*10), V2(64*10, 64*10)).toPolygon.vertices), Duration.Inf)
+  //  pauseOnEvent.enable()
+  //  Await.result(addChain(Seq(V2(-16.5*10, 31.20927970918268*10) ,  V2(38.96171633544622*10, -64.0*10))), Duration.Inf)
+  //  Await.result(addChain(Seq(V2(19.5*10, 28.20927970918268*10) ,  V2(-33.31890779458037*10, -64.0*10))), Duration.Inf)
+  //  Await.result(addChain(Seq(V2(29.0*10, 1.709279709182681*10) ,  V2(-18.634080222389713*10, 64.0*10))), Duration.Inf)
+  //
   //  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, 300.0), V2(-100.0, 300.0))), Duration.Inf)
   //  Await.result(addPoly(List(V2(0.0, 100.0), V2(-100.0, 300.0), V2(-200.0, 300.0))), Duration.Inf)
   //  Await.result(addPoly(List(V2(0.0, 100.0), V2(-200.0, 100.0), V2(-200.0, 0.0))), Duration.Inf)
   //  Await.result(addPoly(List(V2(0.0, 100.0), V2(200.0, 100.0), V2(200.0, 200.0))), Duration.Inf)
   //  Await.result(addPoly(List(V2(0.0, 100.0), V2(0.0, -100.0), V2(100.0, -100.0))), Duration.Inf)
-//  Await.result(addPoly(List(V2(100.0, 300.0), V2(100.0, 0.0), V2(-100.0, -100.0), V2(-100.0, -200.0), V2(300.0, -200.0), V2(300.0, 300.0))), Duration.Inf)
-//  Await.result(addPoly(List(V2(-300.0, 200.0), V2(0.0, 200.0), V2(100.0, 200.0), V2(100.0, 300.0), V2(100.0, 400.0), V2(-200.0, 400.0))), Duration.Inf)
+  //  Await.result(addPoly(List(V2(100.0, 300.0), V2(100.0, 0.0), V2(-100.0, -100.0), V2(-100.0, -200.0), V2(300.0, -200.0), V2(300.0, 300.0))), Duration.Inf)
+  //  Await.result(addPoly(List(V2(-300.0, 200.0), V2(0.0, 200.0), V2(100.0, 200.0), V2(100.0, 300.0), V2(100.0, 400.0), V2(-200.0, 400.0))), Duration.Inf)
 
 
+  //Worlks
+//  Await.result(addPoly(AARectangle(V2(-64 * 100, -64 * 100), V2(64 * 100, 64 * 100)).toPolygon.vertices), Duration.Inf)
+//  pauseOnEvent.enable()
+  //
+  //  Await.result(addPoly(List(V2(320.0, -320.0), V2(320.0, -324.0), V2(322.8284271247462, -322.8284271247462), V2(324.0, -320.0), V2(322.8284271247462, -317.1715728752538), V2(320.0, -316.0), V2(320.0, -320.0), V2(320.0, -320.0), V2(320.0, -320.0), V2(320.0, -320.0)).map(v => (v - V2(300, -300)) * 20)), Duration.Inf)
+  //  Await.result(addPoly(List(V2(324.0, -320.0), V2(328.0, -320.0), V2(332.0, -320.0), V2(336.0, -320.0), V2(331.31370849898474, -308.68629150101526), V2(320.0, -304.0), V2(320.0, -308.0), V2(320.0, -312.0), V2(320.0, -316.0), V2(322.8284271247462, -317.1715728752538)).map(v => (v - V2(300, -300)) * 20)), Duration.Inf)
+  //  Await.result(addPoly(List(V2(320.0, -304.0), V2(320.0, -300.0), V2(305.85786437626905, -305.85786437626905), V2(300.0, -320.0), V2(305.85786437626905, -334.14213562373095), V2(320.0, -340.0), V2(334.14213562373095, -334.14213562373095), V2(340.0, -320.0), V2(334.14213562373095, -305.85786437626905), V2(320.0, -300.0), V2(320.0, -304.0), V2(331.31370849898474, -308.68629150101526), V2(336.0, -320.0), V2(331.31370849898474, -331.31370849898474), V2(320.0, -336.0), V2(308.68629150101526, -331.31370849898474), V2(304.0, -320.0), V2(308.68629150101526, -308.68629150101526)).map(v => (v - V2(300, -300)) * 20)), Duration.Inf)
+  //  Await.result(addPoly(List(V2(316.0, -320.0), V2(312.0, -320.0), V2(308.0, -320.0), V2(311.5147186257614, -328.4852813742386), V2(320.0, -332.0), V2(320.0, -336.0), V2(331.31370849898474, -331.31370849898474), V2(336.0, -320.0), V2(332.0, -320.0), V2(328.0, -320.0), V2(324.0, -320.0), V2(322.8284271247462, -322.8284271247462), V2(320.0, -324.0), V2(317.1715728752538, -322.8284271247462)).map(v => (v - V2(300, -300)) * 20)), Duration.Inf)
+  //  Await.result(addPoly(List(V2(320.0, -320.0), V2(320.0, -316.0), V2(317.1715728752538, -317.1715728752538), V2(316.0, -320.0), V2(317.1715728752538, -322.8284271247462), V2(320.0, -324.0), V2(320.0, -320.0), V2(320.0, -320.0), V2(320.0, -320.0), V2(320.0, -320.0)).map(v => (v - V2(300, -300)) * 20)), Duration.Inf)
+  //  Await.result(addPoly(List(V2(308.0, -320.0), V2(304.0, -320.0), V2(308.68629150101526, -331.31370849898474), V2(320.0, -336.0), V2(320.0, -332.0), V2(311.5147186257614, -328.4852813742386)).map(v => (v - V2(300, -300)) * 20)), Duration.Inf)
+  //  Await.result(addPoly(List(V2(320.0, -316.0), V2(320.0, -312.0), V2(320.0, -308.0), V2(320.0, -304.0), V2(308.68629150101526, -308.68629150101526), V2(304.0, -320.0), V2(308.0, -320.0), V2(312.0, -320.0), V2(316.0, -320.0), V2(317.1715728752538, -317.1715728752538)).map(v => (v - V2(300, -300)) * 20)), Duration.Inf)
 
+    Await.result(addPoly(AARectangle(V2(-64 * 100, -64 * 100), V2(64 * 100, 64 * 100)).toPolygon.vertices), Duration.Inf)
 
+  Await.result(addPoly(List(V2(452.0, 448.0), V2(450.8284271247462, 445.1715728752538), V2(448.0, 444.0), V2(448.0, 452.0), V2(450.8284271247462, 450.8284271247462)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
+  Await.result(addPoly(List(V2(464.0, 448.0), V2(452.0, 448.0), V2(450.8284271247462, 450.8284271247462), V2(448.0, 452.0), V2(448.0, 464.0), V2(459.31370849898474, 459.31370849898474)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
+  Await.result(addPoly(List(V2(468.0, 448.0), V2(462.14213562373095, 433.85786437626905), V2(448.0, 428.0), V2(433.85786437626905, 433.85786437626905), V2(428.0, 448.0), V2(433.85786437626905, 462.14213562373095), V2(448.0, 468.0), V2(462.14213562373095, 462.14213562373095)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
+  Await.result(addPoly(List(V2(459.31370849898474, 459.31370849898474), V2(448.0, 464.0), V2(436.68629150101526, 459.31370849898474), V2(432.0, 448.0), V2(436.68629150101526, 436.68629150101526), V2(448.0, 432.0), V2(459.31370849898474, 436.68629150101526), V2(464.0, 448.0)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
+
+  Await.result(addPoly(List(V2(464.0, 448.0), V2(459.31370849898474, 436.68629150101526), V2(448.0, 432.0), V2(448.0, 436.0), V2(439.5147186257614, 439.5147186257614), V2(436.0, 448.0), V2(444.0, 448.0), V2(445.1715728752538, 445.1715728752538), V2(448.0, 444.0), V2(450.8284271247462, 445.1715728752538), V2(452.0, 448.0)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
+  Await.result(addPoly(List(V2(448.0, 452.0), V2(448.0, 444.0), V2(445.1715728752538, 445.1715728752538), V2(444.0, 448.0), V2(445.1715728752538, 450.8284271247462)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
+  Await.result(addPoly(List(V2(448.0, 436.0), V2(448.0, 432.0), V2(436.68629150101526, 436.68629150101526), V2(432.0, 448.0), V2(436.0, 448.0), V2(439.5147186257614, 439.5147186257614)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
+  Await.result(addPoly(List(V2(448.0, 464.0), V2(448.0, 452.0), V2(445.1715728752538, 450.8284271247462), V2(444.0, 448.0), V2(432.0, 448.0), V2(436.68629150101526, 459.31370849898474)).map(v => (v - V2(450, 450))*20)), Duration.Inf)
 
 
 }
