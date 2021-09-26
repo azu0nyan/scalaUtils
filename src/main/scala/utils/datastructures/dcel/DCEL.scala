@@ -13,11 +13,13 @@ object DCEL {
   /**
    * @param _data         data associated with face
    * @param _incidentEdge starting point to traverse in CCW order
+   * @param _holesIncidentEdges own face's of edges that points to hole in face, one per hole
+   *
    */
   class RawFace[VertexData, HalfEdgeData, FaceData] private[DCEL](
                                                                    private[this] var _data: FaceData,
                                                                    private[dcel] var _incidentEdge: Option[RawHalfEdge[VertexData, HalfEdgeData, FaceData]] = None,
-                                                                   private[dcel] var _holes: Set[RawHalfEdge[VertexData, HalfEdgeData, FaceData]],
+                                                                   private[dcel] var _holesIncidentEdges: Set[RawHalfEdge[VertexData, HalfEdgeData, FaceData]],
                                                                  ) {
 
 
@@ -28,23 +30,25 @@ object DCEL {
 
 //    def parent:Option[Face] = incidentEdge.map(_.allReachableFaces().filter(_.holes.nonEmpty))
 
-    def holesContours: Iterator[Iterator[HalfEdge]] = _holes.iterator.map(_.traverseEdges)
+    def holesContours: Iterator[Iterator[HalfEdge]] = _holesIncidentEdges.iterator.map(_.traverseEdges)
 
     def data: FaceData = _data
     def data_=(value: FaceData): Unit = {
       _data = value
     }
     def incidentEdge: Option[HalfEdge] = _incidentEdge
-
-    def holes: Set[HalfEdge] = _holes
+    
+    /**own face's of edges that points to hole in face, one per hole*/
+    def holesIncidentEdges: Set[HalfEdge] = _holesIncidentEdges
 
     def neighbourFaces:Iterator[Face] = edges.map(_.twin.leftFace).distinct
 
     def outsideVertices: Iterator[Vertex] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
     def borderEdges: Iterator[HalfEdge] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
 
-    def holesVertices: Iterator[Vertex] = _holes.iterator.flatMap(_.traverseEdges.map(_.origin))
-    def holesEdges: Iterator[HalfEdge] = _holes.iterator.flatMap(_.traverseEdges)
+    def holesVertices: Iterator[Vertex] = _holesIncidentEdges.iterator.flatMap(_.traverseEdges.map(_.origin))
+    /**all own edges adjanced to holes */
+    def holesEdges: Iterator[HalfEdge] = _holesIncidentEdges.iterator.flatMap(_.traverseEdges)
 
 
     def vertices: Iterator[Vertex] = outsideVertices ++ holesVertices
@@ -84,7 +88,7 @@ object DCEL {
     def next: HalfEdge = _next
     def prev: HalfEdge = _prev
 
-    def isHoleHalfSide:Boolean = leftFace.holes.nonEmpty && leftFace.holesEdges.contains(this)
+    def isHoleHalfSide:Boolean = leftFace.holesIncidentEdges.nonEmpty && leftFace.holesEdges.contains(this)
 
     def dest: Vertex = twin.origin
 
@@ -216,9 +220,9 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
       if (e.leftFace.incidentEdge.contains(e)) {
         e.leftFace._incidentEdge = Some(redirectOldFaceTo)
       }
-      if (e.leftFace._holes.contains(e)) {
-        e.leftFace._holes -= e
-        e.leftFace._holes += redirectOldFaceTo
+      if (e.leftFace._holesIncidentEdges.contains(e)) {
+        e.leftFace._holesIncidentEdges -= e
+        e.leftFace._holesIncidentEdges += redirectOldFaceTo
       }
       e._leftFace = res
     }

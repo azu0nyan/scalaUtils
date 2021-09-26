@@ -35,7 +35,7 @@ class PlanarDCEL[VD, HED, FD](
 
   def outerContour(f: Face): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.position).toSeq)
 
-  def polygon(f: Face): Polygon = Polygon(outerContour(f) +: f.holes.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
+  def polygon(f: Face): Polygon = Polygon(outerContour(f) +: f.holesIncidentEdges.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
 
 
   def faceAt(pos: V2): Face = {
@@ -162,7 +162,7 @@ class PlanarDCEL[VD, HED, FD](
         val face = faceAt(previous.position)
         val (ld, rd) = newEdProvider(previous, current)
         val he = makeEdge(previous, current, face, face, ld, rd)
-        face._holes += he
+        face._holesIncidentEdges += he
       } else if (previous.incidentEdge.nonEmpty && current.incidentEdge.isEmpty) {
 //                println("2")
         //we are going inside face
@@ -264,13 +264,13 @@ class PlanarDCEL[VD, HED, FD](
               f.incidentEdge.flatMap(_.traverseAllReachableEdges().filter(_.isHoleHalfSide).nextOption()) match {
                 case Some(holeSide) =>
                   //                  println(s"Face can contain holes ${holeSide.data} ${holeSide.leftFace.holes.map(_.data)}")
-                  holeSide.leftFace.holes.filter(h =>
+                  holeSide.leftFace.holesIncidentEdges.filter(h =>
                     h.traverseEdges.map(_.origin.position).forall(v => fPoly.classify(v) == PolygonRegion.INSIDE)
                   ).foreach {
                     hole =>
                       //                      println(s"Found hole ${hole.data}")
-                      holeSide.leftFace._holes -= hole
-                      f._holes += hole
+                      holeSide.leftFace._holesIncidentEdges -= hole
+                      f._holesIncidentEdges += hole
                       //                      println(holeSide.leftFace._holes.map(_.data))
                       //                      println(f._holes.map(_.data))
                       //                      println("Overriding old parent")
@@ -286,11 +286,11 @@ class PlanarDCEL[VD, HED, FD](
               if (newEdge.leftFace == newEdge.twin.leftFace) {
                 //                println("Connecting holes")
                 val leftFace = newEdge.leftFace
-                val holes = leftFace._holes.toSeq
+                val holes = leftFace._holesIncidentEdges.toSeq
                 if (holes.nonEmpty) {
                   leftFace.borderEdges.find(he => holes.contains(he)) match {
                     //if hole become part of border
-                    case Some(edge) => leftFace._holes = leftFace._holes.filter(_ != edge)
+                    case Some(edge) => leftFace._holesIncidentEdges = leftFace._holesIncidentEdges.filter(_ != edge)
                     case None =>
                       var badHoles: Set[HalfEdge] = Set()
 
@@ -300,7 +300,7 @@ class PlanarDCEL[VD, HED, FD](
                         }
                       }
 
-                      leftFace._holes = leftFace._holes &~ badHoles
+                      leftFace._holesIncidentEdges = leftFace._holesIncidentEdges &~ badHoles
                   }
                 }
               }
