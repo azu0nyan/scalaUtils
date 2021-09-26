@@ -72,7 +72,7 @@ class DrawableDcel[VD <: V2, HED, FD](
         }
       }
       if(drawHeToPolyLinks){
-        for(h <- f.holes){
+        for(h <- f.holesIncidentEdges){
           val (origin, ending) = fromTo(h)
           val onSeg = utils.math.v2Lerp(origin, ending, 0.4)
 
@@ -103,7 +103,7 @@ class DrawableDcel[VD <: V2, HED, FD](
 
 
     if(drawHeToPolyLinks) {
-      for (h <- dcel.outerFace.holes) {
+      for (h <- dcel.outerFace.holesIncidentEdges) {
         val (origin, ending) = fromTo(h)
         val onSeg = utils.math.v2Lerp(origin, ending, 0.4)
 
