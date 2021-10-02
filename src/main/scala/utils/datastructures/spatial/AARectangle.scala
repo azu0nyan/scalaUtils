@@ -8,10 +8,13 @@ object AARectangle {
 
   def fromSize(size: V2): AARectangle = AARectangle(-size / 2d, size / 2d)
 
-  def fromCenterSize(center:V2, size:V2):AARectangle = AARectangle(center - size /2d, center + size / 2d)
+  def fromCenterSize(center: V2, size: V2): AARectangle = AARectangle(center - size / 2d, center + size / 2d)
+  def fromHalfExtend(center: V2, halfExtent: V2): AARectangle = AARectangle(center - halfExtent, center + halfExtent)
 }
 
 case class AARectangle(min: V2, max: V2) {
+
+  @inline def center: V2 = (min + max) * .5d
 
   @Deprecated(since = "not implemented yet")
   @inline def distanseTo(ot: AARectangle): Scalar =
@@ -45,6 +48,8 @@ case class AARectangle(min: V2, max: V2) {
     V2(math.max(min.x, ot.min.x), math.max(min.y, ot.min.y)),
     V2(math.min(max.x, ot.max.x), math.min(max.y, ot.max.y))
   )
+  @inline def scale(scale: Scalar): AARectangle = AARectangle(min * scale, max * scale)
+
 
   /** segment between min and max */
   @inline def diagonal: SegmentPlanar = SegmentPlanar(min, max)
@@ -57,7 +62,7 @@ case class AARectangle(min: V2, max: V2) {
     max,
     V2(max.x, min.y)
   )
-  lazy val toPolygon:PolygonRegion = PolygonRegion(vertices)
+  lazy val toPolygon: PolygonRegion = PolygonRegion(vertices)
 
 }
 

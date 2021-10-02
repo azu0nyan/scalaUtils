@@ -110,7 +110,7 @@ case class SegmentPlanar(v1: V2, v2: V2) {
     }
   )*/
 
-
+  /**Project point onto segment and return position of projected point as 0 at segment start 1 at segment end*/
   def projectionUnit(point:V2):Scalar = {
     val po = point - start
     val bodyNorm = body.normalize

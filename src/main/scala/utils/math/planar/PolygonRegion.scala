@@ -188,6 +188,8 @@ object PolygonRegion {
     def projectOn(plane: Plane): Seq[V3] = vertices.map(v => plane.toWorldCords(v))
 
     def withCache: PolygonRegionWithCache = PolygonRegionWithCache(vertices)
+
+    def intersectsOrContainsCircle(center:V2, rad: Scalar): Boolean = contains(center) || sides.map(_.distanceTo(center)).minOption.getOrElse(0d) < rad
   }
 
 
