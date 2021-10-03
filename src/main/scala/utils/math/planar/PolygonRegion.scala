@@ -174,6 +174,7 @@ object PolygonRegion {
       mergeVerticesWithAt(verticesToConnect._1, verticesToConnect._2, true, holeVs)
     }
 
+    /**-1 for ccw with Y-up, 1 for cw     */
     def matchSign(sign: Int): MYTYPE = if (sign == areaSign) replacePoints(vertices) else this.reverse
 
     // IN CW order

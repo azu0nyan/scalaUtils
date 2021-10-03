@@ -41,9 +41,11 @@ object Polygon {
   /**
    *
    * @param regions non intersecting by sides regions
+   * @param outerSign -1 for ccw with Y-up, 1 for cw
    * @return
    */
-  def fixOrdersForHoles(regions: Seq[PolygonRegion], outerSign: Int = 1): Seq[PolygonRegion] =
+
+  def fixOrdersForHoles(regions: Seq[PolygonRegion], outerSign: Int): Seq[PolygonRegion] =
     try {
       fixOrdersForHolesRec(regions.sortBy(-_.area), outerSign)
     } catch {
@@ -159,6 +161,7 @@ object Polygon {
 }
 
 /**
+ * Y-up coordinates system
  * outermost CCW, holes CW, can be CUT to eliminate holes
  */
 case class Polygon(override val regions: Seq[PolygonRegion]) extends PolygonOps[Polygon] {

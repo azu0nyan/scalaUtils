@@ -1,7 +1,7 @@
 package utils.math
 
 import org.scalatest.funsuite.AnyFunSuite
-import utils.math.planar.{PolygonRegion, V2}
+import utils.math.planar.{Polygon, PolygonRegion, V2}
 
 class PolygonOpsTest extends AnyFunSuite {
 
@@ -141,6 +141,15 @@ class PolygonOpsTest extends AnyFunSuite {
       (3d, 3d), PolygonRegion.OUTSIDE)
 
 
+  }
+
+  test("cw-ccw") {
+    assert(PolygonRegion(List(V2(330.0, -310.0), V2(330.0, -320.0), V2(320.0, -320.0))).isCw)
+    assert(PolygonRegion(List(V2(330.0, -310.0), V2(320.0, -320.0), V2(330.0, -320.0))).isCcw)
+  }
+
+  test("Polygon contains bug") {
+    assert(Polygon(List(PolygonRegion(List(V2(330.0, -310.0), V2(330.0, -320.0), V2(320.0, -320.0))))).contains(V2(322.0, -315.0)))
   }
 
 

@@ -53,7 +53,7 @@ class PlanarDCEL[VD, HED, FD](
 
   /**
     *
-    * @param poly
+    * @param poly in ccw order with Y-up
     * @param newVdProvider     maps new vertex position to VertexData
     * @param newEdProvider     newHalfEdges to its halfEdgeData's
     * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with HED copied from args. Provide new EdgeData if needed.

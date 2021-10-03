@@ -7,6 +7,7 @@ import utils.math.planar.{Polygon, PolygonRegion, V2}
 
 import scala.collection.mutable
 
+/**order of vertices ignored*/
 object PolygonClipping {
   implicit val defaultEpsilon: Epsilon = new Epsilon(SMALL_NUMBER)
 
@@ -45,8 +46,8 @@ object PolygonClipping {
 
     //.regions.map(PolygonRegion(_)).toSeq
     var res = chains.flatMap(splitChain).map(s => PolygonRegion(s))
-    res = Polygon.fixOrdersForHoles(res)
-    return Polygon(res)
+    res = Polygon.fixOrdersForHoles(res, -1)
+    Polygon(res)
   }
 
   def union:(Polygon, Polygon) => Polygon = opThenCombine(_,_)(PolyBool.union)

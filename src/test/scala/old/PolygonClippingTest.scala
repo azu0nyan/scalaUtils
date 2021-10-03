@@ -45,9 +45,9 @@ object PolygonClippingTest extends App{
   pol.regions.foreach(r => println(r.areaSigned))
   println("--------------------")
 
-  Polygon.fixOrdersForHoles(pol.regions).foreach(r => println(r.areaSigned))
-  Polygon.toRegionsAndHoles(Polygon.fixOrdersForHoles(pol.regions))
-    .foreach(r => println(r))
+//  Polygon.fixOrdersForHoles(pol.regions).foreach(r => println(r.areaSigned))
+//  Polygon.toRegionsAndHoles(Polygon.fixOrdersForHoles(pol.regions))
+//    .foreach(r => println(r))
 
 //  val poly2 = Poly(ListBuffer(Seq(V2(-14.799999999999997, 7.450000000000006), V2(-5.299999999999997, -3.5499999999999936), V2(-1.8499999999999943, 11.600000000000005)),
 //    Seq(V2(1.3000000000000043, 5.800000000000008), V2(3.8000000000000043, -3.899999999999995), V2(12.800000000000004, 2.6500000000000057)),
