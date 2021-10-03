@@ -164,6 +164,9 @@ object Polygon {
 case class Polygon(override val regions: Seq[PolygonRegion]) extends PolygonOps[Polygon] {
   lazy val (containers, holes) = regions.partition(_.isCcw)
   //todo check usage
+
+  def area: Scalar = containers.map(_.area).sum - holes.map(_.area).sum
+
   def contains(point: V2): Boolean = containers.count(_.contains(point)) > holes.count(_.containsInside(point))
 
   def reverse: Polygon = Polygon(regions.map(_.reverse))
