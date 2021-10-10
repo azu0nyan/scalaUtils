@@ -20,6 +20,10 @@ object SegmentPlanar {
 case class SegmentPlanar(v1: V2, v2: V2) {
   def sampleAt(fraction: Scalar):V2 = start + body * fraction
 
+  /**begin|-------S_0------S_1-----------S_2----------|end*/
+  /**begin|-------S_0------S_1 ...... S_{n-1}-----------S_n----------|end*/
+  def sampleNTimesInside(times: Int):Iterator[V2] = for(i <- 0 until times iterator) yield sampleAt((i + 1d) / (times + 1))
+
   def containsSegment(other: SegmentPlanar): Boolean = contains(other.v1) && contains(other.v2)
 
   def center: V2 = (v1 + v2) * HALF

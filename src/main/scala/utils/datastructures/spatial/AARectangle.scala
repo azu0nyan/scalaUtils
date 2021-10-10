@@ -58,10 +58,11 @@ case class AARectangle(min: V2, max: V2) {
 
   @inline def vertices: Seq[V2] = Seq(
     min,
-    V2(min.x, max.y),
+    V2(max.x, min.y),
     max,
-    V2(max.x, min.y)
+    V2(min.x, max.y),
   )
+  /*sides - bottom right  top left */
   lazy val toPolygon: PolygonRegion = PolygonRegion(vertices)
 
 }
