@@ -13,17 +13,20 @@ class Scroller[T](
   val reverseOrder: Map[T, T] = variantOrder.toSeq.map(_.swap).toMap
 
   def next(): T = {
+    val old = current
     current = variantOrder(current)
-    onValueChanged(current)
+    onValueChanged((old, current))
     current
   }
 
   def prev(): T = {
+    val old = current
     current = reverseOrder(current)
-    onValueChanged(current)
+    onValueChanged((old, current))
     current
   }
-
-  val onValueChanged: Event[T] = new EventImpl[T] {}
+  
+  /**old then new*/
+  val onValueChanged: Event[(T, T)] = new EventImpl[(T, T)] {}
 
 }
