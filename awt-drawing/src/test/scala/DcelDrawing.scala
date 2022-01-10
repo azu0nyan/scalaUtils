@@ -83,7 +83,7 @@ object DcelDrawing extends App {
     println("new vertex", v.data, dcel.pos(v), v.edgesWithOriginHere.size, if (face == dcel.outerFace) "outer" else face.data.toString)
     waitIdNeeded()
   })
-  dcel.onHalfEdgeCollapse.subscribe(e => {
+  dcel.onHalfEdgeRemoved.subscribe(e => {
     println("edge collapse", e.data, e.twin.data, dcel.pos(e.origin), dcel.pos(e.ending), "leftFace", e.leftFace.data, e.twin.leftFace.data)
     waitIdNeeded()
   })
