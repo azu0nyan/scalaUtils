@@ -6,9 +6,9 @@ import scala.collection.mutable
 
 object DCELOps {
 
-  def apply[VertexData, HalfEdgeData, FaceData]( dcel: DCEL[VertexData, HalfEdgeData, FaceData]):DCELOps[VertexData, HalfEdgeData, FaceData] = new DCELOps(dcel)
+  def apply[VertexData, HalfEdgeData, FaceData](dcel: DCEL[VertexData, HalfEdgeData, FaceData]): DCELOps[VertexData, HalfEdgeData, FaceData] = new DCELOps(dcel)
 
-  implicit  class DCELOps[VertexData, HalfEdgeData, FaceData](val dcel: DCEL[VertexData, HalfEdgeData, FaceData]) extends AnyVal {
+  implicit class DCELOps[VertexData, HalfEdgeData, FaceData](val dcel: DCEL[VertexData, HalfEdgeData, FaceData]) extends AnyVal {
     type Dcel = DCEL[VertexData, HalfEdgeData, FaceData]
     type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
     type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
@@ -37,7 +37,7 @@ object DCELOps {
 
         res.edges
           .filter(he => !forbiddenEdges.contains(he))
-          .map(x => x.leftFace.asInstanceOf[RawFace[VertexData,HalfEdgeData,FaceData]])
+          .map(x => x.leftFace.asInstanceOf[RawFace[VertexData, HalfEdgeData, FaceData]])
           .foreach { face =>
             if (!visitedFaces.contains(face)) {
               faceQueue += face
@@ -48,5 +48,39 @@ object DCELOps {
         res
       }
     }
+
+    /**
+      * This procedure assumes that toMerge can't be neighbour and hole at the same time
+      * routine:
+      * - mergeFaceDatas called once before merge
+      * - face data on main updated
+      * - then toMerge rewritten as main
+      * - then for every edge
+      * - - halfEdgeDestructor called
+      * - - halfEdge detached
+      * */
+    def mergeAdjancedFaces(main: Face, toMerge: Face,
+                           mergeFaceDatas: (FaceData, FaceData) => FaceData,
+                           halfEdgeDestructor: (HalfEdgeData, HalfEdgeData) => Unit): Boolean = {
+      if (main == toMerge) false
+      else {
+        val commonBorderEdges = main.borderEdges.filter(_.twin.leftFace == toMerge).toSeq
+        if (commonBorderEdges.nonEmpty) { //we're simple neighbours
+          val newFaceData = mergeFaceDatas(main.data, toMerge.data)
+          main.data = newFaceData
+
+
+        } else {
+          val commonHoleEdges = main.holesIncidentEdges.filter(_.twin.leftFace == toMerge).toSeq
+          if (commonBorderEdges.nonEmpty) { //we're merging with hole
+
+
+          } else false
+        }
+      }
+    }
+
+
   }
+
 }
