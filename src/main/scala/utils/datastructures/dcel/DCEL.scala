@@ -195,10 +195,14 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
   val vertices: mutable.Set[Vertex] = mutable.Set[Vertex]()
 
   val onNewFace: Event[Face] = new EventImpl[Face]
+  val onFaceDelete: Event[Face] = new EventImpl[Face]
+
   val onNewHalfEdge: Event[HalfEdge] = new EventImpl[HalfEdge]
-  val onNewVertex: Event[Vertex] = new EventImpl[Vertex]
-  val onEdgeSplit: Event[(HalfEdge, HalfEdge)] = new EventImpl[(HalfEdge, HalfEdge)]
   val onHalfEdgeRemoved: Event[HalfEdge] = new EventImpl[HalfEdge]
+  val onEdgeSplit: Event[(HalfEdge, HalfEdge)] = new EventImpl[(HalfEdge, HalfEdge)]
+
+  val onNewVertex: Event[Vertex] = new EventImpl[Vertex]
+  val onVertexDelete: Event[Vertex] = new EventImpl[Vertex]
 
 
   def makeVertex(d: VertexData): Vertex = {
@@ -353,13 +357,32 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     onHalfEdgeRemoved(e.twin)
   }
 
-  /**Ignores possibility of merging faces*/
+
+  /** Ignores possibility of merging faces */
   def deleteEdgeUnsafe(e: HalfEdge): Unit = {
     unparentEdge(e)
+
+    /*
+    
+    |                                  /\
+    |e.prev                            |
+    |                                  | e.next
+    \/                  e              |
+    *--------------------------------->*  
+    *<---------------------------------*  
+    |             e.twin               /\
+    |                                  |
+    |                                  |
+    |                                  |e.twin.prev
+    |e.twin.next                       |
+    \/          
+    */
     e.prev._next = e._twin._next
+    e.twin.next._prev = e.prev
+
     e._next._prev = e._twin._prev
     e.twin.prev._next = e.next
-    e.twin.next._prev = e.prev
+    
     halfEdges -= e
     halfEdges -= e.twin
     onHalfEdgeRemoved(e)

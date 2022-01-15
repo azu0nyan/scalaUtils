@@ -59,7 +59,7 @@ object DCELOps {
       * - - halfEdgeDestructor called
       * - - halfEdge detached
       * */
-    def mergeAdjancedFaces(dcel: Dcel, main: Face, toMerge: Face,
+    def mergeAdjancedFaces(main: Face, toMerge: Face,
                            mergeFaceDatas: (FaceData, FaceData) => FaceData,
                            halfEdgeDestructor: (HalfEdgeData, HalfEdgeData) => Unit): Boolean = {
 
@@ -76,6 +76,8 @@ object DCELOps {
             halfEdgeDestructor(e.data, e.twin.data)
             dcel.deleteEdgeUnsafe(e)
           }
+          dcel.innerFaces -= toMerge
+          dcel.onFaceDelete(toMerge)
           true
         } else false
       }
