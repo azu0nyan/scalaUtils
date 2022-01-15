@@ -353,7 +353,7 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     onHalfEdgeRemoved(e.twin)
   }
 
-  /**Ignores possible merged faces*/
+  /**Ignores possibility of merging faces*/
   def deleteEdgeUnsafe(e: HalfEdge): Unit = {
     unparentEdge(e)
     e.prev._next = e._twin._next

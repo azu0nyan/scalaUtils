@@ -59,28 +59,30 @@ object DCELOps {
       * - - halfEdgeDestructor called
       * - - halfEdge detached
       * */
-    def mergeAdjancedFaces(main: Face, toMerge: Face,
+    def mergeAdjancedFaces(dcel: Dcel, main: Face, toMerge: Face,
                            mergeFaceDatas: (FaceData, FaceData) => FaceData,
                            halfEdgeDestructor: (HalfEdgeData, HalfEdgeData) => Unit): Boolean = {
+
       if (main == toMerge) false
       else {
-        val commonBorderEdges = main.borderEdges.filter(_.twin.leftFace == toMerge).toSeq
+        val commonBorderEdges = main.edges.filter(_.twin.leftFace == toMerge).toSeq
         if (commonBorderEdges.nonEmpty) { //we're simple neighbours
           val newFaceData = mergeFaceDatas(main.data, toMerge.data)
           main.data = newFaceData
-
-
-        } else {
-          val commonHoleEdges = main.holesIncidentEdges.filter(_.twin.leftFace == toMerge).toSeq
-          if (commonBorderEdges.nonEmpty) { //we're merging with hole
-
-
-          } else false
-        }
+          main._holesIncidentEdges = main._holesIncidentEdges.filter(_.twin.leftFace != toMerge) ++
+            toMerge._holesIncidentEdges.filter(_.twin.leftFace != main)
+          for(e <- toMerge.edges) e._leftFace = main
+          for(e <- commonBorderEdges) {
+            halfEdgeDestructor(e.data, e.twin.data)
+            dcel.deleteEdgeUnsafe(e)
+          }
+          true
+        } else false
       }
     }
-
-
   }
+
+
+
 
 }
