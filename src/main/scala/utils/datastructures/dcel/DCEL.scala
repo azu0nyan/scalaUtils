@@ -363,26 +363,26 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     unparentEdge(e)
 
     /*
-    
+
     |                                  /\
     |e.prev                            |
     |                                  | e.next
     \/                  e              |
-    *--------------------------------->*  
-    *<---------------------------------*  
+    *--------------------------------->*
+    *<---------------------------------*
     |             e.twin               /\
     |                                  |
     |                                  |
     |                                  |e.twin.prev
     |e.twin.next                       |
-    \/          
+    \/
     */
     e.prev._next = e._twin._next
     e.twin.next._prev = e.prev
 
     e._next._prev = e._twin._prev
     e.twin.prev._next = e.next
-    
+
     halfEdges -= e
     halfEdges -= e.twin
     onHalfEdgeRemoved(e)

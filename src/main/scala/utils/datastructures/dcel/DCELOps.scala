@@ -1,6 +1,7 @@
 package utils.datastructures.dcel
 
 import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
+import utils.math.planar.PolygonRegion
 
 import scala.collection.mutable
 
@@ -60,31 +61,70 @@ object DCELOps {
       * - - halfEdge detached
       * */
     def mergeAdjancedFaces(main: Face, toMerge: Face,
-                           mergeFaceDatas: (FaceData, FaceData) => FaceData,
-                           halfEdgeDestructor: (HalfEdgeData, HalfEdgeData) => Unit): Boolean = {
+                           mergeFaceDatas: (FaceData, FaceData) => FaceData = (a, b) => a,
+                           halfEdgeDestructor: (HalfEdgeData, HalfEdgeData) => Unit = (a, b) => ()): Boolean = {
 
       if (main == toMerge) false
       else {
         val commonBorderEdges = main.edges.filter(_.twin.leftFace == toMerge).toSeq
         if (commonBorderEdges.nonEmpty) { //we're simple neighbours
+          val isMergingHole = main.holesEdges.map(_.twin.leftFace).contains(toMerge) || toMerge.holesEdges.map(_.twin.leftFace).contains(main)
           val newFaceData = mergeFaceDatas(main.data, toMerge.data)
           main.data = newFaceData
-          main._holesIncidentEdges = main._holesIncidentEdges.filter(_.twin.leftFace != toMerge) ++
-            toMerge._holesIncidentEdges.filter(_.twin.leftFace != main)
-          for(e <- toMerge.edges) e._leftFace = main
-          for(e <- commonBorderEdges) {
-            halfEdgeDestructor(e.data, e.twin.data)
-            dcel.deleteEdgeUnsafe(e)
-          }
+//          main._holesIncidentEdges = main._holesIncidentEdges.filter(_.twin.leftFace != toMerge) ++
+//            toMerge._holesIncidentEdges.filter(_.twin.leftFace != main)
+          main._holesIncidentEdges = main._holesIncidentEdges ++ toMerge._holesIncidentEdges
+          for (e <- toMerge.edges) e._leftFace = main
+
           dcel.innerFaces -= toMerge
           dcel.onFaceDelete(toMerge)
+
+          for (e <- commonBorderEdges) {
+            halfEdgeDestructor(e.data, e.twin.data)
+            dcel.deleteEdgeUnsafe(e)
+            //deletion of edge may create hole
+            val next = e.next
+            val prev = e.prev
+            if(e.twin == next || e.twin == prev){ //removing end of some chain
+              if(next == prev){ //removing single hanging edge
+                main._holesIncidentEdges = main._holesIncidentEdges.filter(h => h != e && h != e.twin)
+              } else {
+                //do nothing
+              }
+            } else {
+              val chainBroken = !next.traverseEdges.contains(prev)
+//              println(dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e._origin), dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e.ending))
+//              println(chainBroken, isMergingHole)
+              if (chainBroken && !isMergingHole) { //if we created hole
+                dcel match {
+                  case p: PlanarDCEL[VertexData, HalfEdgeData, FaceData] => //ugly typecast
+                    val nextPoly = PolygonRegion(next.traverseEdges.map(e => p.pos(e.origin)).toSeq)
+                    val prevPoly = PolygonRegion(prev.traverseEdges.map(e => p.pos(e.origin)).toSeq)
+                    if (nextPoly.contains(prevPoly)) {
+                      main._holesIncidentEdges = main._holesIncidentEdges + prev
+                      if (prev.traverseEdges.contains(main.incidentEdge)) main._incidentEdge = Some(next)
+                    } else {
+                      main._holesIncidentEdges = main._holesIncidentEdges + next
+                      if (next.traverseEdges.contains(main.incidentEdge)) main._incidentEdge = Some(prev)
+                    }
+                  case _ =>
+                    main._holesIncidentEdges = main._holesIncidentEdges + (if (next.traverseEdges.contains(main.incidentEdge)) prev else next)
+                }
+              } else if (chainBroken && isMergingHole) { //we split hole to two parts
+                if (!main.holesEdges.contains(prev)) main._holesIncidentEdges = main._holesIncidentEdges + prev
+                if (!main.holesEdges.contains(next)) main._holesIncidentEdges = main._holesIncidentEdges + next
+              } else if (!chainBroken && isMergingHole) {
+
+              }
+            }
+//            println(main._holesIncidentEdges.map(_.data))
+          }
+
           true
         } else false
       }
     }
   }
-
-
 
 
 }
