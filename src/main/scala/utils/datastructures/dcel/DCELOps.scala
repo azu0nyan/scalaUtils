@@ -73,31 +73,31 @@ object DCELOps {
 
           val newFaceData = mergeFaceDatas(main.data, toMerge.data)
           main.data = newFaceData
-//          main._holesIncidentEdges = main._holesIncidentEdges.filter(_.twin.leftFace != toMerge) ++
-//            toMerge._holesIncidentEdges.filter(_.twin.leftFace != main)
+          //          main._holesIncidentEdges = main._holesIncidentEdges.filter(_.twin.leftFace != toMerge) ++
+          //            toMerge._holesIncidentEdges.filter(_.twin.leftFace != main)
           main._holesIncidentEdges = main._holesIncidentEdges ++ toMerge._holesIncidentEdges
           for (e <- toMerge.edges) e._leftFace = main
-          if(isMainHole) main._incidentEdge = toMerge._incidentEdge
+          if (isMainHole) main._incidentEdge = toMerge._incidentEdge
 
           dcel.innerFaces -= toMerge
           dcel.onFaceDelete(toMerge)
 
-          for (e <- commonBorderEdges) {
+          for (e <- if (isMainHole) commonBorderEdges.map(_.twin) else commonBorderEdges) {
             halfEdgeDestructor(e.data, e.twin.data)
             dcel.deleteEdgeUnsafe(e)
             //deletion of edge may create hole
             val next = e.next
             val prev = e.prev
-            if(e.twin == next || e.twin == prev){ //removing end of some chain
-              if(next == prev){ //removing single hanging edge
+            if (e.twin == next || e.twin == prev) { //removing end of some chain
+              if (next == prev) { //removing single hanging edge
                 main._holesIncidentEdges = main._holesIncidentEdges.filter(h => h != e && h != e.twin)
               } else {
                 //do nothing
               }
             } else {
               val chainBroken = !next.traverseEdges.contains(prev)
-//              println(dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e._origin), dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e.ending))
-//              println(chainBroken, isMergingWithHole)
+              //              println(dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e._origin), dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e.ending))
+              //              println(chainBroken, isMergingWithHole)
               if (chainBroken && !isMergingWithHole) { //if we created hole
                 dcel match {
                   case p: PlanarDCEL[VertexData, HalfEdgeData, FaceData] => //ugly typecast
@@ -105,10 +105,12 @@ object DCELOps {
                     val prevPoly = PolygonRegion(prev.traverseEdges.map(e => p.pos(e.origin)).toSeq)
                     if (nextPoly.contains(prevPoly)) {
                       main._holesIncidentEdges = main._holesIncidentEdges + prev
-                      if (prev.traverseEdges.contains(main.incidentEdge)) main._incidentEdge = Some(next)
-                    } else {
+                      if (main.incidentEdge.isDefined && prev.traverseEdges.contains(main.incidentEdge.get)) main._incidentEdge = Some(next)
+                    } else if (prevPoly.contains(nextPoly)) {
                       main._holesIncidentEdges = main._holesIncidentEdges + next
-                      if (next.traverseEdges.contains(main.incidentEdge)) main._incidentEdge = Some(prev)
+                      if (main.incidentEdge.isDefined && next.traverseEdges.contains(main.incidentEdge.get)) main._incidentEdge = Some(prev)
+                    } else {
+                      //todo
                     }
                   case _ =>
                     main._holesIncidentEdges = main._holesIncidentEdges + (if (next.traverseEdges.contains(main.incidentEdge)) prev else next)
@@ -120,7 +122,7 @@ object DCELOps {
 
               }
             }
-//            println(main._holesIncidentEdges.map(_.data))
+            //            println(main._holesIncidentEdges.map(_.data))
           }
 
           true
