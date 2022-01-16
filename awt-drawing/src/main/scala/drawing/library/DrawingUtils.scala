@@ -25,6 +25,19 @@ object DrawingUtils {
       g.drawPolygon(xs, ys, xs.length)
     }
   }
+
+  def drawPolyline(p: Seq[V2], g: Graphics2D, fill: Boolean = false, color: Color = Color.BLACK, lineWidth: Int = 1): Unit = {
+    val transformed = p.map(
+      v => camera.worldToScreen(v)
+    )
+    val xs = transformed.map(v => v.xInt).toArray
+    val ys = transformed.map(v => v.yInt).toArray
+    g.setColor(color)
+    g.setStroke(new BasicStroke(lineWidth.toFloat))
+    g.drawPolyline(xs, ys, xs.length)
+  }
+  
+  
   def drawText(text: String, where: V2, g: Graphics2D, fontSize: Scalar, scaleFont: Boolean = true, color: Color = Color.BLACK, fontName: String = "Lucida Console", fontType: Int = Font.PLAIN): Unit = {
     g.setColor(color)
     g.setFont(new Font(fontName, fontType, if (scaleFont) camera.worldToScreen(fontSize).toInt else fontSize.toInt))
