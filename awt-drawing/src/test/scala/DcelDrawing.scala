@@ -290,14 +290,14 @@ object DcelDrawing extends App {
   }, -100)
 
 
-
+/*
   Await.result(addPoly(List(V2(-200.0, -100.0), V2(200.0, -100.0), V2(200.0, 200.0), V2(-200.0, 200.0))), Duration.Inf)
   Await.result(addPoly(List(V2(-100.0, 0.0), V2(0.0, 0.0), V2(0.0, 100.0), V2(-100.0, 100.0))), Duration.Inf)
   Await.result(addPoly(List(V2(0.0, 0.0), V2(100.0, 0.0), V2(100.0, 100.0), V2(0.0, 100.0))), Duration.Inf)
   pauseOnEvent.enable()
 //  waitIdNeeded()
   Await.result(mergePoly(V2(-36.0, -62.0), V2(-46.0, 51.0)), Duration.Inf)
-
+*/
 /*
   Await.result(addPoly(List(V2(452.0, 448.0), V2(450.8284271247462, 445.1715728752538), V2(448.0, 444.0), V2(448.0, 452.0), V2(450.8284271247462, 450.8284271247462)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
   Await.result(addPoly(List(V2(464.0, 448.0), V2(452.0, 448.0), V2(450.8284271247462, 450.8284271247462), V2(448.0, 452.0), V2(448.0, 464.0), V2(459.31370849898474, 459.31370849898474)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
