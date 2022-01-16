@@ -120,6 +120,12 @@ trait MathUtilsTrait {
 
 
   //Clamps
+  
+  @inline def snapToClosest(x: Scalar, snapping: Scalar):Scalar = {
+    floor((x + snapping / 2) / snapping) * snapping    
+  }
+  
+  @inline def snapToClosest(x: V2, snapping: Scalar):V2 = V2(snapToClosest(x.x, snapping), snapToClosest(x.y, snapping))
 
   def clamp(x: V3, min: V3, max: V3): V3 = V3(clamp(x.x, min.x, max.x), clamp(x.y, min.y, max.y), clamp(x.z, min.y, max.z))
 
