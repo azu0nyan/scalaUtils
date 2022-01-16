@@ -12,7 +12,7 @@ import utils.math.planar.{AngleOps, PolygonRegion, V2}
 
 import java.awt.{Color, Graphics2D}
 
-class DrawableDcel[VD <: V2, HED, FD](
+class DrawableDcel[VD, HED, FD](
                                        var dcel: PlanarDCEL[VD, HED, FD],
                                        var verticesColor: VD => Color = (x: VD) => new Color(0, 0, 255),
                                        var edgesColor: HED => Color = (x: HED) => new Color(10, 159, 10),
@@ -121,8 +121,8 @@ class DrawableDcel[VD <: V2, HED, FD](
       val offsetVector = AngleOps.ccwBisectorPath(p, c, n) * angleOffset
       val offsetVector2 = AngleOps.ccwBisectorPath(c, n, nn) * angleOffset
 
-      val origin = he.origin.data + offsetVector
-      val ending = he.ending.data + offsetVector2
+      val origin: V2 = dcel.pos(he.origin) + offsetVector
+      val ending = dcel.pos(he.ending) + offsetVector2
       (origin, ending)
     }
 
