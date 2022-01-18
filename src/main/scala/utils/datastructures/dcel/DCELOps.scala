@@ -63,7 +63,7 @@ object DCELOps {
     def mergeAdjancedFaces(main: Face, toMerge: Face,
                            mergeFaceDatas: (FaceData, FaceData) => FaceData = (a, b) => a,
                            halfEdgeDestructor: (HalfEdgeData, HalfEdgeData) => Unit = (a, b) => ()): Boolean = {
-
+      //todo remove hanging vertices
       if (main == toMerge) false
       else {
         val commonBorderEdges = main.edges.filter(_.twin.leftFace == toMerge).toSeq
