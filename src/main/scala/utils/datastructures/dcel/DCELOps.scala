@@ -9,6 +9,42 @@ object DCELOps {
 
   def apply[VertexData, HalfEdgeData, FaceData](dcel: DCEL[VertexData, HalfEdgeData, FaceData]): DCELOps[VertexData, HalfEdgeData, FaceData] = new DCELOps(dcel)
 
+
+  def selectToTheLeft[VD, HED, FD](hes: Seq[RawHalfEdge[VD, HED, FD]]): Iterator[RawFace[VD, HED, FD]] = new Iterator[RawFace[VD, HED, FD]] {
+    type Dcel = DCEL[VD, HED, FD]
+    type HalfEdge = RawHalfEdge[VD, HED, FD]
+    type Vertex = RawVertex[VD, HED, FD]
+    type Face = RawFace[VD, HED, FD]
+
+    val visitedFaces = new mutable.HashSet[Face]()
+    val forbiddenEdges: Set[HalfEdge] = hes.toSet
+    val faceQueue: mutable.Queue[Face] = mutable.Queue()
+
+    hes.foreach(he => {
+      if (!visitedFaces.contains(he.leftFace)) {
+        faceQueue += he.leftFace
+        visitedFaces += he.leftFace
+      }
+    })
+
+    override def hasNext: Boolean = faceQueue.nonEmpty
+    override def next(): Face = {
+      val res = faceQueue.dequeue()
+
+      res.edges
+        .filter(he => !forbiddenEdges.contains(he))
+        .map(x => x.leftFace.asInstanceOf[RawFace[VD, HED, FD]])
+        .foreach { face =>
+          if (!visitedFaces.contains(face)) {
+            faceQueue += face
+            visitedFaces += face
+          }
+        }
+
+      res
+    }
+  }
+
   implicit class DCELOps[VertexData, HalfEdgeData, FaceData](val dcel: DCEL[VertexData, HalfEdgeData, FaceData]) extends AnyVal {
     type Dcel = DCEL[VertexData, HalfEdgeData, FaceData]
     type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
@@ -19,36 +55,6 @@ object DCELOps {
       case List(o, e) => o.edgesWithOriginHere.find(_.ending == e)
     } else Iterator.empty
 
-
-    def selectToTheLeft(hes: Seq[HalfEdge]): Iterator[Face] = new Iterator[Face] {
-      val visitedFaces = new mutable.HashSet[Face]()
-      val forbiddenEdges: Set[HalfEdge] = hes.toSet
-      val faceQueue: mutable.Queue[Face] = mutable.Queue()
-
-      hes.foreach(he => {
-        if (!visitedFaces.contains(he.leftFace)) {
-          faceQueue += he.leftFace
-          visitedFaces += he.leftFace
-        }
-      })
-
-      override def hasNext: Boolean = faceQueue.nonEmpty
-      override def next(): Face = {
-        val res = faceQueue.dequeue()
-
-        res.edges
-          .filter(he => !forbiddenEdges.contains(he))
-          .map(x => x.leftFace.asInstanceOf[RawFace[VertexData, HalfEdgeData, FaceData]])
-          .foreach { face =>
-            if (!visitedFaces.contains(face)) {
-              faceQueue += face
-              visitedFaces += face
-            }
-          }
-
-        res
-      }
-    }
 
     /**
       * This procedure assumes that toMerge can't be neighbour and hole at the same time
