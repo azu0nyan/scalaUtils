@@ -154,4 +154,26 @@ object Permutations {
     }
   }
 
+  def order(s:Seq[Int]):Int = {
+    allCycles(s).map(_.size).map(BigInt(_)).foldLeft(BigInt(1)){(x, y) =>
+      (x * y) / x.gcd(y)
+    }.toInt
+  }
+
+
+  def id(n:Int): Seq[Int] = (0 until n)
+
+  def power(p:Seq[Int], n: Int):Seq[Int] = {
+    if(n == 0) id(p.size)
+    else if(n % 2 == 1) compose(p, power(p, n -1 ))
+    else {
+      val x = power(p, n / 2)
+      compose(x, x)
+    }
+  }
+
+  def inverse(p:Seq[Int]):Seq[Int] ={
+    power(p, order(p) - 1)
+  }
+
 }
