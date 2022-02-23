@@ -1,5 +1,7 @@
 package utils.sugar
 
+import scala.annotation.tailrec
+
 object SeqOps {
   //todo no rec
   def removeConsecutiveDuplicatesCircular[T](s:List[T]):List[T] = if(s.nonEmpty){
@@ -16,5 +18,12 @@ object SeqOps {
     case a :: b :: c if a != b => a :: removeConsecutiveDuplicates(b :: c)
     case a :: b :: c => removeConsecutiveDuplicates(b :: c)
     
-  }  
+  }
+
+
+  @tailrec  def insertBeforeCondition[T](s:Seq[T], cond: T => Boolean, toInsert: T): Seq[T] = s match {
+    case Nil => List(toInsert)
+    case h :: t if cond(h) => toInsert :: h :: t
+    case h :: t => h +: insertBeforeCondition(t, cond, toInsert)
+  }
 }

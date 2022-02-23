@@ -18,26 +18,35 @@ object SegmentPlanar {
 
 
 case class SegmentPlanar(v1: V2, v2: V2) {
-  def sampleAt(fraction: Scalar):V2 = start + body * fraction
+  def sampleAt(fraction: Scalar): V2 = start + body * fraction
 
-  /**begin|-------S_0------S_1-----------S_2----------|end*/
-  /**begin|-------S_0------S_1 ...... S_{n-1}-----------S_n----------|end*/
-  def sampleNTimesInside(times: Int):Iterator[V2] = for(i <- 0 until times iterator) yield sampleAt((i + 1d) / (times + 1))
+  /** begin|-------S_0------S_1-----------S_2----------|end */
+  /** begin|-------S_0------S_1 ...... S_{n-1}-----------S_n----------|end */
+  def sampleNTimesInside(times: Int): Iterator[V2] = for (i <- 0 until times iterator) yield sampleAt((i + 1d) / (times + 1))
 
   def containsSegment(other: SegmentPlanar): Boolean = contains(other.v1) && contains(other.v2)
 
   def center: V2 = (v1 + v2) * HALF
   /** calculate x(y) using corresponding line equation x = k_y * y + b_y */
-  def xFromY(y: Scalar): Option[Scalar] = kY.flatMap(k => bY.map(b => k * y + b))
+  @deprecated def xFromY(y: Scalar): Option[Scalar] = kY.flatMap(k => bY.map(b => k * y + b))
 
   /** k_y coeff in x(y) line equation */
-  def kY: Option[Scalar] = {
-    val divisor = v1.y - v2.y
+  @deprecated def kY: Option[Scalar] = {
+    val divisor = v1.y - v2.y //todo maybe in different order
     Option.when(divisor != 0)((v1.x - v2.x) / divisor)
   }
 
   /** b_y coeff in x(y) line equation */
-  def bY: Option[Scalar] = kY.map(k => v2.x - k * v2.y)
+  @deprecated def bY: Option[Scalar] = kY.map(k => v2.x - k * v2.y)
+
+  def kX: Option[Scalar] = {
+    val divisor = v2.x - v1.x
+    Option.when(divisor != 0)((v2.y - v1.y) / divisor)
+  }
+  /** y = k * x + b  => b = y - k * x */
+  def bX: Option[Scalar] = kX.map(k => v1.y - k * v1.x)
+
+  def yFromX(x: Scalar): Option[Scalar] = for (k <- kX; b <- bX) yield k * x + b
 
   def flip: SegmentPlanar = SegmentPlanar(v2, v1)
 
@@ -85,6 +94,9 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
   def toRightNormal: V2 = body.normalize.rotate90CW
 
+  def isVertical: Boolean = v1.x == v2.x
+
+  def isHorizontal: Boolean = v1.y == v2.y
 
   def clothesPoint(point: V2): V2 = {
     val po = point - start
@@ -114,8 +126,8 @@ case class SegmentPlanar(v1: V2, v2: V2) {
     }
   )*/
 
-  /**Project point onto segment and return position of projected point as 0 at segment start 1 at segment end*/
-  def projectionUnit(point:V2):Scalar = {
+  /** Project point onto segment and return position of projected point as 0 at segment start 1 at segment end */
+  def projectionUnit(point: V2): Scalar = {
     val po = point - start
     val bodyNorm = body.normalize
     val proj = po ** bodyNorm
@@ -164,20 +176,20 @@ case class SegmentPlanar(v1: V2, v2: V2) {
     val toE = end - ot.origin
     val a1 = ot.direction.angleClampedToPi(toE)
     val a2 = ot.direction.angleClampedToPi(toS)
-//    println(a1, a2, toS, toE, this,  ot.line.intersection(line),  ot.line.intersection(line))
-    if (((a1 ~> HALF_PI) || (a1 ~< -HALF_PI)) && ((a2 ~> HALF_PI) || (a1 ~< -HALF_PI)))  None
+    //    println(a1, a2, toS, toE, this,  ot.line.intersection(line),  ot.line.intersection(line))
+    if (((a1 ~> HALF_PI) || (a1 ~< -HALF_PI)) && ((a2 ~> HALF_PI) || (a1 ~< -HALF_PI))) None
     else if (a1 ~= 0)
       if (a2 ~= 0)
         if (start != end) Some(SegmentIntersection(SegmentPlanar(start, end)))
         else Some(PointIntersection(start))
       else if (a2 ~= PI) Some(SegmentIntersection(SegmentPlanar(ot.origin, start)))
       else Some(PointIntersection(start))
-    else if(a2 ~= 0)
-      if(a1 ~= PI)  Some(SegmentIntersection(SegmentPlanar(ot.origin, end)))
+    else if (a2 ~= 0)
+      if (a1 ~= PI) Some(SegmentIntersection(SegmentPlanar(ot.origin, end)))
       else Some(PointIntersection(end))
     else {
-      ot.line.intersection(line).flatMap{ p =>
-        if((p - ot.origin).sameDirection(ot.direction) )Some(PointIntersection(p))
+      ot.line.intersection(line).flatMap { p =>
+        if ((p - ot.origin).sameDirection(ot.direction)) Some(PointIntersection(p))
         else None
       }
     }
@@ -203,10 +215,10 @@ case class SegmentPlanar(v1: V2, v2: V2) {
       if ((r det s) ~= 0f) {
         if (((q - p) det r) ~= 0f) {
           /** If r × s = 0 and (q − p) × r = 0, then the two lines are collinear.
-           * r s  - collinear
-           * t0 = (q − p) · r / (r · r)
-           * t1 = (q + s − p) · r / (r · r) = t0 + s · r / (r · r)
-           */
+            * r s  - collinear
+            * t0 = (q − p) · r / (r · r)
+            * t1 = (q + s − p) · r / (r · r) = t0 + s · r / (r · r)
+            */
           var t0 = ((q - p) ** r) / (r ** r)
           var t1 = ((q + s - p) ** r) / (r ** r)
           if ((s ** r) ~< 0) {
