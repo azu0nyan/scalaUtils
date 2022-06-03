@@ -178,8 +178,8 @@ object PolygonContains {
               if (parentSegments.contains(curSeg)) currentXIntersections += SegmentStart(y, true)
               if (childSegments.contains(curSeg)) currentXIntersections += SegmentStart(y, false)
             case None =>
-              if (parentSegments.contains(curSeg)) currentXIntersections += VerticalSegment(curSeg.v1.y, curSeg.v2.y, true)
-              if (childSegments.contains(curSeg)) currentXIntersections += VerticalSegment(curSeg.v1.y, curSeg.v2.y, false)
+//              if (parentSegments.contains(curSeg)) currentXIntersections += VerticalSegment(curSeg.v1.y, curSeg.v2.y, true)
+//              if (childSegments.contains(curSeg)) currentXIntersections += VerticalSegment(curSeg.v1.y, curSeg.v2.y, false)
           }
         }
       }
@@ -199,26 +199,70 @@ object PolygonContains {
   }
 
   def checkInside(intersectionsOrdered: Seq[Intersection]): Boolean = {
-    val (parent, child) = intersectionsOrdered.partition(_.isParent == true)
-    var parentCover: Seq[(Scalar, Scalar)] = Seq()
-    var (curMin, curMax) = parent.head match {
-      case SegmentStart(y, isParent) => (y, y)
-      case SegmentMiddle(y, isParent) => (y, y)
-      case VerticalSegment(minY, maxY, isParent) => (minY, maxY)
+//    val (parent, child) = intersectionsOrdered.partition(_.isParent == true)
+    case class Status(parent:Boolean = false, child: Boolean = false, curY: Scalar = Double.MinValue, curParentPower: Scalar = 0, curChildPower: Scalar = 0, failed: Boolean = false )
+
+
+    def processStatusToNewYTransition(status: Status, intersection: Intersection):Status = {
+      val flipParent = status.curParentPower %  2 != 0
+      val flipChild = status.curChildPower %  2 != 0
+      val newParent = if (flipParent) !status.parent else status.parent
+      val newChild = if (flipChild) !status.child else status.child
+      val newFailed = newChild && !newParent
+      intersection match {
+        case SegmentStart(y, isParent) => incCounter(Status(newParent, newChild, y, 0, 0, newFailed), intersection)
+        case SegmentMiddle(y, isParent) => incCounter(Status(newParent, newChild, y, 0, 0, newFailed), intersection)
+        case VerticalSegment(minY, maxY, isParent) => throw new Exception("Impossible")/*imposible*/
+      }
+
     }
-    var countAt = 1
-    for(seg <- parent){
-      seg match {
-        case SegmentStart(y, isParent) => ???
-        case SegmentMiddle(y, isParent) => ???
+
+    def incCounter(status: Status, intersection: Intersection): Status = (status, intersection) match {
+      case (s@status, SegmentStart(y, isParent)) if isParent => status.copy(curParentPower = status.curParentPower + 1)
+      case (s@status, SegmentStart(y, isParent)) if !isParent => status.copy(curChildPower = status.curChildPower + 1)
+      case (s@status, SegmentMiddle(y, isParent)) if isParent => status.copy(curParentPower = status.curParentPower + 1)
+      case (s@status, SegmentMiddle(y, isParent)) if !isParent => status.copy(curChildPower = status.curChildPower + 1)
+      case (s@status, VerticalSegment(minY, maxY, isParent)) => /*Ignore vertical intersections*/
+        status
+    }
+
+    def processEvent(status:Status, intersection: Intersection): Status = intersection match {
+      case  VerticalSegment(_, _, _) => /*Ignore vertical intersections*/ status
+      case  SegmentStart(y, _) if status.curY ~= y => incCounter(status, intersection)
+      case  SegmentMiddle(y, _) if status.curY ~= y => incCounter(status, intersection)
+      case  SegmentStart(y, _) => processStatusToNewYTransition(status, intersection)
+      case  SegmentMiddle(y, _) => processStatusToNewYTransition(status, intersection)
+
+    }
+
+
+    var cur = intersectionsOrdered
+    var curStatus = Status()
+    while(!curStatus.failed && cur.nonEmpty) {
+      curStatus = processEvent(curStatus, cur.head)
+      cur = cur.tail
+    }
+    curStatus.failed
+
+//    var parentCover: Seq[(Scalar, Scalar)] = Seq()
+//    var (curMin, curMax) = parent.head match {
+//      case SegmentStart(y, isParent) => (y, y)
+//      case SegmentMiddle(y, isParent) => (y, y)
+//      case VerticalSegment(minY, maxY, isParent) => (minY, maxY)
+//    }
+//    var countAt = 1
+//    for (seg <- parent) {
+//      seg match {
+//        case SegmentStart(y, isParent) if y == curMax => countAt += 1
+//        case SegmentStart(y, isParent) if y == curMax => countAt += 1
+//        case SegmentMiddle(y, isParent) => ???
 //        case VerticalSegment(minY, maxY, _) if minY > curMax => //segment on top
 //          parentCover = parentCover :+ (curMin, curMax)
 //          curMin = minY
 //          curMax = maxY
 //        case VerticalSegment(minY, maxY, _) if maxY > curMax
-      }
-    }
-
-    true
+//      }
+//    }
+//    true
   }
 }

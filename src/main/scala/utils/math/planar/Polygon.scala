@@ -178,6 +178,8 @@ case class Polygon(override val regions: Seq[PolygonRegion]) extends PolygonOps[
 
   def sides: Seq[SegmentPlanar] = regions.flatMap(_.sides)
 
+  def asSeq:Seq[Seq[V2]] = regions.map(_.vertices)
+
 }
 
 case class PolygonWithoutHoles(override val regions: Seq[PolygonRegion]) extends PolygonOps[PolygonWithoutHoles] {

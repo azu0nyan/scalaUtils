@@ -21,7 +21,7 @@ object SeqOps {
   }
 
 
-  @tailrec  def insertBeforeCondition[T](s:Seq[T], cond: T => Boolean, toInsert: T): Seq[T] = s match {
+   def insertBeforeCondition[T](s:Seq[T], cond: T => Boolean, toInsert: T): Seq[T] = s match {
     case Nil => List(toInsert)
     case h :: t if cond(h) => toInsert :: h :: t
     case h :: t => h +: insertBeforeCondition(t, cond, toInsert)
