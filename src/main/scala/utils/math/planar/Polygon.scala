@@ -165,6 +165,8 @@ object Polygon {
  * outermost CCW, holes CW, can be CUT to eliminate holes
  */
 case class Polygon(override val regions: Seq[PolygonRegion]) extends PolygonOps[Polygon] {
+  def addRegion(region: PolygonRegion): Polygon = Polygon(region +: regions)
+
   lazy val (containers, holes) = regions.partition(_.isCcw)
   //todo check usage
 
