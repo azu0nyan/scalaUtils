@@ -49,7 +49,8 @@ class PolygonContains extends AnyFunSuite {
     assert(PolygonContains.contains(child.asSeq, child.asSeq))
 
   }
-  test("Non axis alligned non convex intersects") {
+  //todo fix
+  test("Non axis alligned non convex intersects BUG") {
     System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
     var parent: Polygon = Polygon(List(PolygonRegion(List(V2(-445.0, 196.0), V2(-415.0, -6.0), V2(46.0, -117.0), V2(327.0, 200.0), V2(-51.0, 192.0), V2(-99.0, 91.0)))))
     var child: Polygon = Polygon(List(PolygonRegion(List(V2(-394.0, 81.0), V2(-238.0, 3.0), V2(63.0, -15.0), V2(207.0, 188.0)))))
@@ -60,7 +61,28 @@ class PolygonContains extends AnyFunSuite {
     assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
     assert(PolygonContains.contains(child.asSeq, child.asSeq))
   }
+  test("Axis aligned concave intersects") {
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    var parent: Polygon = Polygon(List(PolygonRegion(List(V2(-500.0, 300.0), V2(-500.0, -100.0), V2(100.0, -100.0), V2(100.0, 300.0), V2(-100.0, 300.0), V2(-100.0, 100.0), V2(-200.0, 100.0), V2(-200.0, 300.0)))))
+    var child: Polygon = Polygon(List(PolygonRegion(List(V2(-300.0, 200.0), V2(-300.0, 0.0), V2(0.0, 0.0), V2(0.0, 200.0)))))
 
+    assert(!PolygonContains.contains(parent.asSeq, child.asSeq))
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
+
+  //todo fix
+  test("Axis aligned concave intersects 2 BUG") {
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    var parent: Polygon = Polygon(List(PolygonRegion(List(V2(-200.0, -100.0), V2(100.0, -100.0), V2(100.0, 200.0)))))
+    var child: Polygon = Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(0.0, 0.0), V2(-200.0, 0.0)))))
+
+    assert(!PolygonContains.contains(parent.asSeq, child.asSeq))
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
 
 
 }
