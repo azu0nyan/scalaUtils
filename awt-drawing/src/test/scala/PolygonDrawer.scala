@@ -9,9 +9,12 @@ import java.awt.Font
 import java.awt.Color
 import java.awt.event.KeyEvent
 import java.io.{File, FileOutputStream, PrintWriter}
+import java.util.logging.{Level, Logger}
 import scala.util.Using
 
 object PolygonDrawer {
+  Logger.getLogger("UTILS").setLevel(Level.SEVERE)
+  Logger.getLogger("utils.math.planar.algo.PolygonContains$").setLevel(Level.SEVERE)
   var addToParent: Boolean = false
   var curPoly: Seq[V2] = Seq()
   var curParent: Polygon = Polygon(Seq())
@@ -105,14 +108,38 @@ object PolygonDrawer {
         dumpID += 1
       }
     }, true)
-    Drawing.addMouseLeftClickBinding(pos => {
 
-      val point = if (Drawing.shiftControlAlt.shiftPressed) {
+    def modPosition(pos:V2):V2 = {
+      if (Drawing.shiftControlAlt.shiftPressed) {
         val x = Math.floor((pos + V2(snapValue / 2)).x / snapValue) * snapValue
         val y = Math.floor((pos + V2(snapValue / 2)).y / snapValue) * snapValue
-
         V2(x, y)
+      } else if(Drawing.shiftControlAlt.controlPressed){
+        (curParent.vertices ++ curChild.vertices).minByOption(_.distance(pos)).getOrElse(pos)
+      } else if(Drawing.shiftControlAlt.altPressed) {
+        (curParent.sides ++ curChild.sides).map(_.clothesPoint(pos)).minByOption(_.distance(pos)).getOrElse(pos)
       } else pos
+    }
+
+    Drawing.addDrawer(g => {
+      if (Drawing.shiftControlAlt.shiftPressed) {
+        val pos = modPosition(Drawing.camera.mouseInWorld)
+        DrawingUtils.drawLine(Drawing.camera.mouseInWorld, pos, g, Color.GREEN, 3)
+      } else if(Drawing.shiftControlAlt.controlPressed){
+        val pos = modPosition(Drawing.camera.mouseInWorld)
+        DrawingUtils.drawLine(Drawing.camera.mouseInWorld, pos, g, Color.RED, 3)
+      } else if(Drawing.shiftControlAlt.altPressed) {
+        val pos = modPosition(Drawing.camera.mouseInWorld)
+        DrawingUtils.drawLine(Drawing.camera.mouseInWorld, pos, g, Color.YELLOW, 3)
+      } else {
+        DrawingUtils.drawCircle(Drawing.camera.mouseInWorld, 5, g, Color.BLUE, true)
+      }
+    })
+
+    Drawing.addMouseLeftClickBinding(pos => {
+
+      val point = modPosition(pos)
+
       curPoly = curPoly :+ point
     })
 
