@@ -1,7 +1,7 @@
 package utils.math.plana.algo
 import org.scalatest.funsuite.AnyFunSuite
 import utils.datastructures.spatial.AARectangle
-import utils.math.planar.{Polygon, PolygonRegion, V2}
+import utils.math.planar.{Polygon, PolygonRegion, SegmentPlanar, V2}
 import utils.math.planar.algo.PolygonContains
 
 class PolygonContains extends AnyFunSuite {
@@ -83,6 +83,17 @@ class PolygonContains extends AnyFunSuite {
     assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
     assert(PolygonContains.contains(child.asSeq, child.asSeq))
   }
+  test("Axis aligned concave intersects 2 BUG case") {
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    var parent: Polygon = Polygon(List(PolygonRegion(List(V2(-200.0, -100.0), V2(100.0, -100.0), V2(100.0, 200.0)))))
+    var child: Polygon = Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(0.0, 0.0), V2(-200.0, 0.0)))))
+
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+  }
+
+//  test("YFormXSainity") {
+//    assert(SegmentPlanar(V2(-200, 0), V2(0, 200)).yFromX(-200))
+//  }
 
 
 }

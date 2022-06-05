@@ -122,6 +122,7 @@ object PolygonContains {
       //if we moved sweep line to next vertical bar
       if (currentX != sweepPoint.x) {
         Logging.logger.info(s"New currentX found: ${sweepPoint.x}")
+        Logging.logger.info(s"Running inside check for: ${currentX} ${yStructure.flatMap(s => s.yFromX(currentX))}")
         contains = checkInside(yStructure.flatMap(s => s.yFromX(currentX) match {
           case Some(y) if parentSegments.contains(s) && childSegments.contains(s) => Seq(SegmentStart(y, true), SegmentStart(y, false))
           case Some(y) if parentSegments.contains(s)  => Seq(SegmentStart(y, true))
@@ -210,7 +211,7 @@ object PolygonContains {
       logStats()
     }
 
-    if (yStructure.nonEmpty) {
+    if (contains && yStructure.nonEmpty) {
       Logging.logger.info(s"WTFFF")
       contains = checkInside(yStructure.flatMap(s => s.yFromX(currentX) match {
         case Some(y) if parentSegments.contains(s) && childSegments.contains(s) => Seq(SegmentStart(y, true), SegmentStart(y, false))
@@ -271,6 +272,7 @@ object PolygonContains {
       Logging.logger.info(s"Current status: $curStatus")
       cur = cur.tail
     }
+    Logging.logger.info(s"contains: ${!curStatus.failed}")
     !curStatus.failed
 
   }
