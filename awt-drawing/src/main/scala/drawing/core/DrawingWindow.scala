@@ -160,12 +160,12 @@ class DrawingWindow() extends JFrame {
       }
     }
     addKeyListener(listener)
-    return listener
+    listener
   }
 
 
   def addMouseMovedListener(f:V2 => Unit):Listener[V2] = {
-    return camera.mouseInWorldPosChanged.subscribe(f)
+    camera.mouseInWorldPosChanged.subscribe(f)
   }
   /**
     * @param f takes mouse in world
@@ -197,7 +197,7 @@ class DrawingWindow() extends JFrame {
       }
     }
     addMouseListener(listener)
-    return listener
+    listener
   }
 
   def setCloseButton(keycode:Int = KeyEvent.VK_ESCAPE):KeyListener  = {
