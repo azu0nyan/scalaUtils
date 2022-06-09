@@ -113,7 +113,7 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   override def toString: String = s"""V2($x, $y)"""
 
-  def toShortString: String = f"$x%.3f, $y%.3f"
+  def toShortString: String = f"${toShortStr(x)}, ${toShortStr(y)}"
 
   @inline def addZ(z: Scalar):V3 = V3(x, y, z)
 

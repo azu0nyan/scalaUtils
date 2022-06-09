@@ -25,24 +25,26 @@ object PolygonContains {
   case class VerticalSegment(minY: Scalar, maxY: Scalar, isParent: Boolean) extends Intersection
 
 
-  def contains(parent: Seq[Seq[V2]], child: Seq[Seq[V2]]): Boolean = {
-    //helpers
-    def orientation(v1: V2, v2: V2, v3: V2): Boolean = {
-      val tri = TrianglePlanar(v1, v2, v3)
-      (tri.nonDegenerate && tri.ccw) || (tri.degenerate && (v2 - v1).length < (v3 - v1).length)
-    }
+  //helpers
+  def orientation(v1: V2, v2: V2, v3: V2): Boolean = {
+    val tri = TrianglePlanar(v1, v2, v3)
+    (tri.nonDegenerate && tri.ccw) || (tri.degenerate && (v2 - v1).length < (v3 - v1).length)
+  }
 
-    /** assumes that both segments intersects L-structure */
-    def lessAt(at: V2, s1: SegmentPlanar, s2: SegmentPlanar): Boolean = {
-      val s1y = s1.yFromX(at.x)
-      val s2y = s2.yFromX(at.x)
-      (s1y, s2y) match {
-        case (Some(y1), Some(y2)) => y1 < y2 || (y1 == y2 && orientation(at, s1.v2, s2.v2))
-        case (Some(y1), None) => y1 <= at.y
-        case (None, Some(y2)) => y2 > at.y
-        case (None, None) => s1.v2.y < s2.v2.y //????
-      }
+  /** assumes that both segments intersects L-structure */
+  def lessAt(at: V2, s1: SegmentPlanar, s2: SegmentPlanar): Boolean = {
+    val s1y = s1.yFromX(at.x)
+    val s2y = s2.yFromX(at.x)
+    (s1y, s2y) match {
+      case (Some(y1), Some(y2)) => y1 ~< y2 || ((y1 ~= y2) && orientation(at, s1.v2, s2.v2))
+      case (Some(y1), None) => y1 <= at.y
+      case (None, Some(y2)) => y2 > at.y
+      case (None, None) => s1.v2.y < s2.v2.y //????
     }
+  }
+
+  def contains(parent: Seq[Seq[V2]], child: Seq[Seq[V2]]): Boolean = {
+
     def less(v1: V2, v2: V2): Boolean = v1.x < v2.x || (v1.x == v2.x && v1.y < v2.y)
     def makeSegment(v1: V2, v2: V2, isParent: Boolean): SegmentPlanar =
       if (less(v1, v2)) SegmentPlanar(v1, v2) else SegmentPlanar(v2, v1)
@@ -74,7 +76,8 @@ object PolygonContains {
     //data ops
     def detectCollinearSubseq(from: Int): Int = {
       var res = from + 1
-      while (res < yStructure.size && yStructure(res).body.collinear(yStructure(from).body))
+//      val y = yStructure(from).y
+      while (res < yStructure.size && yStructure(res).onSameLine(yStructure(from)))
         res = res + 1
 
       res - 1
@@ -142,7 +145,9 @@ object PolygonContains {
         //remove segments ending in sweepPoint
         var iter = start
         for (_ <- start to end)
-          if (yStructure(iter).v2 ~= sweepPoint) yStructure.remove(iter)
+          if (yStructure(iter).v2 ~= sweepPoint) {
+            Logging.logger.info(s"Removing ending segment: ${yStructure.remove(iter)}")
+          }
           else iter += 1
         //iter becomes new end
         val newEnd = iter - 1
@@ -182,11 +187,11 @@ object PolygonContains {
       while (segmentQueue.nonEmpty && (segmentQueue.head.v1 ~= sweepPoint)) {
         //assumes (curSeg.length > 0)
         val curSeg = segmentQueue.dequeue()
-        val insertionPoint = yStructure.indexWhere(ySeg => lessAt(sweepPoint, ySeg, curSeg))
-        Logging.logger.info(s"Dequeue starting segment : $curSeg inserting at $insertionPoint")
+        val insertionPoint = yStructure.lastIndexWhere(ySeg => lessAt(sweepPoint, ySeg, curSeg))
+        Logging.logger.info(s"Dequeue starting segment : $curSeg inserting at ${if(insertionPoint == -1) "BEGIN" else (insertionPoint + 1).toString}")
 
-        if (insertionPoint != -1) yStructure.insert(insertionPoint, curSeg)
-        else yStructure += curSeg
+        if (insertionPoint != -1) yStructure.insert(insertionPoint + 1, curSeg)
+        else yStructure.prepend(curSeg)
 
         xStructure += curSeg.v2
 

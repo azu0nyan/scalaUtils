@@ -295,6 +295,8 @@ case class SegmentPlanar(v1: V2, v2: V2) {
     //пересекаются
     return o1 != o2 && o3 != o4
   }
+
+  def onSameLine(ot:SegmentPlanar):Boolean = line.contains(ot)
 }
 
 sealed trait SegmentToSegmentPlanarIntersection

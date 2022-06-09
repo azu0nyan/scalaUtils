@@ -146,6 +146,7 @@ case class V3(x: Scalar, y: Scalar, z: Scalar) {
 
   override def toString: String = s"""V3($x, $y, $z)"""
 
+  def toShortString: String = f"${toShortStr(x)}, ${toShortStr(y)}, ${toShortStr(z)}"
   @inline def heightCord: Scalar = y //todo heightComponent
 
   /** creating 2d vector dropping x */
