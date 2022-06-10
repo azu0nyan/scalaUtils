@@ -145,5 +145,69 @@ class PolygonContains extends AnyFunSuite {
     assert(!PolygonContains.lessAt(at, top, bot))
   }
 
+  test("Parent cross contains center"){
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    val parent: Polygon = Polygon(List(PolygonRegion(List(V2(-100.0, 300.0), V2(0.0, 300.0), V2(0.0, 400.0), V2(100.0, 400.0), V2(100.0, 300.0), V2(200.0, 300.0), V2(200.0, 200.0), V2(100.0, 200.0), V2(100.0, 100.0), V2(0.0, 100.0), V2(0.0, 200.0), V2(-100.0, 200.0)))))
+    val child: Polygon = Polygon(List(PolygonRegion(List(V2(0.0, 300.0), V2(0.0, 200.0), V2(100.0, 200.0), V2(100.0, 300.0)))))
+    assert(PolygonContains.contains(parent.asSeq, child.asSeq))//!!!
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
+
+  test("Parent penta-cross contains center"){
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    val parent: Polygon = Polygon(List(PolygonRegion(List(V2(-100.0, 300.0), V2(-100.0, 400.0), V2(-200.0, 400.0), V2(-200.0, 300.0), V2(-100.0, 300.0), V2(-100.0, 200.0), V2(-200.0, 200.0), V2(-200.0, 100.0), V2(-100.0, 100.0), V2(-100.0, 200.0), V2(0.0, 200.0), V2(0.0, 100.0), V2(100.0, 100.0), V2(100.0, 200.0), V2(0.0, 200.0), V2(0.0, 300.0), V2(100.0, 300.0), V2(100.0, 400.0), V2(0.0, 400.0), V2(0.0, 300.0)))))
+    val child: Polygon = Polygon(List(PolygonRegion(List(V2(0.0, 300.0), V2(-100.0, 300.0), V2(-100.0, 200.0), V2(0.0, 200.0)))))
+    assert(PolygonContains.contains(parent.asSeq, child.asSeq))//!!!
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
+
+  test("Parent contains child in hole"){
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    val parent: Polygon = Polygon(List(PolygonRegion(List(V2(-400.0, 400.0), V2(100.0, 400.0), V2(100.0, 0.0), V2(-400.0, 0.0))), PolygonRegion(List(V2(-500.0, 500.0), V2(200.0, 500.0), V2(200.0, -100.0), V2(-500.0, -100.0)))))
+    val child: Polygon = Polygon(List(PolygonRegion(List(V2(-300.0, 300.0), V2(-300.0, 100.0), V2(0.0, 100.0), V2(0.0, 300.0)))))
+    assert(!PolygonContains.contains(parent.asSeq, child.asSeq))
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
+
+  test("Parent and child shouldnt intersects only touches"){
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    val parent: Polygon = Polygon(List(PolygonRegion(List(V2(-400.0, 300.0), V2(-100.0, 300.0), V2(-100.0, 0.0))), PolygonRegion(List(V2(-400.0, 300.0), V2(-100.0, 0.0)))))
+    val child: Polygon = Polygon(List(PolygonRegion(List(V2(-200.0, 100.0), V2(-200.0, 0.0), V2(-100.0, 0.0))), PolygonRegion(List(V2(-400.0, 300.0), V2(-400.0, 100.0), V2(-100.0, -200.0), V2(200.0, 100.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-200.0, 0.0), V2(-200.0, 100.0)))))
+    assert(!PolygonContains.contains(parent.asSeq, child.asSeq))
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
+
+  test("Parent should contain adjanced childs "){
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    var parent: Polygon = Polygon(Seq(PolygonRegion(Seq(V2(-300.0, 200.0), V2(-100.0, 0.0), V2(0.0, 100.0), V2(0.0, -100.0), V2(-100.0, -200.0), V2(-400.0, 100.0), V2(-400.0, 200.0), V2(-400.0, 300.0), V2(0.0, 300.0)))))
+    var child: Polygon = Polygon(List(PolygonRegion(List(V2(-300.0, 200.0), V2(-300.0, 0.0), V2(-100.0, -200.0), V2(0.0, -100.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-200.0, 0.0), V2(-200.0, 100.0))), PolygonRegion(List(V2(-200.0, 100.0), V2(-200.0, 0.0), V2(-100.0, 0.0)))))
+
+    assert(PolygonContains.contains(parent.asSeq, child.asSeq))
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
+
+  test("Parent should contain adjanced childs 2"){
+    System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT][%4$-7s] %5$s %n")
+    var parent: Polygon = Polygon(List(PolygonRegion(List(V2(-500.0, 200.0), V2(-100.0, -200.0), V2(300.0, 200.0), V2(-100.0, 600.0), V2(-300.0, 400.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-400.0, 300.0)))))
+    var child: Polygon = Polygon(List(PolygonRegion(List(V2(-300.0, 200.0), V2(-300.0, 0.0), V2(-100.0, -200.0), V2(0.0, -100.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-200.0, 0.0), V2(-200.0, 100.0))), PolygonRegion(List(V2(-200.0, 100.0), V2(-200.0, 0.0), V2(-100.0, 0.0)))))
+
+    assert(PolygonContains.contains(parent.asSeq, child.asSeq))
+
+    assert(!PolygonContains.contains(child.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(parent.asSeq, parent.asSeq))
+    assert(PolygonContains.contains(child.asSeq, child.asSeq))
+  }
+
+
 
 }
