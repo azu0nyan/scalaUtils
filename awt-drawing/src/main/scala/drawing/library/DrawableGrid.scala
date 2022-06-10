@@ -15,11 +15,15 @@ class DrawableGrid(
                     var xAxis: V2 = V2.ox,
                     var yAxis: V2 = V2.oy,
                     var color: Color = Color.BLACK,
-                    var lineWidth: Int = 1
+                    var lineWidth: Int = 1,
+                    var printDivs: Boolean = true,
+                    var divsFontSize: Int = 15
                   ) extends SimpleDrawable() {
 
   override def drawAndUpdate(g: Graphics2D, dt: Scalar): Unit = {
     for (x <- min.x to max.x by lineEvery) DrawingUtils.drawLine(pivot + x * xAxis + min.y * yAxis, pivot + x * xAxis + max.y * yAxis, g, color, lineWidth)
     for (y <- min.y to max.y by lineEvery) DrawingUtils.drawLine(pivot + min.x * xAxis + y * yAxis, pivot + max.x * xAxis + y * yAxis, g, color, lineWidth)
+    for (x <- min.x to max.x by lineEvery) DrawingUtils.drawText(s"$x", pivot + x * xAxis + V2(0, lineEvery / 4), g, fontSize = divsFontSize, color = Color.BLACK)
+    for (y <- min.y to max.y by lineEvery if y != 0) DrawingUtils.drawText(s"$y", pivot + y * yAxis + V2(lineEvery / 4, 0), g, fontSize = divsFontSize, color = Color.BLACK)
   }
 }

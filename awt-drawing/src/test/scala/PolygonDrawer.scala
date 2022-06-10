@@ -15,10 +15,14 @@ import scala.util.Using
 object PolygonDrawer {
   Logger.getLogger("UTILS").setLevel(Level.SEVERE)
   Logger.getLogger("utils.math.planar.algo.PolygonContains$").setLevel(Level.SEVERE)
-  var addToParent: Boolean = false
+  var addToParent: Boolean = true
+
+  var parent: Polygon = Polygon(List(PolygonRegion(List(V2(-500.0, 200.0), V2(-100.0, -200.0), V2(300.0, 200.0), V2(-100.0, 600.0), V2(-300.0, 400.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-400.0, 300.0)))))
+  var child: Polygon = Polygon(List(PolygonRegion(List(V2(-300.0, 200.0), V2(-300.0, 0.0), V2(-100.0, -200.0), V2(0.0, -100.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-200.0, 0.0), V2(-200.0, 100.0))), PolygonRegion(List(V2(-200.0, 100.0), V2(-200.0, 0.0), V2(-100.0, 0.0)))))
+
   var curPoly: Seq[V2] = Seq()
-  var curParent: Polygon = Polygon(Seq())
-  var curChild: Polygon = Polygon(Seq())
+
+
   var dumpID:Int = 0
 
   def main(args: Array[String]): Unit = {
@@ -59,8 +63,8 @@ object PolygonDrawer {
 
     Drawing.addDrawer(g => {
       g.setFont(new Font("", Font.BOLD, 30))
-      val tmpParent = if(addToParent && curPoly.size >= 3) curParent.addRegion(PolygonRegion(curPoly)) else curParent
-      val tmpChild = if(!addToParent && curPoly.size >= 3) curChild.addRegion(PolygonRegion(curPoly)) else curChild
+      val tmpParent = if(addToParent && curPoly.size >= 3) parent.addRegion(PolygonRegion(curPoly)) else parent
+      val tmpChild = if(!addToParent && curPoly.size >= 3) child.addRegion(PolygonRegion(curPoly)) else child
       if(tmpParent.regions.nonEmpty && tmpChild.regions.nonEmpty) {
         var text = ""
         try{
@@ -84,27 +88,43 @@ object PolygonDrawer {
       addToParent = !addToParent
     })
 
-    Drawing.addKeyBinding(KeyEvent.VK_ENTER, {
-      println("ENTER")
+    def addPolyClick():Unit = {
+      println("Add poly")
       if (curPoly.nonEmpty) {
         if (addToParent) {
-          curParent = curParent.addRegion(PolygonRegion(curPoly))
+          parent = parent.addRegion(PolygonRegion(curPoly))
           curPoly = Seq()
         } else {
-          curChild = curChild.addRegion(PolygonRegion(curPoly))
+          child = child.addRegion(PolygonRegion(curPoly))
           curPoly = Seq()
         }
       }
 
+    }
 
-    }, true)
+    Drawing.addKeyBinding(KeyEvent.VK_ENTER, addPolyClick)
+    Drawing.addKeyBinding(KeyEvent.VK_SPACE, addPolyClick)
+    Drawing.addKeyBinding(KeyEvent.VK_Z,
+      if(Drawing.shiftControlAlt.controlPressed && !Drawing.shiftControlAlt.shiftPressed){
+        curPoly = curPoly.dropRight(1)
+      } else if(Drawing.shiftControlAlt.controlPressed && Drawing.shiftControlAlt.shiftPressed) {
+        curPoly = curPoly.drop(1)
+      }
+    )
+    Drawing.addKeyBinding(KeyEvent.VK_BACK_SPACE, {
+      parent = Polygon(parent.regions.reverse.tail.reverse)
+    })
+    Drawing.addKeyBinding(KeyEvent.VK_DELETE, {
+      child = Polygon(child.regions.reverse.tail.reverse)
+    })
 
     Drawing.addKeyBinding(KeyEvent.VK_0, {
       println(s"Dumping current polys id=$dumpID")
       Using(new PrintWriter(new FileOutputStream(new File("GenPolys.txt"), true))) { pw =>
         pw.println(s"-------------$dumpID-------------")
-        pw.println(s"var parent: Polygon = $curParent")
-        pw.println(s"var child: Polygon = $curChild")
+        pw.println(s"var parent: Polygon = $parent")
+        pw.println(s"var child: Polygon = $child")
+        pw.println(s"var curPoly: Seq[V2] = $curPoly")
         dumpID += 1
       }
     }, true)
@@ -115,9 +135,9 @@ object PolygonDrawer {
         val y = Math.floor((pos + V2(snapValue / 2)).y / snapValue) * snapValue
         V2(x, y)
       } else if(Drawing.shiftControlAlt.controlPressed){
-        (curParent.vertices ++ curChild.vertices).minByOption(_.distance(pos)).getOrElse(pos)
+        (parent.vertices ++ child.vertices).minByOption(_.distance(pos)).getOrElse(pos)
       } else if(Drawing.shiftControlAlt.altPressed) {
-        (curParent.sides ++ curChild.sides).map(_.clothesPoint(pos)).minByOption(_.distance(pos)).getOrElse(pos)
+        (parent.sides ++ child.sides).map(_.clothesPoint(pos)).minByOption(_.distance(pos)).getOrElse(pos)
       } else pos
     }
 
@@ -143,10 +163,29 @@ object PolygonDrawer {
       curPoly = curPoly :+ point
     })
 
+    Drawing.addMouseRightClickBinding{ pos => {
+      if(addToParent){
+        parent.regions.find(_.contains(pos)) match {
+          case Some(reg) =>
+            parent = parent.copy(regions = parent.regions.filter(_ != reg) ++ Option.when(curPoly.size >= 3)(PolygonRegion(curPoly)).toSeq)
+            curPoly = reg.vertices
+          case None =>
+        }
+      } else {
+        child.regions.find(_.contains(pos)) match {
+          case Some(reg) =>
+            child = child.copy(regions = child.regions.filter(_ != reg) ++ Option.when(curPoly.size >= 3)(PolygonRegion(curPoly)).toSeq)
+            curPoly = reg.vertices
+          case None =>
+        }
+      }
+    }}
 
     Drawing.addDrawer(g => {
-      for (p <- curParent.regions) DrawingUtils.drawPolygon(p, g, true, parentColor)
-      for (p <- curChild.regions) DrawingUtils.drawPolygon(p, g, true, childColor)
+      for (p <- parent.regions) DrawingUtils.drawPolygon(p, g, true, parentColor)
+      for (p <- child.regions) DrawingUtils.drawPolygon(p, g, true, childColor)
+      for (p <- parent.regions) DrawingUtils.drawPolygon(p, g, false, Color.BLACK, 3)
+      for (p <- child.regions) DrawingUtils.drawPolygon(p, g, false, Color.BLACK, 3)
       curPoly.size match {
         case 0 =>
         case 1 => DrawingUtils.drawCircle(curPoly.head, 2f, g, editColor, true, 2)
