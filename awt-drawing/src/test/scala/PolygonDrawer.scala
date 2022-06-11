@@ -23,7 +23,7 @@ object PolygonDrawer {
   var curPoly: Seq[V2] = Seq()
 
 
-  var dumpID:Int = 0
+  var dumpID: Int = 0
 
   def main(args: Array[String]): Unit = {
     implicit val w: DrawingWindow = Drawing
@@ -63,18 +63,21 @@ object PolygonDrawer {
 
     Drawing.addDrawer(g => {
       g.setFont(new Font("", Font.BOLD, 30))
-      val tmpParent = if(addToParent && curPoly.size >= 3) parent.addRegion(PolygonRegion(curPoly)) else parent
-      val tmpChild = if(!addToParent && curPoly.size >= 3) child.addRegion(PolygonRegion(curPoly)) else child
-      if(tmpParent.regions.nonEmpty && tmpChild.regions.nonEmpty) {
+      val tmpParent = if (addToParent && curPoly.size >= 3) parent.addRegion(PolygonRegion(curPoly)) else parent
+      val tmpChild = if (!addToParent && curPoly.size >= 3) child.addRegion(PolygonRegion(curPoly)) else child
+      if (tmpParent.regions.nonEmpty && tmpChild.regions.nonEmpty) {
         var text = ""
-        try{
-          if(PolygonContains.contains(tmpParent.asSeq, tmpChild.asSeq)) text += " Parent contains child. "
+        try {
+          if (PolygonContains.contains(tmpParent.asSeq, tmpChild.asSeq, false)) text += (" Parent contains child. " +
+            (if (PolygonContains.contains(tmpParent.asSeq, tmpChild.asSeq, true)) " NO BORDER CROSSING. " else "BORDER CROSSING"))
         } catch {
           case t: Throwable => text += t.getMessage
         }
 
-        try{
-          if(PolygonContains.contains(tmpChild.asSeq, tmpParent.asSeq)) text += " Child contains parent. "
+        try {
+          if (PolygonContains.contains(tmpChild.asSeq, tmpParent.asSeq, false)) text += (" Child contains parent. " +
+            (if (PolygonContains.contains(tmpChild.asSeq, tmpParent.asSeq, true)) " NO BORDER CROSSING. " else "BORDER CROSSING"))
+          if (PolygonContains.contains(tmpChild.asSeq, tmpParent.asSeq)) text += " Child contains parent. "
         } catch {
           case t: Throwable => text += t.getMessage
         }
@@ -88,7 +91,7 @@ object PolygonDrawer {
       addToParent = !addToParent
     })
 
-    def addPolyClick():Unit = {
+    def addPolyClick(): Unit = {
       println("Add poly")
       if (curPoly.nonEmpty) {
         if (addToParent) {
@@ -105,9 +108,9 @@ object PolygonDrawer {
     Drawing.addKeyBinding(KeyEvent.VK_ENTER, addPolyClick)
     Drawing.addKeyBinding(KeyEvent.VK_SPACE, addPolyClick)
     Drawing.addKeyBinding(KeyEvent.VK_Z,
-      if(Drawing.shiftControlAlt.controlPressed && !Drawing.shiftControlAlt.shiftPressed){
+      if (Drawing.shiftControlAlt.controlPressed && !Drawing.shiftControlAlt.shiftPressed) {
         curPoly = curPoly.dropRight(1)
-      } else if(Drawing.shiftControlAlt.controlPressed && Drawing.shiftControlAlt.shiftPressed) {
+      } else if (Drawing.shiftControlAlt.controlPressed && Drawing.shiftControlAlt.shiftPressed) {
         curPoly = curPoly.drop(1)
       }
     )
@@ -129,14 +132,14 @@ object PolygonDrawer {
       }
     }, true)
 
-    def modPosition(pos:V2):V2 = {
+    def modPosition(pos: V2): V2 = {
       if (Drawing.shiftControlAlt.shiftPressed) {
         val x = Math.floor((pos + V2(snapValue / 2)).x / snapValue) * snapValue
         val y = Math.floor((pos + V2(snapValue / 2)).y / snapValue) * snapValue
         V2(x, y)
-      } else if(Drawing.shiftControlAlt.controlPressed){
+      } else if (Drawing.shiftControlAlt.controlPressed) {
         (parent.vertices ++ child.vertices).minByOption(_.distance(pos)).getOrElse(pos)
-      } else if(Drawing.shiftControlAlt.altPressed) {
+      } else if (Drawing.shiftControlAlt.altPressed) {
         (parent.sides ++ child.sides).map(_.clothesPoint(pos)).minByOption(_.distance(pos)).getOrElse(pos)
       } else pos
     }
@@ -145,10 +148,10 @@ object PolygonDrawer {
       if (Drawing.shiftControlAlt.shiftPressed) {
         val pos = modPosition(Drawing.camera.mouseInWorld)
         DrawingUtils.drawLine(Drawing.camera.mouseInWorld, pos, g, Color.GREEN, 3)
-      } else if(Drawing.shiftControlAlt.controlPressed){
+      } else if (Drawing.shiftControlAlt.controlPressed) {
         val pos = modPosition(Drawing.camera.mouseInWorld)
         DrawingUtils.drawLine(Drawing.camera.mouseInWorld, pos, g, Color.RED, 3)
-      } else if(Drawing.shiftControlAlt.altPressed) {
+      } else if (Drawing.shiftControlAlt.altPressed) {
         val pos = modPosition(Drawing.camera.mouseInWorld)
         DrawingUtils.drawLine(Drawing.camera.mouseInWorld, pos, g, Color.YELLOW, 3)
       } else {
@@ -163,8 +166,8 @@ object PolygonDrawer {
       curPoly = curPoly :+ point
     })
 
-    Drawing.addMouseRightClickBinding{ pos => {
-      if(addToParent){
+    Drawing.addMouseRightClickBinding { pos => {
+      if (addToParent) {
         parent.regions.find(_.contains(pos)) match {
           case Some(reg) =>
             parent = parent.copy(regions = parent.regions.filter(_ != reg) ++ Option.when(curPoly.size >= 3)(PolygonRegion(curPoly)).toSeq)
@@ -179,7 +182,8 @@ object PolygonDrawer {
           case None =>
         }
       }
-    }}
+    }
+    }
 
     Drawing.addDrawer(g => {
       for (p <- parent.regions) DrawingUtils.drawPolygon(p, g, true, parentColor)
@@ -189,10 +193,9 @@ object PolygonDrawer {
       curPoly.size match {
         case 0 =>
         case 1 => DrawingUtils.drawCircle(curPoly.head, 2f, g, editColor, true, 2)
-        case 2 =>DrawingUtils.drawLine(curPoly.head, curPoly.tail.head, g, editColor,  2)
+        case 2 => DrawingUtils.drawLine(curPoly.head, curPoly.tail.head, g, editColor, 2)
         case _ => DrawingUtils.drawPolygon(PolygonRegion(curPoly), g, true, editColor)
       }
-
 
 
     }, -100)

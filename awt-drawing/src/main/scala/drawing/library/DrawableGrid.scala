@@ -23,7 +23,9 @@ class DrawableGrid(
   override def drawAndUpdate(g: Graphics2D, dt: Scalar): Unit = {
     for (x <- min.x to max.x by lineEvery) DrawingUtils.drawLine(pivot + x * xAxis + min.y * yAxis, pivot + x * xAxis + max.y * yAxis, g, color, lineWidth)
     for (y <- min.y to max.y by lineEvery) DrawingUtils.drawLine(pivot + min.x * xAxis + y * yAxis, pivot + max.x * xAxis + y * yAxis, g, color, lineWidth)
-    for (x <- min.x to max.x by lineEvery) DrawingUtils.drawText(s"$x", pivot + x * xAxis + V2(0, lineEvery / 4), g, fontSize = divsFontSize, color = Color.BLACK)
-    for (y <- min.y to max.y by lineEvery if y != 0) DrawingUtils.drawText(s"$y", pivot + y * yAxis + V2(lineEvery / 4, 0), g, fontSize = divsFontSize, color = Color.BLACK)
+    if(printDivs) {
+      for (x <- min.x to max.x by lineEvery) DrawingUtils.drawText(s"$x", pivot + x * xAxis + V2(0, lineEvery / 4), g, fontSize = divsFontSize, color = Color.BLACK)
+      for (y <- min.y to max.y by lineEvery if y != 0) DrawingUtils.drawText(s"$y", pivot + y * yAxis + V2(lineEvery / 4, 0), g, fontSize = divsFontSize, color = Color.BLACK)
+    }
   }
 }
