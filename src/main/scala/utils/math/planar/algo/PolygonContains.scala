@@ -44,7 +44,7 @@ object PolygonContains {
   }
 
  case class SegmentIsParent(segment:SegmentPlanar, isParent:Boolean)
-  def contains(parent: Seq[Seq[V2]], child: Seq[Seq[V2]]): Boolean = {
+  def contains(parent: Seq[Seq[V2]], child: Seq[Seq[V2]], forbidParentBorderCrossing: Boolean = false): Boolean = {
 
     def less(v1: V2, v2: V2): Boolean = v1.x < v2.x || (v1.x == v2.x && v1.y < v2.y)
     def makeSegment(v1: V2, v2: V2, isParent: Boolean): SegmentIsParent =
@@ -138,7 +138,7 @@ object PolygonContains {
       if (currentX != sweepPoint.x) {
         Logging.logger.info(s"New currentX found: ${sweepPoint.x}")
         Logging.logger.info(s"Running inside check for: ${currentX} ${yStructure.flatMap(s => s.segment.yFromX(currentX))}")
-        contains = checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
+        contains &= checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
           case Some(y) => Seq(SegmentMiddle(y, s.isParent))
           case _ => Seq()
         }).toSeq)
@@ -163,13 +163,45 @@ object PolygonContains {
         if (start <= newEnd) {
           //reverse collinear segment bulks to prevent its reverse
           var i = start
-          while (i < iter) {
-            val collinearEnd = detectCollinearSubseq(i)
-            if (i != collinearEnd) {
-              reverseY(i, collinearEnd)
-              i = collinearEnd + 1
-            } else {
-              i = i + 1
+
+          //looking for parent to child noncollinear intersections
+          if(forbidParentBorderCrossing) {
+            var parentVisited = false
+            var childVisited = false
+            while (i < iter) {
+              var pInt = false
+              var cInt = false
+              val collinearEnd = detectCollinearSubseq(i)
+              if (i != collinearEnd) {
+                reverseY(i, collinearEnd)
+                for(j <- i to collinearEnd){
+                  pInt |= yStructure(j).isParent
+                  cInt |= !yStructure(j).isParent
+                }
+                i = collinearEnd + 1
+              } else {
+                pInt |= yStructure(i).isParent
+                cInt |= !yStructure(i).isParent
+                i = i + 1
+              }
+              if(pInt && !cInt){
+                if(childVisited) contains = false
+                else parentVisited = true
+              } else if(!pInt &&cInt){
+                if(parentVisited) contains = false
+                else childVisited = true
+              }
+            }
+
+          } else {
+            while (i < iter) {
+              val collinearEnd = detectCollinearSubseq(i)
+              if (i != collinearEnd) {
+                reverseY(i, collinearEnd)
+                i = collinearEnd + 1
+              } else {
+                i = i + 1
+              }
             }
           }
 
@@ -227,7 +259,7 @@ object PolygonContains {
 
     if (contains && yStructure.nonEmpty) {
       Logging.logger.info(s"WTFFF")
-      contains = checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
+      contains &= checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
         case Some(y) => Seq(SegmentMiddle(y, s.isParent))
         case _ => Seq()
       }).toSeq)
