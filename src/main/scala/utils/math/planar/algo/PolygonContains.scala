@@ -43,41 +43,50 @@ object PolygonContains {
     }
   }
 
+ case class SegmentIsParent(segment:SegmentPlanar, isParent:Boolean)
   def contains(parent: Seq[Seq[V2]], child: Seq[Seq[V2]]): Boolean = {
 
     def less(v1: V2, v2: V2): Boolean = v1.x < v2.x || (v1.x == v2.x && v1.y < v2.y)
-    def makeSegment(v1: V2, v2: V2, isParent: Boolean): SegmentPlanar =
-      if (less(v1, v2)) SegmentPlanar(v1, v2) else SegmentPlanar(v2, v1)
+    def makeSegment(v1: V2, v2: V2, isParent: Boolean): SegmentIsParent =
+      SegmentIsParent(if (less(v1, v2)) SegmentPlanar(v1, v2) else SegmentPlanar(v2, v1), isParent)
 
 
     //data
-    val parentSegments: Set[SegmentPlanar] = parent.flatMap(CircullarOps.toCyclicPairs).map { case (x, y) => makeSegment(x, y, true) }.toSet
-    val childSegments: Set[SegmentPlanar] = child.flatMap(CircullarOps.toCyclicPairs).map { case (x, y) => makeSegment(x, y, false) }.toSet
+//    val parentSegs: Set[SegmentIsParent] = parent.flatMap(CircullarOps.toCyclicPairs).map { case (x, y) => makeSegment(x, y, true) }.toSet
+//    val childSegs: Set[SegmentIsParent] = child.flatMap(CircullarOps.toCyclicPairs).map { case (x, y) => makeSegment(x, y, false) }.toSet
 
 //    implicit val pointOrdering: Ordering[V2] = Ordering.fromLessThan(less)
     val v2Ordering = Ordering.by[V2, Scalar](-_.x).orElseBy[Scalar](-_.y)
     val xStructure = new mutable.PriorityQueue[V2]()(v2Ordering)
-    val yStructure = new ArrayBuffer[SegmentPlanar]()
-    val segmentQueue = new mutable.PriorityQueue[SegmentPlanar]()(
-      Ordering.by[SegmentPlanar, V2](_.v1)(v2Ordering).orElseBy[V2](_.v2)(v2Ordering)
+
+    val yStructure = new ArrayBuffer[SegmentIsParent]()
+    val segmentQueue = new mutable.PriorityQueue[SegmentIsParent]()(
+      Ordering.by[SegmentIsParent, V2](_.segment.v1)(v2Ordering).orElseBy[V2](_.segment.v2)(v2Ordering)
     )
-    var contains = true
+    var contains: Boolean = true
 
 
     //push segment start events to queue
-    for (s@SegmentPlanar(v1, v2) <- childSegments ++ parentSegments) {
-      xStructure += v1
+    for(s <- parent.flatMap(CircullarOps.toCyclicPairs).map { case (x, y) => makeSegment(x, y, true) }){
+      xStructure += s.segment.v1
       segmentQueue += s
     }
+    for(s <- child.flatMap(CircullarOps.toCyclicPairs).map { case (x, y) => makeSegment(x, y, false) }){
+      xStructure += s.segment.v1
+      segmentQueue += s
+    }
+//    for (s@SegmentPlanar(v1, v2) <- childSegments ++ parentSegments) {
+//      xStructure += v1
+//      segmentQueue += s
+//    }
 
-//    var currentXIntersections: mutable.Buffer[Intersection] = mutable.Buffer()
+
     var currentX = xStructure.head.x
 
     //data ops
     def detectCollinearSubseq(from: Int): Int = {
       var res = from + 1
-//      val y = yStructure(from).y
-      while (res < yStructure.size && yStructure(res).onSameLine(yStructure(from)))
+      while (res < yStructure.size && yStructure(res).segment.onSameLine(yStructure(from).segment))
         res = res + 1
 
       res - 1
@@ -103,14 +112,17 @@ object PolygonContains {
     }
 
     Logging.logger.info(s"Init finished")
-    Logging.logger.info(s"Parent segments: ${parentSegments.map{case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})"}.mkString(" | ")}")
-    Logging.logger.info(s"Child segments: ${childSegments.map{case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})"}.mkString(" | ")}  ")
+//    Logging.logger.info(s"Parent segments: ${parentSegments.map{case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})"}.mkString(" | ")}")
+//    Logging.logger.info(s"Child segments: ${childSegments.map{case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})"}.mkString(" | ")}  ")
 
     def logStats(): Unit = {
       Logging.logger.info(s"currentX: ${currentX}")
       Logging.logger.info(s"xStructure: ${xStructure.clone().dequeueAll[V2].map(_.toShortString)} ")
-      Logging.logger.info(s"yStructure: ${yStructure.toSeq.map { case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})" }.mkString(" | ")}")
-      Logging.logger.info(s"segmentQueue: ${segmentQueue.clone().dequeueAll[SegmentPlanar].map { case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})" }.mkString(" | ")}")
+      Logging.logger.info(s"yStructure: ${yStructure.toSeq.map { case SegmentIsParent(SegmentPlanar(v1, v2), isParent) =>
+        s"(${v1.toShortString} -> ${v2.toShortString} ${if(isParent) "PARENT" else "CHILD"})"}.mkString(" | ")}")
+      Logging.logger.info(s"segmentQueue: ${segmentQueue.clone().dequeueAll[SegmentIsParent]
+        .map { case SegmentIsParent(SegmentPlanar(v1, v2), isParent) =>
+          s"(${v1.toShortString} -> ${v2.toShortString} ${if(isParent) "PARENT" else "CHILD"})" }.mkString(" | ")}")
     }
     logStats()
     while (xStructure.nonEmpty && contains) {
@@ -125,27 +137,24 @@ object PolygonContains {
       //if we moved sweep line to next vertical bar
       if (currentX != sweepPoint.x) {
         Logging.logger.info(s"New currentX found: ${sweepPoint.x}")
-        Logging.logger.info(s"Running inside check for: ${currentX} ${yStructure.flatMap(s => s.yFromX(currentX))}")
-        contains = checkInside(yStructure.flatMap(s => s.yFromX(currentX) match {
-          case Some(y) if parentSegments.contains(s) && childSegments.contains(s) => Seq(SegmentStart(y, true), SegmentStart(y, false))
-          case Some(y) if parentSegments.contains(s)  => Seq(SegmentStart(y, true))
-          case Some(y) if childSegments.contains(s) => Seq(SegmentStart(y, false))
+        Logging.logger.info(s"Running inside check for: ${currentX} ${yStructure.flatMap(s => s.segment.yFromX(currentX))}")
+        contains = checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
+          case Some(y) => Seq(SegmentMiddle(y, s.isParent))
           case _ => Seq()
         }).toSeq)
-//        currentXIntersections.clear()
         currentX = sweepPoint.x
       }
 
       //detect yStructure subSeq containing sweepPoint
-      val start = yStructure.indexWhere(_.contains(sweepPoint))
-      val end = yStructure.lastIndexWhere(_.contains(sweepPoint))
+      val start = yStructure.indexWhere(_.segment.contains(sweepPoint))
+      val end = yStructure.lastIndexWhere(_.segment.contains(sweepPoint))
 
       //remove segments ending in sweepPoint and reverse order of segments passing sweepPoint
       if (start != -1 && end != -1) {
         //remove segments ending in sweepPoint
         var iter = start
         for (_ <- start to end)
-          if (yStructure(iter).v2 ~= sweepPoint) {
+          if (yStructure(iter).segment.v2 ~= sweepPoint) {
             Logging.logger.info(s"Removing ending segment: ${yStructure.remove(iter)}")
           }
           else iter += 1
@@ -184,16 +193,16 @@ object PolygonContains {
 
      // var alreadyAdded: Set[SegmentPlanar] = Set() //todo handle multiple same segments
 
-      while (segmentQueue.nonEmpty && (segmentQueue.head.v1 ~= sweepPoint)) {
+      while (segmentQueue.nonEmpty && (segmentQueue.head.segment.v1 ~= sweepPoint)) {
         //assumes (curSeg.length > 0)
         val curSeg = segmentQueue.dequeue()
-        val insertionPoint = yStructure.lastIndexWhere(ySeg => lessAt(sweepPoint, ySeg, curSeg))
+        val insertionPoint = yStructure.lastIndexWhere(ySeg => lessAt(sweepPoint, ySeg.segment, curSeg.segment))
         Logging.logger.info(s"Dequeue starting segment : $curSeg inserting at ${if(insertionPoint == -1) "BEGIN" else (insertionPoint + 1).toString}")
 
         if (insertionPoint != -1) yStructure.insert(insertionPoint + 1, curSeg)
         else yStructure.prepend(curSeg)
 
-        xStructure += curSeg.v2
+        xStructure += curSeg.segment.v2
 
         //add start events for segment
         /*if (!alreadyAdded.contains(curSeg)) {
@@ -208,20 +217,18 @@ object PolygonContains {
         }*/
       }
 
-      val curStart = yStructure.indexWhere(_.contains(sweepPoint))
-      val curEnd = yStructure.lastIndexWhere(_.contains(sweepPoint))
-      if (curStart > 0) addIntersectionsIfNeeded(sweepPoint, yStructure(curStart - 1), yStructure(curStart))
-      if (curEnd>= 0 && curEnd < yStructure.size - 1) addIntersectionsIfNeeded(sweepPoint, yStructure(curEnd), yStructure(curEnd + 1))
+      val curStart = yStructure.indexWhere(_.segment.contains(sweepPoint))
+      val curEnd = yStructure.lastIndexWhere(_.segment.contains(sweepPoint))
+      if (curStart > 0) addIntersectionsIfNeeded(sweepPoint, yStructure(curStart - 1).segment, yStructure(curStart).segment)
+      if (curEnd>= 0 && curEnd < yStructure.size - 1) addIntersectionsIfNeeded(sweepPoint, yStructure(curEnd).segment, yStructure(curEnd + 1).segment)
 
       logStats()
     }
 
     if (contains && yStructure.nonEmpty) {
       Logging.logger.info(s"WTFFF")
-      contains = checkInside(yStructure.flatMap(s => s.yFromX(currentX) match {
-        case Some(y) if parentSegments.contains(s) && childSegments.contains(s) => Seq(SegmentStart(y, true), SegmentStart(y, false))
-        case Some(y) if parentSegments.contains(s)  => Seq(SegmentStart(y, true))
-        case Some(y) if childSegments.contains(s) => Seq(SegmentStart(y, false))
+      contains = checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
+        case Some(y) => Seq(SegmentMiddle(y, s.isParent))
         case _ => Seq()
       }).toSeq)
     }
