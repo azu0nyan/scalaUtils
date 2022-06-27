@@ -28,6 +28,10 @@ case class LinePlanar(origin: V2, direction: UnitV2) {
 
   def distanceTo(point:V2):Scalar = normal ** (point - origin)
 
+  def contains(v:V2):Boolean = distanceTo(v) ~= 0 //todo mb do through line equation
+
+  def contains(s:SegmentPlanar):Boolean = contains(s.v1) && contains(s.v2)
+
   def projectOnLine(point:V2):V2 = point - (distanceTo(point) * normal)
 
   def toSegment:SegmentPlanar = SegmentPlanar(origin, origin + direction)

@@ -31,7 +31,7 @@ object PolygonRegion {
 
     def areaSign: Int = math.signum(areaSigned).toInt
 
-    def areaSigned: Scalar = sides.map(fs => (fs.v1.x + fs.v2.x) * (fs.v1.y - fs.v2.y)).sum
+    def areaSigned: Scalar = sides.map(fs => (fs.v1.x + fs.v2.x) * (fs.v1.y - fs.v2.y)).sum / 2.0
 
     /**
      * todo tmp func

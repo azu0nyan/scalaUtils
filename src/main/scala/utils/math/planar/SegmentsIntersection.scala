@@ -7,8 +7,7 @@ import utils.sugar._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-
-object SegmentsIntersection {
+@deprecated object SegmentsIntersection {
 
 
   /**

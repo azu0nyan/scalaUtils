@@ -35,6 +35,8 @@ object V2 {
 }
 
 case class V2(x: Scalar, y: Scalar) extends WithMap{
+
+
   def toProduct:(Scalar, Scalar) = (x, y)
 
   @inline def reciporalSafe: V2 = V2(
@@ -110,6 +112,8 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
   @inline def length: Scalar = math.hypot(x, y)
 
   override def toString: String = s"""V2($x, $y)"""
+
+  def toShortString: String = f"${toShortStr(x)}, ${toShortStr(y)}"
 
   @inline def addZ(z: Scalar):V3 = V3(x, y, z)
 

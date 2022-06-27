@@ -20,7 +20,7 @@ package object math
   val idScale: Scale = V3.one
   type Axes = (V3, V3, V3)
 
-  val percision:Scalar = 0.00000001d
+  val percision: Scalar = 0.00000001d
 
 
   val ZERO: Scalar = 0f
@@ -49,6 +49,12 @@ package object math
   /** A value to multiply a radian value by, to convert it to degrees. */
   val RAD_TO_DEG: Scalar = 180.0f / PI
 
+  def toShortStr(s: Scalar): String = {
+    val res = f"$s%.3f"
+    val dropped = res.reverse.dropWhile(_ == '0').reverse
+    if (dropped.last == '.') dropped.dropRight(1)
+    else dropped
+  }
 
   implicit class Power(val s: Scalar) extends AnyVal {
     def ^^(p: Scalar): Scalar = pow(s, p)
@@ -61,13 +67,12 @@ package object math
   }
 
 
-
   implicit class LongPower(val s: Long) extends AnyVal {
-    def fastPow(n:Long, p:Long) :Long =
-      if(p == 0) 1
-      else if(p == 1) n
-      else if((p & 1) == 0) {
-        val res = fastPow(n, p>>1)
+    def fastPow(n: Long, p: Long): Long =
+      if (p == 0) 1
+      else if (p == 1) n
+      else if ((p & 1) == 0) {
+        val res = fastPow(n, p >> 1)
         res * res
       } else n * fastPow(n, p - 1)
     def ^^(p: Long): Long = fastPow(s, p)
@@ -78,7 +83,6 @@ package object math
 
     def tesseracted: Long = s * s * s * s
   }
-
 
 
   implicit class WithAlmostEquals(val d: Scalar) extends AnyVal {
@@ -134,7 +138,6 @@ package object math
   def compare(a: Scalar, b: Scalar): Int = if (a < b) -1 else if (a > b) 1 else 0
 
 
-
   //casts
   val Raycast: RaycastTrait = utils.math.space.intersections.Raycast
 
@@ -144,7 +147,7 @@ package object math
 
   val Maps: MapsTrait = utils.math.Maps
 
-//  val UnitMaps: UnitMaps = utils.math.UnitMaps
+  //  val UnitMaps: UnitMaps = utils.math.UnitMaps
   //@inline implicit def doubleToScalar(d:Double):Scalar = d.toFloat
   //implicit def add_~=(d: Float): WithAlmostEquals = new WithAlmostEquals(d)
 }
