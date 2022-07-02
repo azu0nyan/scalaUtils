@@ -18,6 +18,8 @@ object SegmentPlanar {
 
 
 case class SegmentPlanar(v1: V2, v2: V2) {
+  def reverse: SegmentPlanar = SegmentPlanar(v2, v1)
+
   def sampleAt(fraction: Scalar): V2 = start + body * fraction
 
   /** begin|-------S_0------S_1-----------S_2----------|end */
