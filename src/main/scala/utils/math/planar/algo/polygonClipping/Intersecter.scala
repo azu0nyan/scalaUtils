@@ -333,7 +333,7 @@ class Intersecter(var selfIntersection: Boolean)(implicit epsilon: Epsilon) {
             //          if (buildLog)
             //            buildLog.rewind(ev.seg);
             // continue;
-            break
+            break()
           }
 
           //

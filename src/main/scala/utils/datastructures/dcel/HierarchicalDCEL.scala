@@ -1,8 +1,6 @@
 package utils.datastructures.dcel
 
 import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
-import utils.datastructures.dcel.DCELOps.DCELOps
-import utils.datastructures.dcel.HierarchicalDCELCache
 import utils.datastructures.dcel.HierarchicalDCELCache.HierarchicalDCELCacheInstance
 import utils.datastructures.graph.VisibilityGraphOps
 import utils.math.planar.{Polygon, PolygonRegion, SegmentPlanar, V2}
@@ -231,9 +229,10 @@ object HierarchicalDCEL {
         newHierarchicalEdgeProvider(_, _, newHEDProvider),
         splitHierarchicalEdgeProvider(_, _, splitHEDProvider),
         newHierarchicalFaceProvider(_, newFDProvider))
-      innerDCEL.toChain(res).flatten.toSeq
+      DCELOps.toChain(res).flatten.toSeq
     }
 
+    /**Cuts PolygonRegion, polygonRegion should be clamped before cut. */
     def cutClamped(poly: PolygonRegion,
                    newVDProvider: V2 => VD,
                    newHEDProvider: (Vertex, Vertex) => (HED, HED),
@@ -247,8 +246,7 @@ object HierarchicalDCEL {
           newHierarchicalEdgeProvider(_, _, newHEDProvider),
           splitHierarchicalEdgeProvider(_, _, splitHEDProvider),
           newHierarchicalFaceProvider(_, newFDProvider))
-
-      innerDCEL.toChain(res).flatten.toSeq
+      DCELOps.toChain(res).flatten.toSeq
     }
 
 

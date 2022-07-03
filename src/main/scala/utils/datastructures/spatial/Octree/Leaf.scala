@@ -5,7 +5,7 @@ import utils.math.space.AABox
 
 case class Leaf[V](bounds: AABox, kvPairs: Seq[(AABox, V)]) extends Octree[V] {
 
-  override def remove(area: AABox, value: V): Octree[V] = Leaf(bounds, kvPairs.filter(kv => !kv._2.equals(value) && kv._1.intersectsWith(area)))
+  override def remove(area: AABox, value: V): Octree[V] = Leaf(bounds, kvPairs.filter(kv => kv._2 != value && kv._1.intersectsWith(area)))
 
   override def add(area: AABox, value: V): Octree[V] = if (kvPairs.length < Octree.maxValsInLeaf) {
     Leaf(bounds, (area, value) +: kvPairs)
@@ -17,7 +17,7 @@ case class Leaf[V](bounds: AABox, kvPairs: Seq[(AABox, V)]) extends Octree[V] {
     Leaf(bounds, (area, value) +: kvPairs)
   }
 
-  override def remove(value: V): Leaf[ V] = Leaf(bounds, kvPairs.filter(kv => !kv._2.equals(value)))
+  override def remove(value: V): Leaf[ V] = Leaf(bounds, kvPairs.filter(kv => kv._2 != value))
 
   override def areas: Seq[AABox] = kvPairs.map(_._1)
 

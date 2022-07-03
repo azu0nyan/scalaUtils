@@ -294,7 +294,7 @@ object DoubleLinkedList {
 
       override def update(idx: Int, elem: T): Unit = DoubleLinkedList.this.nodesIterator.drop(idx).next().value = elem
 
-      override def apply(i: Int): T = iterator.drop(i).next
+      override def apply(i: Int): T = iterator.drop(i).next()
 
       override def length: Int = DoubleLinkedList.this._size
 

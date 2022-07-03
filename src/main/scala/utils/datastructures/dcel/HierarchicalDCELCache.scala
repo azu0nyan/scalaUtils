@@ -47,15 +47,15 @@ object HierarchicalDCELCache {
   def allChildFaces[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[HierarchicalFace[V, HE, F] ] = directChildFaces.flatMap(a => Seq(a) ++ allChildFaces(a)).toSeq
 
 
-  def outerPoly[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): PolygonRegion = PolygonRegion(outerBorder.map(x => x.origin.data.extractor(x.origin.data.ownData)))
-  def holesPolys[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[PolygonRegion] = holesOwnContours.map(h => PolygonRegion(h.map(x => x.origin.data.extractor(x.origin.data.ownData))))
+  def outerPoly[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): PolygonRegion = PolygonRegion(outerBorder.map(x => x.origin.data.position))
+  def holesPolys[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[PolygonRegion] = holesOwnContours.map(h => PolygonRegion(h.map(x => x.origin.data.position)))
   def polygon[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Polygon = Polygon(outerPoly +: holesPolys) //todo maybe difference???
   def obstacles[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[SegmentPlanar] = ownArea.regions.flatMap(_.sides) //todo cache
 
   //todo check if hole contours necessary
   def ownArea[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Polygon = {
     val container = polygon
-    val insides = holesPolys ++: face.innerDCEL.outerFace.holesContours.map(hc => PolygonRegion(hc.map(x => x.origin.data.extractor(x.origin.data.ownData)).toSeq)).toSeq
+    val insides = holesPolys ++: face.innerDCEL.outerFace.holesContours.map(hc => PolygonRegion(hc.map(x => x.origin.data.position).toSeq)).toSeq
     val toCut = Polygon(insides)
     PolygonClipping.difference(container, toCut)
   }

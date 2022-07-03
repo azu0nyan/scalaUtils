@@ -66,16 +66,16 @@ object Chainer {
             var tail2 = chain.secondLast
             if (EpsilonOps.pointsSame(head, pt1)) {
               if (setMatch(Match(i, true, true)))
-                break
+                break()
             } else if (EpsilonOps.pointsSame(head, pt2)) {
               if (setMatch(Match(i, true, false)))
-                break
+                break()
             } else if (EpsilonOps.pointsSame(tail, pt1)) {
               if (setMatch(Match(i, false, true)))
-                break
+                break()
             } else if (EpsilonOps.pointsSame(tail, pt2)) {
               if (setMatch(Match(i, false, false)))
-                break
+                break()
             }
           }
         }

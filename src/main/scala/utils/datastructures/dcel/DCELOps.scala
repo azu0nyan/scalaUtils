@@ -7,7 +7,8 @@ import scala.collection.mutable
 
 object DCELOps {
 
-  def apply[VertexData, HalfEdgeData, FaceData](dcel: DCEL[VertexData, HalfEdgeData, FaceData]): DCELOps[VertexData, HalfEdgeData, FaceData] = new DCELOps(dcel)
+  def apply[VertexData, HalfEdgeData, FaceData](dcel: DCEL[VertexData, HalfEdgeData, FaceData]): DCELOpsImplicit[VertexData, HalfEdgeData, FaceData] =
+    new DCELOpsImplicit[VertexData, HalfEdgeData, FaceData](dcel)
 
 
   def selectToTheLeft[VD, HED, FD](hes: Seq[RawHalfEdge[VD, HED, FD]]): Iterator[RawFace[VD, HED, FD]] = new Iterator[RawFace[VD, HED, FD]] {
@@ -45,15 +46,17 @@ object DCELOps {
     }
   }
 
-  implicit class DCELOps[VertexData, HalfEdgeData, FaceData](val dcel: DCEL[VertexData, HalfEdgeData, FaceData]) extends AnyVal {
+  def toChain[VD, HED, FD](vs: Seq[RawVertex[VD, HED, FD]]): Iterator[Option[RawHalfEdge[VD, HED, FD]]] = if (vs.size >= 2) vs.sliding(2).map {
+    case List(o, e) => o.edgesWithOriginHere.find(_.ending == e)
+  } else Iterator.empty
+
+  implicit class DCELOpsImplicit[VertexData, HalfEdgeData, FaceData](val dcel: DCEL[VertexData, HalfEdgeData, FaceData]) extends AnyVal {
     type Dcel = DCEL[VertexData, HalfEdgeData, FaceData]
     type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
     type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
     type Face = RawFace[VertexData, HalfEdgeData, FaceData]
 
-    def toChain(vs: Seq[Vertex]): Iterator[Option[HalfEdge]] = if (vs.size >= 2) vs.sliding(2).map {
-      case List(o, e) => o.edgesWithOriginHere.find(_.ending == e)
-    } else Iterator.empty
+
 
 
     /**

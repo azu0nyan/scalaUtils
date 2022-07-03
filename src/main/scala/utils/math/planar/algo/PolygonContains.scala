@@ -295,6 +295,7 @@ object PolygonContains {
       case (s@status, SegmentMiddle(y, isParent)) if !isParent => status.copy(curChildPower = status.curChildPower + 1)
       case (s@status, VerticalSegment(minY, maxY, isParent)) => /*Ignore vertical intersections*/
         status
+      case _ => throw  new Exception("")
     }
 
     def processEvent(status:Status, intersection: Intersection): Status = intersection match {
