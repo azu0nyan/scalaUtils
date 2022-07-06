@@ -13,7 +13,8 @@ object DCEL {
   /**
     * @param _data               data associated with face
     * @param _incidentEdge       starting point to traverse in CCW order
-    * @param _holesIncidentEdges own face's of edges that points to hole in face, one per hole
+    * @param _holesIncidentEdges own face's of edges that points to hole in face, one per hole,
+    *                            holes bound is PolygonRegion, not Polygon
     *
     */
   class RawFace[VertexData, HalfEdgeData, FaceData] private[DCEL](
