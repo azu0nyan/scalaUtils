@@ -21,6 +21,16 @@ case class SegmentPlanar(v1: V2, v2: V2) {
   def reverse: SegmentPlanar = SegmentPlanar(v2, v1)
 
   def sampleAt(fraction: Scalar): V2 = start + body * fraction
+  /**pos should lie on segment
+    * returns pos in segment coordinates, where
+    * start == 0
+    * end == 1
+    * start + body * X = X
+    * */
+  def getFractionAt(pos: V2): Scalar = {
+    val ofPos = pos - start  //body * X = ofPos => X = ofPos / body
+    ofPos.length / body.length
+  }
 
   /** begin|-------S_0------S_1-----------S_2----------|end */
   /** begin|-------S_0------S_1 ...... S_{n-1}-----------S_n----------|end */

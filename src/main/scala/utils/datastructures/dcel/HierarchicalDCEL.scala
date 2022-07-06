@@ -5,6 +5,7 @@ import utils.datastructures.dcel.HierarchicalDCELCache.HierarchicalDCELCacheInst
 import utils.datastructures.graph.VisibilityGraphOps
 import utils.math.planar.{Polygon, PolygonRegion, SegmentPlanar, V2}
 import utils.datastructures.dcel.PlanarDCEL.PlanarEdge
+import utils.math._
 import utils.sugar.{IteratorOps, SeqOps}
 
 object HierarchicalDCEL {
@@ -29,8 +30,8 @@ object HierarchicalDCEL {
     * @param isFake true if edge lies on border of some inner polygon, have non-fake ancestor
     */
   class HierarchicalEdge[VD, HED, FD](
-                                       initialParent: Option[HierarchicalEdge[VD, HED, FD]],
-                                       var isFake: Boolean,
+                                       initialParents: Seq[HierarchicalEdge[VD, HED, FD]],
+                                       //var isFake: Boolean, //todo remove, if edge has parent than it's twin has partially fake part
                                        var ownData: HED) {
     type Face = HierarchicalDCEL.Face[VD, HED, FD]
     type HalfEdge = HierarchicalDCEL.HalfEdge[VD, HED, FD]
@@ -41,9 +42,14 @@ object HierarchicalDCEL {
 
     var childs: Seq[HierarchicalEdge[VD, HED, FD]] = Seq()
 
-    private[this] var _parent: Option[HierarchicalEdge[VD, HED, FD]] = _
+    private[this] var _parents: Seq[HierarchicalEdge[VD, HED, FD]] = Seq()
 
-    def parent: Option[HierarchicalEdge[VD, HED, FD]] = _parent
+    initialParents.foreach(addParent)
+
+    /** Parent edge can cover only part of a child, full cover not guaranteed.
+      * Because modification of innerDCEL shouldn't affect modifications of a parent,
+      * and splitting child edge at parent vertices can be impossible */
+    def parents: Seq[HierarchicalEdge[VD, HED, FD]] = _parents
 
     def face: Face = edge.leftFace
 
@@ -51,32 +57,51 @@ object HierarchicalDCEL {
 
     def asSegment: SegmentPlanar = SegmentPlanar(edge.origin.data.position, edge.ending.data.position)
 
+    /** Parent edge can cover only part of a child, full cover not guaranteed */
     def allLevelChilds: Seq[HierarchicalEdge[VD, HED, FD]] = childs.flatMap(_.meAndAllLevelChilds.toSeq)
 
+    /** Parent edge can cover only part of a child, full cover not guaranteed */
     def meAndAllLevelChilds: Seq[HierarchicalEdge[VD, HED, FD]] = this +: allLevelChilds
 
-    def rootParent: HierarchicalEdge[VD, HED, FD] = parent.map(_.rootParent).getOrElse(this)
-
-    def meAndAncestors: Iterator[HierarchicalEdge[VD, HED, FD]] = Iterator.from(Seq(this)) ++ ancestors
-
-    def ancestors: Iterator[HierarchicalEdge[VD, HED, FD]] = IteratorOps.iterateOpt(parent)(_.parent)
+    //    def rootParent: HierarchicalEdge[VD, HED, FD] = parent.map(_.rootParent).getOrElse(this)
+    //
+    //    def meAndAncestors: Iterator[HierarchicalEdge[VD, HED, FD]] = Iterator.from(Seq(this)) ++ ancestors
+    //
+    //    def ancestors: Iterator[HierarchicalEdge[VD, HED, FD]] = IteratorOps.iterateOpt(parent)(_.parent)
 
     /** twin on same or higher level to whom we go if go through EdgeNode(this) */
-    def edgeNodeTwin: HierarchicalEdge[VD, HED, FD] =
-      if (!edge.twin.data.isFake) edge.twin.data
-      else parent.map(_.edgeNodeTwin).get //in that case parent shouldn't be empty and root level parent always have non-fake twin
+    //    def edgeNodeTwin: HierarchicalEdge[VD, HED, FD] =
+    //      if (!edge.twin.data.isFake) edge.twin.data
+    //      else parent.map(_.edgeNodeTwin).get //in that case parent shouldn't be empty and root level parent always have non-fake twin
+    //
 
-    def setParent(value: Option[HierarchicalEdge[VD, HED, FD]]): Unit = {
-      //todo remove from previous
-      _parent = value
-      if (value.nonEmpty) {
-        value.get.childs = value.get.childs :+ this
-      }
+    def addParent(toAdd: HierarchicalEdge[VD, HED, FD]): Unit = {
+      _parents = _parents :+ toAdd
+      toAdd.childs = toAdd.childs :+ toAdd
     }
 
+    def removeParent(toRemove: HierarchicalEdge[VD, HED, FD]): Unit = {
+      _parents = _parents.filter(_ != toRemove)
+      toRemove.childs = toRemove.childs.filter(_ != toRemove)
+    }
 
-    this setParent initialParent
+    def replaceParents(newParents: Seq[HierarchicalEdge[VD, HED, FD]]) : Unit = {
+      parents.foreach(removeParent)
+      newParents.foreach(addParent)
+    }
 
+    /***/
+    def parentCoveredParts: Seq[(HierarchicalEdge[VD, HED, FD], Scalar, Scalar)] = {
+      val seg = asSegment
+      parents.flatMap{parent =>
+        //assumes that parent goes in the same direction as a child => start < end
+        val pSeg = parent.asSegment
+        val start = clamp(seg.getFractionAt(pSeg.start), 0, 1)
+        val end = clamp(seg.getFractionAt(pSeg.end), 0, 1)
+        //check that child has non point intersection with parent //todo mb delete check
+        Option.when(start ~< 1 && (end !~= start))((parent, start, end))
+      }
+    }
 
   }
 
@@ -172,45 +197,53 @@ object HierarchicalDCEL {
     }
 
 
-
     //todo clamp
-    def splitEdge(edge: HalfEdge, splitAt: HierarchicalVertex[VD, HED, FD], endingData: HED, endingTwinData: HED): HalfEdge = {
-      innerDCEL.split(edge, splitAt,
-        new HierarchicalEdge[VD, HED, FD](edge.data.parent, edge.data.isFake, endingData),
-        new HierarchicalEdge[VD, HED, FD](edge.twin.data.parent, edge.twin.data.isFake, endingTwinData))
-      edge.next
-    }
+//    def splitEdge(edge: HalfEdge, splitAt: HierarchicalVertex[VD, HED, FD], endingData: HED, endingTwinData: HED): HalfEdge = {
+      //todo split parents
+//      innerDCEL.split(edge, splitAt,
+//        new HierarchicalEdge[VD, HED, FD](edge.data.parent, endingData),
+//        new HierarchicalEdge[VD, HED, FD](edge.twin.data.parent, endingTwinData))
+//      edge.next
+//    }
 
 
     /** can cut poly in own area with result of single polygon island */
     def canCutAsSingleArea(poly: PolygonRegion): Boolean = ??? //todo mb remove
 
-    //todo split child edges to multiple parents or allow multiple parents
-    def findParentForNewEdge(seg: SegmentPlanar): Option[HierarchicalEdge[VD, HED, FD]] = {
-      fullBorder.find { parent =>
+    def findParentForEdge(seg: SegmentPlanar): Seq[HierarchicalEdge[VD, HED, FD]] = {
+      fullBorder.filter { parent =>
         val parentSeg = parent.data.asSegment
-        seg.body.sameDirection(parentSeg.body) && parentSeg.containsSegment(seg)
+        seg.body.sameDirection(parentSeg.body) && {
+          val start = clamp(seg.getFractionAt(parentSeg.start), 0, 1)
+          val end = clamp(seg.getFractionAt(parentSeg.end), 0, 1)
+          (start ~< 1 && (end !~= start))
+        }
       }.map(_.data)
     }
 
     def newHierarchicalEdgeProvider(v1: Vertex, v2: Vertex, newHEDProvider: (Vertex, Vertex) => (HED, HED)): (HierarchicalEdge[VD, HED, FD], HierarchicalEdge[VD, HED, FD]) = {
       val (data, twinData) = newHEDProvider(v1, v2)
       val seg = SegmentPlanar(v1.data.position, v2.data.position)
-      val(p1, f1, p2, f2) = findParentForNewEdge(seg) match {
-        case s@Some(_) => (s, false, None, true)
-        case None => findParentForNewEdge(seg.reverse) match {
-          case s@Some(_) => (None, true, s, false)
-          case None => (None, false, None, false)
-        }
-      }
+      val parents = findParentForEdge(seg)
+      val twinParents = findParentForEdge(seg.reverse)
 
-      (new HierarchicalEdge[VD, HED, FD](p1, f1, data),  new HierarchicalEdge[VD, HED, FD](p2, f2, twinData))
+      (new HierarchicalEdge[VD, HED, FD](parents, data), new HierarchicalEdge[VD, HED, FD](twinParents, twinData))
     }
 
     def splitHierarchicalEdgeProvider(edge: HalfEdge, at: V2, splitHEDProvider: (HalfEdge, V2) => (HED, HED)): (HierarchicalEdge[VD, HED, FD], HierarchicalEdge[VD, HED, FD]) = {
       val (data, twinData) = splitHEDProvider(edge, at)
-      (new HierarchicalEdge[VD, HED, FD](edge.data.parent, edge.data.isFake, data),
-        new HierarchicalEdge[VD, HED, FD](edge.twin.data.parent, edge.twin.data.isFake, twinData))
+      val SegmentPlanar(start, end) = edge.data.asSegment
+      //todo do int here or in linstener??
+      val parents = findParentForEdge(SegmentPlanar(start, at))
+      val twinParents = findParentForEdge(SegmentPlanar(at, start))
+      edge.data.replaceParents(parents)
+      edge.twin.data.replaceParents(twinParents)
+
+      val newParents = findParentForEdge(SegmentPlanar(at, end))
+      val newTwinParents = findParentForEdge(SegmentPlanar(end, at))
+
+      (new HierarchicalEdge[VD, HED, FD](newParents,  data),
+        new HierarchicalEdge[VD, HED, FD](newTwinParents, twinData))
     }
 
     def newHierarchicalFaceProvider(edge: HalfEdge, newFDProvider: HalfEdge => FD): HierarchicalFace[VD, HED, FD] = {
@@ -232,20 +265,20 @@ object HierarchicalDCEL {
       DCELOps.toChain(res).flatten.toSeq
     }
 
-    /**Cuts PolygonRegion, polygonRegion should be clamped before cut. */
+    /** Cuts PolygonRegion, polygonRegion should be clamped before cut. */
     def cutClamped(poly: PolygonRegion,
                    newVDProvider: V2 => VD,
                    newHEDProvider: (Vertex, Vertex) => (HED, HED),
                    splitHEDProvider: (HalfEdge, V2) => (HED, HED),
                    newFDProvider: HalfEdge => FD): Seq[HalfEdge] = {
-        val normalized = PolygonRegion(SeqOps.removeConsecutiveDuplicatesCircular(poly.vertices.toList))
-        val p = if (normalized.isCw) normalized.reverse else normalized
+      val normalized = PolygonRegion(SeqOps.removeConsecutiveDuplicatesCircular(poly.vertices.toList))
+      val p = if (normalized.isCw) normalized.reverse else normalized
 
-        val res = innerDCEL.cutPoly(p.vertices,
-          x => new HierarchicalVertex[VD, HED, FD](newVDProvider(x)),
-          newHierarchicalEdgeProvider(_, _, newHEDProvider),
-          splitHierarchicalEdgeProvider(_, _, splitHEDProvider),
-          newHierarchicalFaceProvider(_, newFDProvider))
+      val res = innerDCEL.cutPoly(p.vertices,
+        x => new HierarchicalVertex[VD, HED, FD](newVDProvider(x)),
+        newHierarchicalEdgeProvider(_, _, newHEDProvider),
+        splitHierarchicalEdgeProvider(_, _, splitHEDProvider),
+        newHierarchicalFaceProvider(_, newFDProvider))
       DCELOps.toChain(res).flatten.toSeq
     }
 

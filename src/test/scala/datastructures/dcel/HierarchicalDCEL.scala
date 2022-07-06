@@ -48,11 +48,12 @@ class HierarchicalDCEL extends AnyFunSuite {
     assert(root.allChildFaces.size == 2)
     assert(root.directChildFaces.size == 1)
     for (e <- childCutResult) {
-      assert(e.data.parent.nonEmpty)
+      assert(e.data.parents.size == 1)
+      assert(e.twin.data.parents.isEmpty)
+
       assert(e.leftFace == cildsChids.face)
       assert(e.twin.leftFace == child.innerDCEL.outerFace)
-      assert(!e.data.isFake)
-      assert(e.twin.data.isFake)
+
     }
 
 
