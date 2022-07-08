@@ -35,7 +35,9 @@ object V2 {
 }
 
 case class V2(x: Scalar, y: Scalar) extends WithMap{
-
+  
+  
+  
 
   def toProduct:(Scalar, Scalar) = (x, y)
 
@@ -94,6 +96,16 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
     if (a > PI) a - TWO_PI
     else a
   }
+
+  /**Y - up, returns from - PI to PI*/
+  def angleCCW(ot: V2): Scalar = atan2(det(ot), this ** ot)
+
+  def angleCCW0to2PI(ot: V2): Scalar = {
+    val angle = angleCCW(ot)
+    if(angle >= 0) angle
+    else angle + TWO_PI
+  }
+
 
   @inline def distance(v: V2): Scalar = (this - v).length
 

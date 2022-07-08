@@ -39,9 +39,11 @@ package object math
   val E: Scalar = Math.E
   val PI: Scalar = Math.PI
   val TWO_PI: Scalar = 2.0f * PI
+  val ONE_AND_HALF_PI: Scalar = 1.5f * PI
   val HALF_PI: Scalar = 0.5f * PI
   val QUARTER_PI: Scalar = 0.25f * PI
   val EIGHT_PI: Scalar = 0.125f * PI
+  val THREE_QUARTER_PI: Scalar = PI * 0.75
   val INV_PI: Scalar = 1.0f / PI
   val INW_TWO_PI: Scalar = 2.0f * TWO_PI
   /** A value to multiply a degree value by, to convert it to radians. */

@@ -1,6 +1,6 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
+import utils.datastructures.dcel.DCEL.{CantDoOpOnDCELException, MalformedDCELException, MultipleEdgesBetweenTwoVerticesException, RawFace, RawHalfEdge, RawVertex}
 import utils.datastructures.dcel.PlanarDCEL._
 import utils.math.planar.{AngleCCWPlanar, AngleOps, PointIntersection, Polygon, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
 import utils.math._
@@ -9,6 +9,7 @@ import utils.math._
 object PlanarDCEL {
   implicit class PlanarVertex[VD, HED, FD](f: RawVertex[VD, HED, FD])(implicit extractor: VD => V2) {
     def position: V2 = extractor(f.data)
+
     /** If vertex has no connected edges return face containing vertex */
     def insideFace(implicit dcel: PlanarDCEL[VD, HED, FD]): Option[RawFace[VD, HED, FD]] = Option.when(f.incidentEdge.isEmpty)(dcel.faceAt(position))
   }
@@ -53,7 +54,7 @@ class PlanarDCEL[VD, HED, FD](
 
   /**
     *
-    * @param poly in ccw order with Y-up
+    * @param poly              in ccw order with Y-up
     * @param newVdProvider     maps new vertex position to VertexData
     * @param newEdProvider     newHalfEdges to its halfEdgeData's
     * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with HED copied from args. Provide new EdgeData if needed.
@@ -157,14 +158,14 @@ class PlanarDCEL[VD, HED, FD](
       val end = current.position
 
       if (previous.incidentEdge.isEmpty && current.incidentEdge.isEmpty) {
-//                println("1")
+        //                println("1")
         //no edges or faces, we inside some face
         val face = faceAt(previous.position)
         val (ld, rd) = newEdProvider(previous, current)
         val he = makeEdge(previous, current, face, face, ld, rd)
         face._holesIncidentEdges += he
       } else if (previous.incidentEdge.nonEmpty && current.incidentEdge.isEmpty) {
-//                println("2")
+        //                println("2")
         //we are going inside face
         val face = faceAt(current.position)
         //
@@ -187,7 +188,7 @@ class PlanarDCEL[VD, HED, FD](
         //        val (ld, rd) = newEdProvider(previous, current)
         //        makeEdge(previous, current, face, face, ld, rd)
       } else if (previous.incidentEdge.isEmpty && current.incidentEdge.nonEmpty) {
-//                println("3")
+        //                println("3")
         //we are going to edge from inside face
         val nextEdge = current.edgesWithOriginHere.minBy { e =>
           val v1 = start - end
@@ -202,9 +203,9 @@ class PlanarDCEL[VD, HED, FD](
 
         val face = faceAt(previous.position)
         val (ld, rd) = newEdProvider(previous, current)
-        makeEdge(previous, current, face, face, ld, rd,  None, Some(nextEdge), Some(nextEdge.prev), None)
+        makeEdge(previous, current, face, face, ld, rd, None, Some(nextEdge), Some(nextEdge.prev), None)
       } else {
-//                println("4")
+        //                println("4")
         //if vertices disconnected
         if (!previous.edgesWithOriginHere.exists(e => e.ending == current)) {
           //we are closing chain
@@ -346,5 +347,72 @@ class PlanarDCEL[VD, HED, FD](
     }
 
     res
+  }
+
+  /**
+    * Merges two vertices, calls onVertexDelete(v2).
+    * Can't merge vertices with edge between.
+    * Assumes that v1 close or in the same place
+    * Merge allowed only on planar DCEL's, since on usual DCEL winding order after merge undefined
+    * //todo
+    * */
+  @deprecated("since unfinished") def mergeVertices(v1: Vertex, v2: Vertex): Unit =
+    if (v1.incidentEdge.nonEmpty && v2.incidentEdge.nonEmpty) {
+      //for(e <- v1.edgeTo(v2)) deleteEdge(e) //Don't do it like that,  since deleteEdge can delete face that shouldn't be deleted  after vertex merge
+      val edgeBetween = v1.edgeTo(v2)
+      if (edgeBetween.nonEmpty) {
+        //maybe implement
+        throw new CantDoOpOnDCELException("Cant merge vertices with edge betweem")
+        //our merge can delete some face
+        //        for(e1 <- v1.edgesWithOriginHere; e2 <- v2.edgesWithOriginHere if e1.ending == e2.ending) {
+        //          if(e1.leftFace == outerFace && e2.leftFace == outerFace) throw new MalformedDCELException("")
+        //        }
+        //        deleteEdgeUnsafe(edgeBetween.get)     //Do not modifies faces
+      }
+      /*
+           v1oPrev
+              |           __
+              |f1      f2 /|
+              |          / v2eNext
+             \|        /
+             v1      v2
+              |        |\
+           v1o|         \
+              |          \v2e
+             \|           \
+
+     */
+      val (v1o, v2e) = (for (v1o <- v1.edgesWithOriginHere; v2e <- v2.edgesWithEndHere) yield (v1o, v2e)).minBy {
+        case (v1o, v2e) => v1o.asSegment.body.angleCCW0to2PI(v2e.asSegment.reverse.body)
+      }
+      val v1oPrev = v1o.prev
+      val v2eNext = v2e.next
+
+      v1o._prev = v2e
+      v2e._next = v1o
+
+      v1oPrev._next = v2eNext
+      v2eNext._prev = v1oPrev
+
+      for (e <- v2.edgesWithOriginHere) e._origin = v1
+
+      //fix broken polygon or create new
+
+      onVertexRemoved(v2)
+    } else if (v1.incidentEdge.nonEmpty) { //v2 - empty, nothing to merge
+      onVertexRemoved(v2)
+    } else if (v2.incidentEdge.nonEmpty) { // v1 empty, redirect edges with origin at v2
+      v1._incidentEdge = v2.incidentEdge
+      for (e <- v2.edgesWithOriginHere) e._origin = v1
+      onVertexRemoved(v2)
+    } else { //both empty
+      onVertexRemoved(v2)
+    }
+
+  def insert[OVD, OHED, OFD](ot: DCEL[OVD, OHED, OFD],
+                             mapVD: RawVertex[OVD, OHED, OFD] => VD,
+                             mapHED: RawHalfEdge[OVD, OHED, OFD] => HED,
+                             mapFD: RawFace[OVD, OHED, OFD] => FD): Unit = {
+
   }
 }

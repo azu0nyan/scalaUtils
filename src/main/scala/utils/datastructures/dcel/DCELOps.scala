@@ -89,7 +89,7 @@ object DCELOps {
           if (isMainHole) main._incidentEdge = toMerge._incidentEdge
 
           dcel.innerFaces -= toMerge
-          dcel.onFaceDelete(toMerge)
+          dcel.onFaceRemoved(toMerge)
 
           for (e <- if (isMainHole) commonBorderEdges.map(_.twin) else commonBorderEdges) {
             halfEdgeDestructor(e.data, e.twin.data)
