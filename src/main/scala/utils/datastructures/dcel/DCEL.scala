@@ -50,6 +50,7 @@ object DCEL {
     /** all own edges adjanced to holes */
     def holesEdges: Iterator[HalfEdge] = _holesIncidentEdges.iterator.flatMap(_.traverseEdges)
 
+    def holes: Iterator[Face] = _holesIncidentEdges.iterator.map(_.twin._leftFace)
 
     def vertices: Iterator[Vertex] = outsideVertices ++ holesVertices
     def edges: Iterator[HalfEdge] = borderEdges ++ holesEdges

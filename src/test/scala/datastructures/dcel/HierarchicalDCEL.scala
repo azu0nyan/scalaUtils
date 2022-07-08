@@ -5,17 +5,24 @@ import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCELOps
 import utils.datastructures.dcel.HierarchicalDCEL.HierarchicalFace
 import utils.datastructures.spatial.AARectangle
-import utils.math.planar.V2
+import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
 
 import java.util.concurrent.atomic.AtomicInteger
 
 class HierarchicalDCEL extends AnyFunSuite {
+
+  val x = new AtomicInteger()
+
+  def cutInside(face: HierarchicalFace[V2, String, String], toCut: PolygonRegion):Seq[face.HalfEdge] = {
+    face.cutClamped(toCut, x => x, (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString),
+      (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString), a => x.getAndIncrement().toString)
+  }
+
   test("Single rectangle cut") {
-    val x = new AtomicInteger()
+
     val root = new HierarchicalFace[V2, String, String](None, "ROOT")(x => x)
     val toCut = AARectangle(V2(-100, -100), V2(100, 100)).toPolygon
-    val cutResult = root.cutClamped(toCut, x => x, (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString),
-      (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString), a => x.getAndIncrement().toString)
+    val cutResult = cutInside(root, toCut)
 
     assert(cutResult.size == 4)
     assert(root.directChildFaces.size == 1)
@@ -33,8 +40,7 @@ class HierarchicalDCEL extends AnyFunSuite {
     }
 
 
-    val childCutResult = child.cutClamped(toCut, x => x, (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString),
-      (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString), a => x.getAndIncrement().toString)
+    val childCutResult = cutInside(child, toCut)
 
     val childPolySeq = DCELOps.selectToTheLeft(childCutResult).toSeq
     assert(polySeq.size == 1)
@@ -49,12 +55,69 @@ class HierarchicalDCEL extends AnyFunSuite {
     assert(root.directChildFaces.size == 1)
     for (e <- childCutResult) {
       assert(e.data.parents.size == 1)
+      assert(e.data.parents.head.face == child.face)
       assert(e.twin.data.parents.isEmpty)
 
       assert(e.leftFace == cildsChids.face)
       assert(e.twin.leftFace == child.innerDCEL.outerFace)
-
     }
+  }
+
+
+  /*
+
+
+
+
+    |_______________________
+    |                      |
+    |                      |
+    |                 _    |
+    |    _           |_|   |
+    |   |_|                |
+    |                      |
+    |______________________
+
+   */
+  test("Parent correctness"){
+    val root = new HierarchicalFace[V2, String, String](None, "ROOT")(x => x)
+    val containerShape = AARectangle(V2(0, 0), V2(100, 100)).toPolygon
+    val containerHole1 = AARectangle(V2(20, 20), V2(30, 30)).toPolygon
+    val containerHole2 = AARectangle(V2(40, 30), V2(50, 40)).toPolygon
+    val holeContainerIntersector = AARectangle(V2(10, 30), V2(60, 60)).toPolygon
+
+    val cutContainerResult = cutInside(root, containerShape)
+    val container = DCELOps.selectToTheLeft(cutContainerResult).toSeq.head
+    val cutHoleResult1 = cutInside(root, containerHole1)
+    val hole1 = DCELOps.selectToTheLeft(cutHoleResult1).toSeq.head
+    val cutHoleResult2 = cutInside(root, containerHole2)
+    val hole2 = DCELOps.selectToTheLeft(cutHoleResult2).toSeq.head
+
+    assert(root.directChildFaces.toSet == Set(container.data, hole1.data,hole2.data))
+
+    assert(container.holes.size == 2)
+    assert(container.holes.toSet == Set(hole1, hole2))
+
+
+    val segmentWithParens = SegmentPlanar(V2(10.0, 30.0), V2(60.0, 30.0))
+    val potentialParents = container.data.findParentForEdge(segmentWithParens)
+    println(s"Potential parents for $segmentWithParens is ${potentialParents.map(_.asSegment)}")
+    assert(potentialParents.size == 1)//other parented segment will be twin
+
+    val inContainerCutResult = cutInside(container.data, holeContainerIntersector)
+    val inContainerCutFace = DCELOps.selectToTheLeft(inContainerCutResult).toSeq.head
+
+    println(inContainerCutFace.edges.toSeq.map(_.data.asSegment))
+    val edgesWithParent = inContainerCutFace.edges.filter(_.data.parents.nonEmpty).toSeq
+    println(edgesWithParent.map(_.data.asSegment))
+    println(edgesWithParent.map(_.data.parents.map(_.asSegment)))
+    assert(edgesWithParent.size == 1)
+    assert(edgesWithParent.head.data.asSegment == SegmentPlanar(V2(10, 30), V2(60, 30)))
+    assert(edgesWithParent.head.data.parents.size == 1)
+    assert(edgesWithParent.head.data.parents.head.asSegment == SegmentPlanar(V2(20, 30), V2(30, 30)))
+    assert(edgesWithParent.head.twin.data.parents.size == 1)
+    assert(edgesWithParent.head.twin.data.parents.head.asSegment == SegmentPlanar(V2(50, 30), V2(40, 30)))
+
 
 
   }

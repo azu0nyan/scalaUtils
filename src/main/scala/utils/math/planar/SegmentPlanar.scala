@@ -207,6 +207,11 @@ case class SegmentPlanar(v1: V2, v2: V2) {
     }
   }
 
+  /**Have non point intersection*/
+  def haveSegmentIntersection(ot: SegmentPlanar): Boolean = intersection(ot) match {
+    case Some(SegmentIntersection(_)) => true //todo optimize
+    case _ => false
+  }
 
   def intersection(ot: SegmentPlanar): Option[SegmentToSegmentPlanarIntersection] = {
     //degenerate cases

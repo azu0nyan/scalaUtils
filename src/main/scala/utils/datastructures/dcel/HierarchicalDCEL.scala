@@ -213,11 +213,7 @@ object HierarchicalDCEL {
     def findParentForEdge(seg: SegmentPlanar): Seq[HierarchicalEdge[VD, HED, FD]] = {
       fullBorder.filter { parent =>
         val parentSeg = parent.data.asSegment
-        seg.body.sameDirection(parentSeg.body) && {
-          val start = clamp(seg.getFractionAt(parentSeg.start), 0, 1)
-          val end = clamp(seg.getFractionAt(parentSeg.end), 0, 1)
-          (start ~< 1 && (end !~= start))
-        }
+        seg.body.sameDirection(parentSeg.body) &&  seg.haveSegmentIntersection(parentSeg)
       }.map(_.data)
     }
 
@@ -265,7 +261,7 @@ object HierarchicalDCEL {
       DCELOps.toChain(res).flatten.toSeq
     }
 
-    /** Cuts PolygonRegion, polygonRegion should be clamped before cut. */
+    /** Cuts PolygonRegion inside face(in innerDCEL), polygonRegion should be clamped before cut. */
     def cutClamped(poly: PolygonRegion,
                    newVDProvider: V2 => VD,
                    newHEDProvider: (Vertex, Vertex) => (HED, HED),
