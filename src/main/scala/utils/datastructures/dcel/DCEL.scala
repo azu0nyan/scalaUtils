@@ -64,6 +64,8 @@ object DCEL {
     def vertices: Iterator[Vertex] = outsideVertices ++ holesVertices
 
     def edges: Iterator[HalfEdge] = borderEdges ++ holesEdges
+    /**If forEdge is in hole border, finds holeIncidentEdge that refers to forEdge's hole*/
+    def holeIncidentEdge(forEdge: HalfEdge): Option[HalfEdge] = _holesIncidentEdges.find(_.traverseEdges.contains(forEdge))
 
     /** requires O(twin.holeEdges) */
     def isHole: Boolean = incidentEdge.exists(_.twin.isHoleHalfSide)
@@ -397,12 +399,15 @@ class DCEL[VertexData, HalfEdgeData, FaceData](
     if(f1 != f2) {
       if(f1 != outerFace && f2 != outerFace) {
         for(e <- f2.edges)  e._leftFace = f1
+        innerFaces -= f2
         onFaceRemoved(f2)
       } else if(f1 == outerFace) {
         for(e <- f2.edges) e._leftFace = f1
+        innerFaces -= f2
         onFaceRemoved(f2)
       } else { //f2 == outerFace
         for(e <- f1.edges) e._leftFace = f2
+        innerFaces -= f1
         onFaceRemoved(f1)
       }
     }

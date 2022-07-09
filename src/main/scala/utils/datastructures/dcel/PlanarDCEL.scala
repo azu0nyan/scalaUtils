@@ -352,17 +352,16 @@ class PlanarDCEL[VD, HED, FD](
   /**
     * Merges two vertices, calls onVertexDelete(v2).
     * Can't merge vertices with edge between.
-    * Assumes that v1 close or in the same place
+    * Assumes that v1 close to v2 or in the same place. Assumes that DCEL correct, but can have vertices in the same place.
     * Merge allowed only on planar DCEL's, since on usual DCEL winding order after merge undefined
-    * //todo
     * */
-  @deprecated("since unfinished") def mergeVertices(v1: Vertex, v2: Vertex): Unit =
+  @deprecated("since unfinished") def mergeVertices(v1: Vertex, v2: Vertex, fdProvider: HalfEdge => FD): Unit =
     if (v1.incidentEdge.nonEmpty && v2.incidentEdge.nonEmpty) {
       //for(e <- v1.edgeTo(v2)) deleteEdge(e) //Don't do it like that,  since deleteEdge can delete face that shouldn't be deleted  after vertex merge
       val edgeBetween = v1.edgeTo(v2)
       if (edgeBetween.nonEmpty) {
         //maybe implement
-        throw new CantDoOpOnDCELException("Cant merge vertices with edge betweem")
+        throw new CantDoOpOnDCELException("Cant merge vertices with edge between.")
         //our merge can delete some face
         //        for(e1 <- v1.edgesWithOriginHere; e2 <- v2.edgesWithOriginHere if e1.ending == e2.ending) {
         //          if(e1.leftFace == outerFace && e2.leftFace == outerFace) throw new MalformedDCELException("")
@@ -382,30 +381,187 @@ class PlanarDCEL[VD, HED, FD](
              \|           \
 
      */
+      for (e <- v2.edgesWithOriginHere) e._origin = v1 //before link rewrite, change's only position making DCEL temporary malformed
+      //in v1 origin, in v2 ending
       val (v1o, v2e) = (for (v1o <- v1.edgesWithOriginHere; v2e <- v2.edgesWithEndHere) yield (v1o, v2e)).minBy {
         case (v1o, v2e) => v1o.asSegment.body.angleCCW0to2PI(v2e.asSegment.reverse.body)
       }
       val v1oPrev = v1o.prev
       val v2eNext = v2e.next
+      if (v1o.leftFace != v2e.leftFace) throw new CantDoOpOnDCELException("Cant merge vertices, without edges adjanced to same face")
+      val faceWeIn = v1o.leftFace
 
-      v1o._prev = v2e
-      v2e._next = v1o
+      def redirectEdges(): Unit = {
+        v1o._prev = v2e
+        v2e._next = v1o
 
-      v1oPrev._next = v2eNext
-      v2eNext._prev = v1oPrev
+        v1oPrev._next = v2eNext
+        v2eNext._prev = v1oPrev
+      }
 
-      for (e <- v2.edgesWithOriginHere) e._origin = v1
+      def mergeRemoveV1OV2E(): Unit = {
+        v1o.twin._twin = v2e.twin
+        v2e.twin._twin = v1o.twin
+        halfEdges -= v1o
+        halfEdges -= v2e
+        onHalfEdgeRemoved(v1o)
+        onHalfEdgeRemoved(v2e)
+      }
+
+      def mergeRemoveV1OPrevV2ENext(): Unit = {
+        v1oPrev.twin._twin = v2eNext.twin
+        v2eNext.twin._twin = v1oPrev.twin
+        halfEdges -= v1oPrev
+        halfEdges -= v2eNext
+        onHalfEdgeRemoved(v1oPrev)
+        onHalfEdgeRemoved(v2eNext)
+      }
 
       //fix broken polygon or create new
+      /* case 1: v2 in hole of v1o poly
+      v1-----------*
+      |  v2-----*  |
+      |  |      |  |
+      |  *______*  |
+      *____________*
+      case 2:
+      v2-----------*
+      |  v1-----*  |
+      |  |      |  |
+      |  *______*  |
+      *____________*
+      case 3:
+      *-----v1      v2------*
+      |      |      |       |
+      *-----*       *-------*
+      case 4: new face
+      *-------v1    v2----*
+      |        |     \    |
+      |        |      \   |
+      |        *      *   |
+      |         \   /     |
+      *----------*--------*
+      case 5: no new face, merge edges
+      *-------v1    v2------*
+      |        \    |       |
+      |         \   |       |
+      |          \  |       |
+      |           \ |       |
+      *------------ *-------*
+      case 6: delete face
+      *----------*----------*
+      |         /  \        |
+      |        /    \       |
+      |      v1      v2     |
+      |        \    /       |
+      |         \  /        |
+      *----------*----------*
 
+       */
+
+      val holeInV1OOpt = v1o.leftFace.holeIncidentEdge(v2e)
+      val holeInV2EOpt = v2e.leftFace.holeIncidentEdge(v1o)
+      (holeInV1OOpt, holeInV2EOpt) match {
+        case (Some(holeEdge), Some(sameEdge)) if holeEdge == sameEdge => //4,5, 6-impossible because v1o and v2e both on holes border??????
+          if (v1o.next == v2e && v2eNext.next == v1oPrev) { //6
+            throw new MalformedDCELException("Impossible")
+          } else if (v1o.next == v2e) { //5
+            if (v1.incidentEdge.contains(v1o) || v1.incidentEdge.contains(v2e)) v1._incidentEdge = Some(v1oPrev.twin)
+            if (holeEdge == v1o || holeEdge == v2e) {
+              v1o.leftFace._holesIncidentEdges -= holeEdge
+              v1o.leftFace._holesIncidentEdges += v1oPrev
+            }
+            mergeRemoveV1OV2E()
+          } else if (v2eNext.next == v1oPrev) { //5'
+            if (v1.incidentEdge.contains(v1oPrev) || v1.incidentEdge.contains(v2eNext)) v1._incidentEdge = Some(v1oPrev.twin)
+            if (holeEdge == v1oPrev || holeEdge == v2eNext) {
+              v1o.leftFace._holesIncidentEdges -= holeEdge
+              v1o.leftFace._holesIncidentEdges += v1o
+            }
+            mergeRemoveV1OPrevV2ENext()
+          } else { //4
+            //Edge chain splitted to two chain one CW(hole) one CCW(new face)
+            val v1oFaceEdges = v1o.traverseEdges.takeWhile(_ != v2eNext).toSeq
+            val v1oFacePoly = PolygonRegion(v1oFaceEdges.map(_.origin.position))
+            if (v1oFacePoly.isCcw) {
+              if (v1oFaceEdges.contains(holeEdge)) {
+                faceWeIn._holesIncidentEdges -= holeEdge
+                faceWeIn._holesIncidentEdges += v1oPrev
+              }
+              val newFd = fdProvider(v1o)
+              val newFace = makeFace(newFd)
+              newFace._incidentEdge = Some(v1o)
+              for (e <- v1oFaceEdges) e._leftFace = newFace
+
+              //holes in faceWeIn exists, so check isn't needed, maybe check if faceWeIn.holeIncidentEdges.size > 1
+              val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => v1oFacePoly.containsInside(e.origin.position))
+              newFace._holesIncidentEdges = inNewFace
+              faceWeIn._holesIncidentEdges = inOldFace
+            } else { //v2eNExtFacePoly should be CCW
+              val v2eNextFaceEdges = v2eNext.traverseEdges.takeWhile(_ != v1o)
+              if (v2eNextFaceEdges.contains(holeEdge)) {
+                faceWeIn._holesIncidentEdges -= holeEdge
+                faceWeIn._holesIncidentEdges += v1o
+              }
+              val newFd = fdProvider(v2eNext)
+              val newFace = makeFace(newFd)
+              for (e <- v2eNextFaceEdges) e._leftFace = newFace
+              val v2eNextFacePoly = PolygonRegion(v2eNextFaceEdges.map(_.origin.position).toSeq)
+              val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => v2eNextFacePoly.containsInside(e.origin.position))
+              newFace._holesIncidentEdges = inNewFace
+              faceWeIn._holesIncidentEdges = inOldFace
+            }
+          }
+
+        case (Some(holeEdge), Some(otherEdge)) => //3
+          v1o.leftFace._holesIncidentEdges -= otherEdge
+        case (Some(holeInV1O), None) => //1
+          v1o.leftFace._holesIncidentEdges -= holeInV1O
+        case (None, Some(holeInV2E)) => //2
+          v2e.leftFace._holesIncidentEdges -= holeInV2E
+        case (None, None) => //4, 5, 6
+          if (v1o.next == v2e && v2eNext.next == v1oPrev) { //6
+            if (v1.incidentEdge.contains(v1o) || v1.incidentEdge.contains(v2e) ||
+              v1.incidentEdge.contains(v1oPrev) || v1.incidentEdge.contains(v2eNext)) v1._incidentEdge = Some(v1oPrev.twin)
+            mergeRemoveV1OV2E()
+            mergeRemoveV1OPrevV2ENext()
+          } else if (v1o.next == v2e) { //5
+            if (v1.incidentEdge.contains(v1o) || v1.incidentEdge.contains(v2e)) v1._incidentEdge = Some(v1oPrev.twin)
+            mergeRemoveV1OV2E()
+          } else if (v2eNext.next == v1oPrev) { //5'
+            if (v1.incidentEdge.contains(v1oPrev) || v1.incidentEdge.contains(v2eNext)) v1._incidentEdge = Some(v1oPrev.twin)
+            mergeRemoveV1OPrevV2ENext()
+          } else { //4 Because it's not hole's border, we can use either v1o and v2eNext for new face
+            val newFd = fdProvider(v1o)
+            val newFaceEdges = v1o.traverseEdges.takeWhile(_ != v2eNext).toSeq
+            faceWeIn._incidentEdge = Some(v2eNext) //faster overwrite than check if rewrite needed
+            val newFace = makeFace(newFd)
+            newFace._incidentEdge = Some(v1o)
+            for (e <- newFaceEdges) e._leftFace = newFace
+            if (faceWeIn._holesIncidentEdges.nonEmpty) {
+              val newFacePoly = PolygonRegion(newFaceEdges.map(_.origin.position))
+              val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => newFacePoly.containsInside(e.origin.position))
+              faceWeIn._holesIncidentEdges = inOldFace
+              newFace._holesIncidentEdges = inNewFace
+            }
+          }
+
+      }
+
+      redirectEdges() //doesn't needed if 6 but who cares
+
+      vertices -= v2
       onVertexRemoved(v2)
     } else if (v1.incidentEdge.nonEmpty) { //v2 - empty, nothing to merge
+      vertices -= v2
       onVertexRemoved(v2)
     } else if (v2.incidentEdge.nonEmpty) { // v1 empty, redirect edges with origin at v2
       v1._incidentEdge = v2.incidentEdge
       for (e <- v2.edgesWithOriginHere) e._origin = v1
+      vertices -= v2
       onVertexRemoved(v2)
     } else { //both empty
+      vertices -= v2
       onVertexRemoved(v2)
     }
 
