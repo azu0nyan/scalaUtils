@@ -66,6 +66,7 @@ class PlanarDCEL[VD, HED, FD](
               newFdProvider: HalfEdge => FD,
              ): Seq[Vertex] = cutChain(poly :+ poly.head, newVdProvider, newEdProvider, splitEdProvider, newFdProvider)
 
+  def getVertex(pos: V2): Option[Vertex] = vertices.find(_.position ~= pos)
 
   def getOrAddVertex(pos: V2, newVdProvider: V2 => VD, splitEdProvider: (HalfEdge, V2) => (HED, HED)): Vertex = {
     val res = vertices.find(_.position ~= pos)
@@ -355,7 +356,7 @@ class PlanarDCEL[VD, HED, FD](
     * Assumes that v1 close to v2 or in the same place. Assumes that DCEL correct, but can have vertices in the same place.
     * Merge allowed only on planar DCEL's, since on usual DCEL winding order after merge undefined
     * */
-  @deprecated("since unfinished") def mergeVertices(v1: Vertex, v2: Vertex, fdProvider: HalfEdge => FD): Unit =
+  def mergeVertices(v1: Vertex, v2: Vertex, fdProvider: HalfEdge => FD): Unit =
     if (v1.incidentEdge.nonEmpty && v2.incidentEdge.nonEmpty) {
       //for(e <- v1.edgeTo(v2)) deleteEdge(e) //Don't do it like that,  since deleteEdge can delete face that shouldn't be deleted  after vertex merge
       val edgeBetween = v1.edgeTo(v2)
@@ -525,6 +526,11 @@ class PlanarDCEL[VD, HED, FD](
               v1.incidentEdge.contains(v1oPrev) || v1.incidentEdge.contains(v2eNext)) v1._incidentEdge = Some(v1oPrev.twin)
             mergeRemoveV1OV2E()
             mergeRemoveV1OPrevV2ENext()
+            if(faceWeIn.holes.nonEmpty){
+              throw new CantDoOpOnDCELException("Some holes left in deleted face")
+            }
+            innerFaces -= faceWeIn
+            onFaceRemoved(faceWeIn)
           } else if (v1o.next == v2e) { //5
             if (v1.incidentEdge.contains(v1o) || v1.incidentEdge.contains(v2e)) v1._incidentEdge = Some(v1oPrev.twin)
             mergeRemoveV1OV2E()

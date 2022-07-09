@@ -62,7 +62,7 @@ object DCEL {
     def holes: Iterator[Face] = _holesIncidentEdges.iterator.map(_.twin._leftFace)
 
     def vertices: Iterator[Vertex] = outsideVertices ++ holesVertices
-
+    /**Includes border edges and hole edges*/
     def edges: Iterator[HalfEdge] = borderEdges ++ holesEdges
     /**If forEdge is in hole border, finds holeIncidentEdge that refers to forEdge's hole*/
     def holeIncidentEdge(forEdge: HalfEdge): Option[HalfEdge] = _holesIncidentEdges.find(_.traverseEdges.contains(forEdge))
