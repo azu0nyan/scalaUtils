@@ -5,6 +5,8 @@ import utils.datastructures.dcel.PlanarDCEL._
 import utils.math.planar.{AngleCCWPlanar, AngleOps, PointIntersection, Polygon, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
 import utils.math._
 
+import scala.collection.mutable
+
 
 object PlanarDCEL {
   implicit class PlanarVertex[VD, HED, FD](f: RawVertex[VD, HED, FD])(implicit extractor: VD => V2) {
@@ -571,10 +573,50 @@ class PlanarDCEL[VD, HED, FD](
       onVertexRemoved(v2)
     }
 
+  /**untested*/
   def insert[OVD, OHED, OFD](ot: DCEL[OVD, OHED, OFD],
                              mapVD: RawVertex[OVD, OHED, OFD] => VD,
                              mapHED: RawHalfEdge[OVD, OHED, OFD] => HED,
-                             mapFD: RawFace[OVD, OHED, OFD] => FD): Unit = {
+                             mapFD: RawFace[OVD, OHED, OFD] => FD,
+                             mergeVerticesAtSamePosition: Boolean,
+                             mergeFDProvider: HalfEdge => FD): Unit = {
+    val newFaces: mutable.Map[RawFace[OVD, OHED, OFD], Face] = mutable.Map()
+    val newHalfEdges: mutable.Map[RawHalfEdge[OVD, OHED, OFD], HalfEdge] = mutable.Map()
+    val newVertices: mutable.Map[RawVertex[OVD, OHED, OFD], Vertex] = mutable.Map()
+    for(v <- ot.vertices){
+      val v1 = makeVertex(mapVD(v))
+      newVertices += v -> v1
+    }
+    for(f <- ot.innerFaces) {
+      val f1 = makeFace(mapFD(f))
+      newFaces += f -> f1
+    }
+    for(he <- ot.halfEdges) {
+      val edgeFace = if(he.leftFace == ot.outerFace) outerFace else newFaces(he.leftFace)
+      val origin = newVertices(he._origin)
+      val he1 = new HalfEdge(mapHED(he), origin, null, edgeFace, null, null )
+      newHalfEdges += he -> he1
+      if(origin.incidentEdge.isEmpty) {
+        origin._incidentEdge = Some(he1)
+      }
+    }
+    for(he <- ot.halfEdges) {
+      val newHe = newHalfEdges(he)
+      newHe._twin = newHalfEdges(he._twin)
+      newHe._prev = newHalfEdges(he._prev)
+      newHe._next = newHalfEdges(he._next)
+      onNewHalfEdge(newHe)
+    }
+    for(outerEdge <- ot.outerFace._holesIncidentEdges) {
+      outerFace._holesIncidentEdges += newHalfEdges(outerEdge)
+    }
+    if(mergeVerticesAtSamePosition){
+      for(v <- ot.vertices;
+          nv = newVertices(v);
+          toMerge <- getVertex(nv.position)) {
+        mergeVertices(toMerge, nv, mergeFDProvider)
+      }
+    }
 
   }
 }
