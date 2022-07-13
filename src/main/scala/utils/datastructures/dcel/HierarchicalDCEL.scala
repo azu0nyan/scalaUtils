@@ -1,6 +1,6 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
+import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.HierarchicalDCELCache.HierarchicalDCELCacheInstance
 import utils.datastructures.graph.VisibilityGraphOps
 import utils.math.planar.{Polygon, PolygonRegion, SegmentPlanar, V2}
@@ -10,18 +10,35 @@ import utils.sugar.{IteratorOps, SeqOps}
 
 object HierarchicalDCEL {
 
-  type HierarchicalDCEL[VD, HED, FD] =
-    PlanarDCEL[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
 
-  type Face[VD, HED, FD] = RawFace[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
-  type HalfEdge[VD, HED, FD] = RawHalfEdge[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
-  type Vertex[VD, HED, FD] = RawVertex[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
+  type HierarchicalDCELOwnData = {
+    type VertexOwnData
+    type HalfEdgeOwnData
+    type FaceOwnData
+  }
+
+  type HierarchicalDCELData[OwnData <: HierarchicalDCELOwnData] = DCELData{
+     type VertexData = HierarchicalVertex[OwnData]
+     type HalfEdgeData = HierarchicalEdge[OwnData]
+     type FaceData =  HierarchicalFace[OwnData]
+  }
+
+  type HierarchicalDCEL[OwnData <: HierarchicalDCELOwnData] = PlanarDCEL[HierarchicalDCELData[OwnData]]
+  //R stands for RAW
+  type RVertex[OwnData <: HierarchicalDCELOwnData] = DCEL.Vertex[HierarchicalDCELData[OwnData]]
+  type RHalfEdge[OwnData <: HierarchicalDCELOwnData] = DCEL.HalfEdge[HierarchicalDCELData[OwnData]]
+  type RFace[OwnData <: HierarchicalDCELOwnData] = DCEL.Face[HierarchicalDCELData[OwnData]]
+
+//  type HierarchicalDCEL[VD, HED, FD] =
+//    PlanarDCEL[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
+//
+//  type Face[VD, HED, FD] = Face[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
+//  type HalfEdge[VD, HED, FD] = HalfEdge[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
+//  type Vertex[VD, HED, FD] = Vertex[HierarchicalVertex[VD, HED, FD], HierarchicalEdge[VD, HED, FD], HierarchicalFace[VD, HED, FD]]
 
 
-  class HierarchicalVertex[VD, HED, FD](var ownData: VD)(implicit extractor: VD => V2) {
-    type Face = HierarchicalDCEL.Face[VD, HED, FD]
-    type HalfEdge = HierarchicalDCEL.HalfEdge[VD, HED, FD]
-    type Vertex = HierarchicalDCEL.Vertex[VD, HED, FD]
+  class HierarchicalVertex[OD <: HierarchicalDCELOwnData](var ownData: OD#VertexOwnData)
+                                                         (implicit extractor: OD#VertexOwnData => V2) {
 
     def position: V2 = extractor(ownData)
   }
@@ -29,69 +46,66 @@ object HierarchicalDCEL {
   /**
     * @param isFake true if edge lies on border of some inner polygon, have non-fake ancestor
     */
-  class HierarchicalEdge[VD, HED, FD](
-                                       initialParents: Seq[HierarchicalEdge[VD, HED, FD]],
-                                       //var isFake: Boolean, //todo remove, if edge has parent than it's twin has partially fake part
-                                       var ownData: HED) {
-    type Face = HierarchicalDCEL.Face[VD, HED, FD]
-    type HalfEdge = HierarchicalDCEL.HalfEdge[VD, HED, FD]
-    type Vertex = HierarchicalDCEL.Vertex[VD, HED, FD]
+  class HierarchicalEdge[OD <: HierarchicalDCELOwnData](
+                                                         initialParents: Seq[HierarchicalEdge[OD]],
+                                                         //var isFake: Boolean, //todo remove, if edge has parent than it's twin has partially fake part
+                                                         var ownData: OD#HalfEdgeOwnData) {
 
 
-    var edge: HalfEdge = _
+    var edge: HalfEdge[HierarchicalDCELData[OD]] = _
 
-    var childs: Seq[HierarchicalEdge[VD, HED, FD]] = Seq()
+    var childs: Seq[HierarchicalEdge[OD]] = Seq()
 
-    private[this] var _parents: Seq[HierarchicalEdge[VD, HED, FD]] = Seq()
+    private[this] var _parents: Seq[HierarchicalEdge[OD]] = Seq()
 
     initialParents.foreach(addParent)
 
     /** Parent edge can cover only part of a child, full cover not guaranteed.
       * Because modification of innerDCEL shouldn't affect modifications of a parent,
       * and splitting child edge at parent vertices can be impossible */
-    def parents: Seq[HierarchicalEdge[VD, HED, FD]] = _parents
+    def parents: Seq[HierarchicalEdge[OD]] = _parents
 
-    def face: Face = edge.leftFace
+    def face: RFace[OD] = edge.leftFace
 
-    def hierarchicalFace: HierarchicalFace[VD, HED, FD] = edge.leftFace.data
+//    def hierarchicalFace: HierarchicalFace[OD] = edge.leftFace.data
 
     def asSegment: SegmentPlanar = SegmentPlanar(edge.origin.data.position, edge.ending.data.position)
 
     /** Parent edge can cover only part of a child, full cover not guaranteed */
-    def allLevelChilds: Seq[HierarchicalEdge[VD, HED, FD]] = childs.flatMap(_.meAndAllLevelChilds.toSeq)
+    def allLevelChilds: Seq[HierarchicalEdge[OD]] = childs.flatMap(_.meAndAllLevelChilds.toSeq)
 
     /** Parent edge can cover only part of a child, full cover not guaranteed */
-    def meAndAllLevelChilds: Seq[HierarchicalEdge[VD, HED, FD]] = this +: allLevelChilds
+    def meAndAllLevelChilds: Seq[HierarchicalEdge[OD]] = this +: allLevelChilds
 
-    //    def rootParent: HierarchicalEdge[VD, HED, FD] = parent.map(_.rootParent).getOrElse(this)
+    //    def rootParent: HierarchicalEdge[OD] = parent.map(_.rootParent).getOrElse(this)
     //
-    //    def meAndAncestors: Iterator[HierarchicalEdge[VD, HED, FD]] = Iterator.from(Seq(this)) ++ ancestors
+    //    def meAndAncestors: Iterator[HierarchicalEdge[OD]] = Iterator.from(Seq(this)) ++ ancestors
     //
-    //    def ancestors: Iterator[HierarchicalEdge[VD, HED, FD]] = IteratorOps.iterateOpt(parent)(_.parent)
+    //    def ancestors: Iterator[HierarchicalEdge[OD]] = IteratorOps.iterateOpt(parent)(_.parent)
 
     /** twin on same or higher level to whom we go if go through EdgeNode(this) */
-    //    def edgeNodeTwin: HierarchicalEdge[VD, HED, FD] =
+    //    def edgeNodeTwin: HierarchicalEdge[OD] =
     //      if (!edge.twin.data.isFake) edge.twin.data
     //      else parent.map(_.edgeNodeTwin).get //in that case parent shouldn't be empty and root level parent always have non-fake twin
     //
 
-    def addParent(toAdd: HierarchicalEdge[VD, HED, FD]): Unit = {
+    def addParent(toAdd: HierarchicalEdge[OD]): Unit = {
       _parents = _parents :+ toAdd
       toAdd.childs = toAdd.childs :+ toAdd
     }
 
-    def removeParent(toRemove: HierarchicalEdge[VD, HED, FD]): Unit = {
+    def removeParent(toRemove: HierarchicalEdge[OD]): Unit = {
       _parents = _parents.filter(_ != toRemove)
       toRemove.childs = toRemove.childs.filter(_ != toRemove)
     }
 
-    def replaceParents(newParents: Seq[HierarchicalEdge[VD, HED, FD]]) : Unit = {
+    def replaceParents(newParents: Seq[HierarchicalEdge[OD]]) : Unit = {
       parents.foreach(removeParent)
       newParents.foreach(addParent)
     }
 
     /***/
-    def parentCoveredParts: Seq[(HierarchicalEdge[VD, HED, FD], Scalar, Scalar)] = {
+    def parentCoveredParts: Seq[(HierarchicalEdge[OD], Scalar, Scalar)] = {
       val seg = asSegment
       parents.flatMap{parent =>
         //assumes that parent goes in the same direction as a child => start < end
@@ -105,19 +119,16 @@ object HierarchicalDCEL {
 
   }
 
-  class HierarchicalFace[VD, HED, FD](
-                                       val parent: Option[HierarchicalFace[VD, HED, FD]],
-                                       var ownData: FD)(implicit extractor: VD => V2) {
-    type Face = HierarchicalDCEL.Face[VD, HED, FD]
-    type HalfEdge = HierarchicalDCEL.HalfEdge[VD, HED, FD]
-    type Vertex = HierarchicalDCEL.Vertex[VD, HED, FD]
+  class HierarchicalFace[OD <: HierarchicalDCELOwnData](
+                                       val parent: Option[HierarchicalFace[OD]],
+                                       var ownData: OD#FaceOwnData)(implicit extractor: OD#VertexOwnData => V2) {
 
 
-    var face: Face = _
+    var face: RFace[OD] = _
 
     var cacheEnabled: Boolean = false
-    var shapeCache: HierarchicalDCELCacheInstance[VD, HED, FD] = _
-    val innerDCEL: HierarchicalDCEL[VD, HED, FD] = new HierarchicalDCEL(this, d => d.position)
+    var shapeCache: HierarchicalDCELCacheInstance[OD] = _
+    val innerDCEL: HierarchicalDCEL[OD] = new HierarchicalDCEL(this, d => d.position)
 
     innerDCEL.onNewFace.subscribe { face =>
       face.data.face = face
@@ -135,21 +146,21 @@ object HierarchicalDCEL {
     innerDCEL.onNewFace(innerDCEL.outerFace)
 
     /** Face's outer border. Build from face.borderEdges */
-    def outerBorder: Seq[HalfEdge] = if (cacheEnabled) shapeCache.outerBorder else HierarchicalDCELCache.outerBorder(this)
+    def outerBorder: Seq[RHalfEdge[OD]] = if (cacheEnabled) shapeCache.outerBorder else HierarchicalDCELCache.outerBorder(this)
 
-    def holesOwnContours: Seq[Seq[HalfEdge]] = if (cacheEnabled) shapeCache.holesOwnContours else HierarchicalDCELCache.holesOwnContours(this)
+    def holesOwnContours: Seq[Seq[RHalfEdge[OD]]] = if (cacheEnabled) shapeCache.holesOwnContours else HierarchicalDCELCache.holesOwnContours(this)
 
-    def fullBorder: Seq[HalfEdge] = if (cacheEnabled) shapeCache.fullBorder else HierarchicalDCELCache.fullBorder(this)
+    def fullBorder: Seq[RHalfEdge[OD]] = if (cacheEnabled) shapeCache.fullBorder else HierarchicalDCELCache.fullBorder(this)
 
     /** Holes parent equals to  my parent */
-    def holeAreas: Seq[HierarchicalFace[VD, HED, FD]] = if (cacheEnabled) shapeCache.holeAreas else HierarchicalDCELCache.holeAreas(this)
+    def holeAreas: Seq[HierarchicalFace[OD]] = if (cacheEnabled) shapeCache.holeAreas else HierarchicalDCELCache.holeAreas(this)
 
-    def neighbourFaces: Seq[HierarchicalFace[VD, HED, FD]] = if (cacheEnabled) shapeCache.neighbourFaces else HierarchicalDCELCache.neighbourFaces(this)
+    def neighbourFaces: Seq[HierarchicalFace[OD]] = if (cacheEnabled) shapeCache.neighbourFaces else HierarchicalDCELCache.neighbourFaces(this)
 
     /** Childs which inner parent  is me */
-    def directChildFaces: Seq[HierarchicalFace[VD, HED, FD]] = if (cacheEnabled) shapeCache.directChildFaces else HierarchicalDCELCache.directChildFaces(this)
+    def directChildFaces: Seq[HierarchicalFace[OD]] = if (cacheEnabled) shapeCache.directChildFaces else HierarchicalDCELCache.directChildFaces(this)
 
-    def allChildFaces: Seq[HierarchicalFace[VD, HED, FD]] = if (cacheEnabled) shapeCache.allChildFaces else HierarchicalDCELCache.allChildFaces(this)
+    def allChildFaces: Seq[HierarchicalFace[OD]] = if (cacheEnabled) shapeCache.allChildFaces else HierarchicalDCELCache.allChildFaces(this)
 
     def outerPoly: PolygonRegion = if (cacheEnabled) shapeCache.outerPoly else HierarchicalDCELCache.outerPoly(this)
 
@@ -164,14 +175,14 @@ object HierarchicalDCEL {
     def obstacles: Seq[SegmentPlanar] = if (cacheEnabled) shapeCache.obstacles else HierarchicalDCELCache.obstacles(this)
 
     //////////////////////////helper functions
-    def isAncestorOf(a: HierarchicalFace[VD, HED, FD]): Boolean = allChildFaces.contains(a)
+    def isAncestorOf(a: HierarchicalFace[OD]): Boolean = allChildFaces.contains(a)
 
     /** faster than isAncestorOf */
-    def isDescendantOf(a: HierarchicalFace[VD, HED, FD]): Boolean = parent.contains(a) || parent.nonEmpty && parent.get.isDescendantOf(a)
+    def isDescendantOf(a: HierarchicalFace[OD]): Boolean = parent.contains(a) || parent.nonEmpty && parent.get.isDescendantOf(a)
 
     def containsPoint(pos: V2): Boolean = outerPoly.contains(pos) && !holesPolys.exists(_.containsInside(pos))
 
-    def meAndParents: Seq[HierarchicalFace[VD, HED, FD]] = this +: parent.map(_.meAndParents).getOrElse(Seq())
+    def meAndParents: Seq[HierarchicalFace[OD]] = this +: parent.map(_.meAndParents).getOrElse(Seq())
 
     /** points should be inside */
     def visible(from: V2, to: V2): Boolean = //(from ~= to) ||
@@ -179,7 +190,7 @@ object HierarchicalDCEL {
         !obstacles.exists(seg => VisibilityGraphOps.bodyIntersection(from, to, seg.start, seg.end))
       }
 
-    def faceAt(pos: V2): HierarchicalFace[VD, HED, FD] = {
+    def faceAt(pos: V2): HierarchicalFace[OD] = {
       //    println(s"${areaGameplayData.name} $holeAreas}")
       if (outerPoly.contains(pos)) {
         directChildFaces.find(_.outerPoly.contains(pos)) orElse
@@ -198,11 +209,11 @@ object HierarchicalDCEL {
 
 
     //todo clamp
-//    def splitEdge(edge: HalfEdge, splitAt: HierarchicalVertex[VD, HED, FD], endingData: HED, endingTwinData: HED): HalfEdge = {
+//    def splitEdge(edge: HalfEdge, splitAt: HierarchicalVertex[OD], endingData: HED, endingTwinData: HED): HalfEdge = {
       //todo split parents
 //      innerDCEL.split(edge, splitAt,
-//        new HierarchicalEdge[VD, HED, FD](edge.data.parent, endingData),
-//        new HierarchicalEdge[VD, HED, FD](edge.twin.data.parent, endingTwinData))
+//        new HierarchicalEdge[OD](edge.data.parent, endingData),
+//        new HierarchicalEdge[OD](edge.twin.data.parent, endingTwinData))
 //      edge.next
 //    }
 
@@ -210,23 +221,23 @@ object HierarchicalDCEL {
     /** can cut poly in own area with result of single polygon island */
     def canCutAsSingleArea(poly: PolygonRegion): Boolean = ??? //todo mb remove
 
-    def findParentForEdge(seg: SegmentPlanar): Seq[HierarchicalEdge[VD, HED, FD]] = {
+    def findParentForEdge(seg: SegmentPlanar): Seq[HierarchicalEdge[OD]] = {
       fullBorder.filter { parent =>
         val parentSeg = parent.data.asSegment
         seg.body.sameDirection(parentSeg.body) &&  seg.haveSegmentIntersection(parentSeg)
       }.map(_.data)
     }
 
-    def newHierarchicalEdgeProvider(v1: Vertex, v2: Vertex, newHEDProvider: (Vertex, Vertex) => (HED, HED)): (HierarchicalEdge[VD, HED, FD], HierarchicalEdge[VD, HED, FD]) = {
+    def newHierarchicalEdgeProvider(v1: RVertex[OD], v2: RVertex[OD], newHEDProvider: (RVertex[OD], RVertex[OD]) => (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData)): (HierarchicalEdge[OD], HierarchicalEdge[OD]) = {
       val (data, twinData) = newHEDProvider(v1, v2)
       val seg = SegmentPlanar(v1.data.position, v2.data.position)
       val parents = findParentForEdge(seg)
       val twinParents = findParentForEdge(seg.reverse)
 
-      (new HierarchicalEdge[VD, HED, FD](parents, data), new HierarchicalEdge[VD, HED, FD](twinParents, twinData))
+      (new HierarchicalEdge[OD](parents, data), new HierarchicalEdge[OD](twinParents, twinData))
     }
 
-    def splitHierarchicalEdgeProvider(edge: HalfEdge, at: V2, splitHEDProvider: (HalfEdge, V2) => (HED, HED)): (HierarchicalEdge[VD, HED, FD], HierarchicalEdge[VD, HED, FD]) = {
+    def splitHierarchicalEdgeProvider(edge: RHalfEdge[OD], at: V2, splitHEDProvider: (RHalfEdge[OD], V2) => (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData)): (HierarchicalEdge[OD], HierarchicalEdge[OD]) = {
       val (data, twinData) = splitHEDProvider(edge, at)
       val SegmentPlanar(start, end) = edge.data.asSegment
       //todo do int here or in linstener??
@@ -238,23 +249,23 @@ object HierarchicalDCEL {
       val newParents = findParentForEdge(SegmentPlanar(at, end))
       val newTwinParents = findParentForEdge(SegmentPlanar(end, at))
 
-      (new HierarchicalEdge[VD, HED, FD](newParents,  data),
-        new HierarchicalEdge[VD, HED, FD](newTwinParents, twinData))
+      (new HierarchicalEdge[OD](newParents,  data),
+        new HierarchicalEdge[OD](newTwinParents, twinData))
     }
 
-    def newHierarchicalFaceProvider(edge: HalfEdge, newFDProvider: HalfEdge => FD): HierarchicalFace[VD, HED, FD] = {
-      new HierarchicalFace[VD, HED, FD](Some(this), newFDProvider(edge))
+    def newHierarchicalFaceProvider(edge: RHalfEdge[OD], newFDProvider: RHalfEdge[OD] => OD#FaceOwnData): HierarchicalFace[OD] = {
+      new HierarchicalFace[OD](Some(this), newFDProvider(edge))
     }
 
     //todo normalization needed?
     def cutChain(chain: Seq[V2],
-                 newVDProvider: V2 => VD,
-                 newHEDProvider: (Vertex, Vertex) => (HED, HED),
-                 splitHEDProvider: (HalfEdge, V2) => (HED, HED),
-                 newFDProvider: HalfEdge => FD): Seq[HalfEdge] = {
+                 newVDProvider: V2 => OD#VertexOwnData,
+                 newHEDProvider: (RVertex[OD], RVertex[OD]) => (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData),
+                 splitHEDProvider: (RHalfEdge[OD], V2) => (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData),
+                 newFDProvider: RHalfEdge[OD] => OD#FaceOwnData): Seq[RHalfEdge[OD]] = {
       val normalized = SeqOps.removeConsecutiveDuplicatesCircular(chain.toList)
       val res = innerDCEL.cutChain(normalized,
-        x => new HierarchicalVertex[VD, HED, FD](newVDProvider(x)),
+        x => new HierarchicalVertex[OD](newVDProvider(x)),
         newHierarchicalEdgeProvider(_, _, newHEDProvider),
         splitHierarchicalEdgeProvider(_, _, splitHEDProvider),
         newHierarchicalFaceProvider(_, newFDProvider))
@@ -263,15 +274,15 @@ object HierarchicalDCEL {
 
     /** Cuts PolygonRegion inside face(in innerDCEL), polygonRegion should be clamped before cut. */
     def cutClamped(poly: PolygonRegion,
-                   newVDProvider: V2 => VD,
-                   newHEDProvider: (Vertex, Vertex) => (HED, HED),
-                   splitHEDProvider: (HalfEdge, V2) => (HED, HED),
-                   newFDProvider: HalfEdge => FD): Seq[HalfEdge] = {
+                   newVDProvider: V2 => OD#VertexOwnData,
+                   newHEDProvider: (RVertex[OD], RVertex[OD]) => (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData),
+                   splitHEDProvider: (RHalfEdge[OD], V2) => (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData),
+                   newFDProvider: RHalfEdge[OD] => OD#FaceOwnData): Seq[RHalfEdge[OD]] = {
       val normalized = PolygonRegion(SeqOps.removeConsecutiveDuplicatesCircular(poly.vertices.toList))
       val p = if (normalized.isCw) normalized.reverse else normalized
 
       val res = innerDCEL.cutPoly(p.vertices,
-        x => new HierarchicalVertex[VD, HED, FD](newVDProvider(x)),
+        x => new HierarchicalVertex[OD](newVDProvider(x)),
         newHierarchicalEdgeProvider(_, _, newHEDProvider),
         splitHierarchicalEdgeProvider(_, _, splitHEDProvider),
         newHierarchicalFaceProvider(_, newFDProvider))
