@@ -1,7 +1,7 @@
 package utils.datastructures.dcel
 
 import utils.datastructures.dcel.DCEL.{Face, HalfEdge, Vertex}
-import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELData, HierarchicalDCELOwnData, HierarchicalEdge, HierarchicalFace, HierarchicalVertex}
+import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELData, HierarchicalDCELOwnData, HierarchicalEdge, HierarchicalFace, HierarchicalVertex, RHalfEdge}
 import utils.datastructures.dcel.PlanarDCEL.PlanarVertex
 import utils.math.planar.algo.polygonClipping.PolygonClipping
 import utils.math.planar.{Polygon, PolygonRegion, SegmentPlanar}
@@ -13,16 +13,13 @@ object HierarchicalDCELCache {
     Avoid using neighbours cached values as they can be incorrect.
   */
 
-  type Face[OD <: HierarchicalDCELOwnData] = DCEL.Face[HierarchicalDCELData[OD]]
-  type Vertex[OD <: HierarchicalDCELOwnData] = DCEL.Face[HierarchicalDCELData[OD]]
-  type HalfEdge[OD <: HierarchicalDCELOwnData] = DCEL.HalfEdge[HierarchicalDCELData[OD]]
 
-  def outerBorder[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HalfEdge[OD]] =
+  def outerBorder[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[RHalfEdge[OD]] =
     face.face.borderEdges.toSeq
 
-  def holesOwnContours[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[Seq[HalfEdge[OD]]] = face.face.holesIncidentEdges.map(_.traverseEdges.toSeq).toSeq
+  def holesOwnContours[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[Seq[RHalfEdge[OD]]] = face.face.holesIncidentEdges.map(_.traverseEdges.toSeq).toSeq
 
-  def fullBorder[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HalfEdge[OD]] = outerBorder ++ holesOwnContours.flatten
+  def fullBorder[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[RHalfEdge[OD]] = outerBorder ++ holesOwnContours.flatten
 
   /** Holes parent equals to my parent */
   def holeAreas[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HierarchicalFace[OD]] = {
@@ -87,9 +84,9 @@ object HierarchicalDCELCache {
   }
 
   case class HierarchicalDCELCacheInstance[OD <: HierarchicalDCELOwnData](
-                                                                           outerBorder: Seq[HalfEdge[OD]],
-                                                                           holesOwnContours: Seq[Seq[HalfEdge[OD]]],
-                                                                           fullBorder: Seq[HalfEdge[OD]],
+                                                                           outerBorder: Seq[RHalfEdge[OD]],
+                                                                           holesOwnContours: Seq[Seq[RHalfEdge[OD]]],
+                                                                           fullBorder: Seq[RHalfEdge[OD]],
                                                                            holeAreas: Seq[HierarchicalFace[OD]],
                                                                            neighbourFaces: Seq[HierarchicalFace[OD]],
                                                                            directChildFaces: Seq[HierarchicalFace[OD]],
