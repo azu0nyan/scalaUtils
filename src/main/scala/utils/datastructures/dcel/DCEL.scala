@@ -1,6 +1,7 @@
 package utils.datastructures.dcel
 
 import utils.datastructures.dcel.DCEL._
+import utils.math.planar.PolygonRegion
 import utils.system.Event.{Event, EventImpl}
 
 import scala.collection.mutable
@@ -32,10 +33,10 @@ object DCEL {
     *
     */
   class Face[D <: DCELData] private[DCEL](
-                                                private[this] var _data: D#FaceData,
-                                                private[dcel] var _incidentEdge: Option[HalfEdge[D]] = None,
-                                                private[dcel] var _holesIncidentEdges: Set[HalfEdge[D]],
-                                              ) {
+                                           private[this] var _data: D#FaceData,
+                                           private[dcel] var _incidentEdge: Option[HalfEdge[D]] = None,
+                                           private[dcel] var _holesIncidentEdges: Set[HalfEdge[D]],
+                                         ) {
 
     //    def parent:Option[Face[D]] = incidentEdge.map(_.allReachableFaces().filter(_.holes.nonEmpty))
 
@@ -86,13 +87,13 @@ object DCEL {
     * @param prev     previous half-edge
     */
   class HalfEdge[D <: DCELData] private[dcel](
-                                                    private[dcel] var _data: D#HalfEdgeData,
-                                                    private[dcel] var _origin: Vertex[D],
-                                                    private[dcel] var _twin: HalfEdge[D],
-                                                    private[dcel] var _leftFace: Face[D],
-                                                    private[dcel] var _prev: HalfEdge[D],
-                                                    private[dcel] var _next: HalfEdge[D],
-                                                  ) {
+                                               private[dcel] var _data: D#HalfEdgeData,
+                                               private[dcel] var _origin: Vertex[D],
+                                               private[dcel] var _twin: HalfEdge[D],
+                                               private[dcel] var _leftFace: Face[D],
+                                               private[dcel] var _prev: HalfEdge[D],
+                                               private[dcel] var _next: HalfEdge[D],
+                                             ) {
     def origin: Vertex[D] = _origin
 
     def ending: Vertex[D] = _next.origin
@@ -163,9 +164,9 @@ object DCEL {
 
 
   class Vertex[D <: DCELData] private[dcel](
-                                                  private[this] var _data: D#VertexData,
-                                                  private[dcel] var _incidentEdge: Option[HalfEdge[D]] = None
-                                                ) {
+                                             private[this] var _data: D#VertexData,
+                                             private[dcel] var _incidentEdge: Option[HalfEdge[D]] = None
+                                           ) {
 
     def incidentEdge: Option[HalfEdge[D]] = _incidentEdge
 
@@ -209,8 +210,8 @@ object DCEL {
 
 /** Double connected edge list */
 class DCEL[D <: DCELData](
-                                outerFaceData: D#FaceData
-                              ) {
+                           outerFaceData: D#FaceData
+                         ) {
 
   val outerFace: Face[D] = new Face(outerFaceData, None, Set())
 
@@ -437,6 +438,83 @@ class DCEL[D <: DCELData](
     halfEdges -= e.twin
     onHalfEdgeRemoved(e)
     onHalfEdgeRemoved(e.twin)
+  }
+
+  //todo test
+  /**
+    * This procedure assumes that toMerge can't be neighbour and hole at the same time
+    * routine:
+    * - mergeFaceDatas called once before merge
+    * - face data on main updated
+    * - then toMerge rewritten as main
+    * - then for every edge
+    * - - halfEdge detached
+    * */
+  def mergeAdjancedFaces(main: Face[D], toMerge: Face[D], mergeFaceDatas: MergeFaceDatas[D]): Boolean = {
+    //todo remove hanging vertices
+    if (main == toMerge) false
+    else {
+      val commonBorderEdges = main.edges.filter(_.twin.leftFace == toMerge).toSeq
+      if (commonBorderEdges.nonEmpty) { //we're simple neighbours
+        val isMergingWithHole = main.holesEdges.map(_.twin.leftFace).contains(toMerge)
+        val isMainHole = toMerge.holesEdges.map(_.twin.leftFace).contains(main)
+
+        val newFaceData = mergeFaceDatas.mergeFaceDatas(main, toMerge)
+        main.data = newFaceData
+        //          main._holesIncidentEdges = main._holesIncidentEdges.filter(_.twin.leftFace != toMerge) ++
+        //            toMerge._holesIncidentEdges.filter(_.twin.leftFace != main)
+        main._holesIncidentEdges = main._holesIncidentEdges ++ toMerge._holesIncidentEdges
+        for (e <- toMerge.edges) e._leftFace = main
+        if (isMainHole) main._incidentEdge = toMerge._incidentEdge
+
+        innerFaces -= toMerge
+        onFaceRemoved(toMerge)
+
+        for (e <- if (isMainHole) commonBorderEdges.map(_.twin) else commonBorderEdges) {
+          deleteEdgeUnsafe(e)
+          //deletion of edge may create hole
+          val next = e.next
+          val prev = e.prev
+          if (e.twin == next || e.twin == prev) { //removing end of some chain
+            if (next == prev) { //removing single hanging edge
+              main._holesIncidentEdges = main._holesIncidentEdges.filter(h => h != e && h != e.twin)
+            } else {
+              //do nothing
+            }
+          } else {
+            val chainBroken = !next.traverseEdges.contains(prev)
+            //              println(dcel.asInstanceOf[PlanarDCEL[D]].pos(e._origin), dcel.asInstanceOf[PlanarDCEL[D]].pos(e.ending))
+            //              println(chainBroken, isMergingWithHole)
+            if (chainBroken && !isMergingWithHole) { //if we created hole
+              this match {
+                case p: PlanarDCEL[D] => //ugly typecast
+                  val nextPoly = PolygonRegion(next.traverseEdges.map(e => p.pos(e.origin)).toSeq)
+                  val prevPoly = PolygonRegion(prev.traverseEdges.map(e => p.pos(e.origin)).toSeq)
+                  if (nextPoly.contains(prevPoly)) {
+                    main._holesIncidentEdges = main._holesIncidentEdges + prev
+                    if (main.incidentEdge.isDefined && prev.traverseEdges.contains(main.incidentEdge.get)) main._incidentEdge = Some(next)
+                  } else if (prevPoly.contains(nextPoly)) {
+                    main._holesIncidentEdges = main._holesIncidentEdges + next
+                    if (main.incidentEdge.isDefined && next.traverseEdges.contains(main.incidentEdge.get)) main._incidentEdge = Some(prev)
+                  } else {
+                    //todo
+                  }
+                case _ =>
+                  main._holesIncidentEdges = main._holesIncidentEdges + (if (next.traverseEdges.contains(main.incidentEdge)) prev else next)
+              }
+            } else if (chainBroken && isMergingWithHole) { //we split hole to two parts
+              if (!main.holesEdges.contains(prev)) main._holesIncidentEdges = main._holesIncidentEdges + prev
+              if (!main.holesEdges.contains(next)) main._holesIncidentEdges = main._holesIncidentEdges + next
+            } else if (!chainBroken && isMergingWithHole) {
+
+            }
+          }
+          //            println(main._holesIncidentEdges.map(_.data))
+        }
+
+        true
+      } else false
+    }
   }
 
 

@@ -34,7 +34,7 @@ class PlanarDCEL[D <: DCELData](
 
   def pos(v: Vertex[D]): V2 = extractor(v.data)
 
-  def seg(e: HalfEdge[D]): SegmentPlanar = e.asSegment
+  def asSegment(e: HalfEdge[D]): SegmentPlanar = e.asSegment
 
   def outerContour(f: Face[D]): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.position).toSeq)
 

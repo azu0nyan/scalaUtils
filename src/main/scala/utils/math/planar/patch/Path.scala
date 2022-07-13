@@ -6,18 +6,19 @@ import utils.math.planar.{PolygonalChain, SegmentPlanar, TransformablePlanar, V2
 
 object Path {
   /**
-    *Result of searching closest point on spline
-    * @param point closest point
+    * Result of searching closest point on spline
+    *
+    * @param point    closest point
     * @param argument curve(arg) = point
     * @param distance to point
     */
-  case class SearchResult (point:V2, argument:Scalar, distance:Scalar)
+  case class SearchResult(point: V2, argument: Scalar, distance: Scalar)
 
   def uniformCombinePatches(s: Seq[Path]): Path = new Path {
     private val patches = s.map(_.IterpolateArgToUnit).toIndexedSeq
-    override def posFromT(t: Scalar): V2 =  {
-      if(t <= argStart) patches.head(0d)
-      else if(t >= argEnd) patches.last(1d)
+    override def posFromT(t: Scalar): V2 = {
+      if (t <= argStart) patches.head(0d)
+      else if (t >= argEnd) patches.last(1d)
       else patches(t.toInt)(t - t.toInt)
     }
 
@@ -107,15 +108,20 @@ object Path {
       SearchResult(this (closestArg), closestArg, closestDistance)
     }
 
+    def tangentAtApproximation(arg: Scalar, argOffset: Scalar = 0.00001): V2 = ((apply(arg) - apply(arg - argOffset)) + (apply(arg + argOffset) - apply(arg))).normalize
+
   }
 
 
   trait PathWithTangent extends Path {
     /*correctly override*/
-    def tangentAt(arg: Scalar): V2 = ((apply(arg) - apply(arg - 0.001)) + (apply(arg + 0.001) - apply(arg))).normalize
+    def tangentAt(arg: Scalar): V2
   }
 
   case class StraitPath(s: SegmentPlanar) extends PathWithTangent {
+
+    override def tangentAt(arg: Scalar): V2 = tangentAtApproximation(arg)
+
     override def posFromT(t: _root_.utils.math.Scalar): V2 = s.v1 * (1 - t) + s.v2 * t
 
     override def argStart: _root_.utils.math.Scalar = 0

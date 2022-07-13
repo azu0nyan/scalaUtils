@@ -271,7 +271,7 @@ object HierarchicalDCEL {
     def cutChain(chain: Seq[V2], dcelDataProvider: OwnDataProvider[OD]): Seq[RHalfEdge[OD]] = {
       val normalized = SeqOps.removeConsecutiveDuplicatesCircular(chain.toList)
       val res = innerDCEL.cutChain(normalized, new HierarchicalDCElDataProvider(dcelDataProvider))
-      DCELOps.toChain(res).flatten.toSeq
+      DCELOps.toChainOpt(res).flatten.toSeq
     }
 
     /** Cuts PolygonRegion inside face(in innerDCEL), polygonRegion should be clamped before cut. */
@@ -280,7 +280,7 @@ object HierarchicalDCEL {
       val p = if (normalized.isCw) normalized.reverse else normalized
 
       val res = innerDCEL.cutPoly(p.vertices, new HierarchicalDCElDataProvider(dcelDataProvider))
-      DCELOps.toChain(res).flatten.toSeq
+      DCELOps.toChainOpt(res).flatten.toSeq
     }
 
 
