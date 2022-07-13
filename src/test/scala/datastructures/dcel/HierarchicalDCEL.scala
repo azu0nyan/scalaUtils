@@ -3,7 +3,7 @@ package datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCELOps
-import utils.datastructures.dcel.HierarchicalDCEL.HierarchicalFace
+import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalFace}
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
 
@@ -12,15 +12,21 @@ import java.util.concurrent.atomic.AtomicInteger
 class HierarchicalDCEL extends AnyFunSuite {
 
   val x = new AtomicInteger()
+  type HData = HierarchicalDCELOwnData{
+    type VertexOwnData = V2
+    type HalfEdgeOwnData = String
+    type FaceOwnData = String
+  }
 
-  def cutInside(face: HierarchicalFace[V2, String, String], toCut: PolygonRegion):Seq[face.HalfEdge] = {
+
+  def cutInside(face: HierarchicalFace[HData], toCut: PolygonRegion) = {
     face.cutClamped(toCut, x => x, (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString),
       (a, b) => (x.getAndIncrement().toString, x.getAndIncrement().toString), a => x.getAndIncrement().toString)
   }
 
   test("Single rectangle cut") {
 
-    val root = new HierarchicalFace[V2, String, String](None, "ROOT")(x => x)
+    val root = new HierarchicalFace[HData](None, "ROOT")(x => x)
     val toCut = AARectangle(V2(-100, -100), V2(100, 100)).toPolygon
     val cutResult = cutInside(root, toCut)
 
@@ -76,7 +82,7 @@ class HierarchicalDCEL extends AnyFunSuite {
 
    */
   test("Parent correctness"){
-    val root = new HierarchicalFace[V2, String, String](None, "ROOT")(x => x)
+    val root = new HierarchicalFace[HData](None, "ROOT")(x => x)
     val containerShape = AARectangle(V2(0, 0), V2(100, 100)).toPolygon
     val containerHole1 = AARectangle(V2(20, 20), V2(30, 30)).toPolygon
     val containerHole2 = AARectangle(V2(40, 30), V2(50, 40)).toPolygon

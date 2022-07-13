@@ -1,25 +1,21 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
+import utils.datastructures.dcel.DCEL.{DCELDataTypes, Face, HalfEdge, Vertex}
 import utils.math.planar.PolygonRegion
 
 import scala.collection.mutable
 
 object DCELOps {
 
-  def apply[VertexData, HalfEdgeData, FaceData](dcel: DCEL[VertexData, HalfEdgeData, FaceData]): DCELOpsImplicit[VertexData, HalfEdgeData, FaceData] =
-    new DCELOpsImplicit[VertexData, HalfEdgeData, FaceData](dcel)
+  def apply[D <: DCELDataTypes](dcel: DCEL[D]): DCELOpsImplicit[D] =
+    new DCELOpsImplicit[D](dcel)
 
 
-  def selectToTheLeft[VD, HED, FD](hes: Seq[RawHalfEdge[VD, HED, FD]]): Iterator[RawFace[VD, HED, FD]] = new Iterator[RawFace[VD, HED, FD]] {
-    type Dcel = DCEL[VD, HED, FD]
-    type HalfEdge = RawHalfEdge[VD, HED, FD]
-    type Vertex = RawVertex[VD, HED, FD]
-    type Face = RawFace[VD, HED, FD]
+  def selectToTheLeft[D <: DCELDataTypes](hes: Seq[HalfEdge[D]]): Iterator[Face[D]] = new Iterator[Face[D]] {
 
-    val visitedFaces = new mutable.HashSet[Face]()
-    val forbiddenEdges: Set[HalfEdge] = hes.toSet
-    val faceQueue: mutable.Queue[Face] = mutable.Queue()
+    val visitedFaces = new mutable.HashSet[Face[D]]()
+    val forbiddenEdges: Set[HalfEdge[D]] = hes.toSet
+    val faceQueue: mutable.Queue[Face[D]] = mutable.Queue()
 
     hes.foreach(he => {
       if (!visitedFaces.contains(he.leftFace)) {
@@ -29,12 +25,12 @@ object DCELOps {
     })
 
     override def hasNext: Boolean = faceQueue.nonEmpty
-    override def next(): Face = {
+    override def next(): Face[D] = {
       val res = faceQueue.dequeue()
 
       res.edges
         .filter(he => !forbiddenEdges.contains(he))
-        .map(x => x.leftFace.asInstanceOf[RawFace[VD, HED, FD]])
+        .map(x => x.leftFace.asInstanceOf[Face[D]])
         .foreach { face =>
           if (!visitedFaces.contains(face)) {
             faceQueue += face
@@ -46,15 +42,11 @@ object DCELOps {
     }
   }
 
-  def toChain[VD, HED, FD](vs: Seq[RawVertex[VD, HED, FD]]): Iterator[Option[RawHalfEdge[VD, HED, FD]]] = if (vs.size >= 2) vs.sliding(2).map {
+  def toChain[D <: DCELDataTypes](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] = if (vs.size >= 2) vs.sliding(2).map {
     case List(o, e) => o.edgesWithOriginHere.find(_.ending == e)
   } else Iterator.empty
 
-  implicit class DCELOpsImplicit[VertexData, HalfEdgeData, FaceData](val dcel: DCEL[VertexData, HalfEdgeData, FaceData]) extends AnyVal {
-    type Dcel = DCEL[VertexData, HalfEdgeData, FaceData]
-    type HalfEdge = RawHalfEdge[VertexData, HalfEdgeData, FaceData]
-    type Vertex = RawVertex[VertexData, HalfEdgeData, FaceData]
-    type Face = RawFace[VertexData, HalfEdgeData, FaceData]
+  implicit class DCELOpsImplicit[D <: DCELDataTypes](val dcel: DCEL[D]) extends AnyVal {
 
 
 
@@ -69,9 +61,9 @@ object DCELOps {
       * - - halfEdgeDestructor called
       * - - halfEdge detached
       * */
-    def mergeAdjancedFaces(main: Face, toMerge: Face,
-                           mergeFaceDatas: (FaceData, FaceData) => FaceData = (a, b) => a,
-                           halfEdgeDestructor: (HalfEdgeData, HalfEdgeData) => Unit = (a, b) => ()): Boolean = {
+    def mergeAdjancedFaces(main: Face[D], toMerge: Face[D],
+                           mergeFaceDatas: (D#FaceData, D#FaceData) => D#FaceData = (a, b) => a,
+                           halfEdgeDestructor: (D#HalfEdgeData, D#HalfEdgeData) => Unit = (a, b) => ()): Boolean = {
       //todo remove hanging vertices
       if (main == toMerge) false
       else {
@@ -105,11 +97,11 @@ object DCELOps {
               }
             } else {
               val chainBroken = !next.traverseEdges.contains(prev)
-              //              println(dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e._origin), dcel.asInstanceOf[PlanarDCEL[VertexData, HalfEdgeData, FaceData]].pos(e.ending))
+              //              println(dcel.asInstanceOf[PlanarDCEL[D]].pos(e._origin), dcel.asInstanceOf[PlanarDCEL[D]].pos(e.ending))
               //              println(chainBroken, isMergingWithHole)
               if (chainBroken && !isMergingWithHole) { //if we created hole
                 dcel match {
-                  case p: PlanarDCEL[VertexData, HalfEdgeData, FaceData] => //ugly typecast
+                  case p: PlanarDCEL[D] => //ugly typecast
                     val nextPoly = PolygonRegion(next.traverseEdges.map(e => p.pos(e.origin)).toSeq)
                     val prevPoly = PolygonRegion(prev.traverseEdges.map(e => p.pos(e.origin)).toSeq)
                     if (nextPoly.contains(prevPoly)) {

@@ -1,7 +1,7 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{RawFace, RawHalfEdge, RawVertex}
-import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalEdge, HierarchicalFace, HierarchicalVertex}
+import utils.datastructures.dcel.DCEL.{Face, HalfEdge, Vertex}
+import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELData, HierarchicalDCELOwnData, HierarchicalEdge, HierarchicalFace, HierarchicalVertex}
 import utils.datastructures.dcel.PlanarDCEL.PlanarVertex
 import utils.math.planar.algo.polygonClipping.PolygonClipping
 import utils.math.planar.{Polygon, PolygonRegion, SegmentPlanar}
@@ -13,47 +13,55 @@ object HierarchicalDCELCache {
     Avoid using neighbours cached values as they can be incorrect.
   */
 
-  //  type Face[V, HE, F] = RawFace[HierarchicalVertex[V, HE, F],  HierarchicalEdge[V, HE, F],  HierarchicalFace[V, HE, F]]
-  //  type Vertex[V, HE, F] = RawVertex[HierarchicalVertex[V, HE, F],  HierarchicalEdge[V, HE, F],  HierarchicalFace[V, HE, F]]
-  type HalfEdge[V, HE, F] = RawHalfEdge[HierarchicalVertex[V, HE, F],  HierarchicalEdge[V, HE, F],  HierarchicalFace[V, HE, F]]
+  type Face[OD <: HierarchicalDCELOwnData] = DCEL.Face[HierarchicalDCELData[OD]]
+  type Vertex[OD <: HierarchicalDCELOwnData] = DCEL.Face[HierarchicalDCELData[OD]]
+  type HalfEdge[OD <: HierarchicalDCELOwnData] = DCEL.HalfEdge[HierarchicalDCELData[OD]]
 
-  def outerBorder[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[HalfEdge[V, HE, F]] =
+  def outerBorder[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HalfEdge[OD]] =
     face.face.borderEdges.toSeq
-  def holesOwnContours[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[Seq[HalfEdge[V, HE, F]]] = face.face.holesIncidentEdges.map(_.traverseEdges.toSeq).toSeq
-  def fullBorder[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[HalfEdge[V, HE, F]] = outerBorder ++ holesOwnContours.flatten
+
+  def holesOwnContours[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[Seq[HalfEdge[OD]]] = face.face.holesIncidentEdges.map(_.traverseEdges.toSeq).toSeq
+
+  def fullBorder[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HalfEdge[OD]] = outerBorder ++ holesOwnContours.flatten
 
   /** Holes parent equals to my parent */
-  def holeAreas[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[HierarchicalFace[V, HE, F] ] = {
+  def holeAreas[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HierarchicalFace[OD]] = {
     //todo maybe this can be done separately, sine requires access to potentially uncached neighbours
-    val visited: mutable.Set[HierarchicalFace[V, HE, F] ] = new mutable.HashSet[HierarchicalFace[V, HE, F] ]()
-    def traverse(from: HierarchicalFace[V, HE, F]): Unit =
-      if(!visited.contains(from)){
+    val visited: mutable.Set[HierarchicalFace[OD]] = new mutable.HashSet[HierarchicalFace[OD]]()
+
+    def traverse(from: HierarchicalFace[OD]): Unit =
+      if (!visited.contains(from)) {
         visited += from
-        for(a <- neighbourFaces(from) if a != face) traverse(a)
+        for (a <- neighbourFaces(from) if a != face) traverse(a)
       }
 
-    for(h <- face.face.holesEdges.map(_.twin.leftFace.data)) traverse(h)
+    for (h <- face.face.holesEdges.map(_.twin.leftFace.data)) traverse(h)
 
     visited.toSeq
     //    area.face.holesIncidentEdges.map(_.twin.leftFace.data).toSeq
   }
-  def neighbourFaces[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[HierarchicalFace[V, HE, F] ] =
+
+  def neighbourFaces[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HierarchicalFace[OD]] =
     fullBorder.map(_.twin.leftFace.data).distinct //todo
-//    fullBorder.filter(!_.twin.data.isFake).map(_.twin.leftFace.data).distinct
+  //    fullBorder.filter(!_.twin.data.isFake).map(_.twin.leftFace.data).distinct
 
   /** inner Areas parent is me */
-  def directChildFaces[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[HierarchicalFace[V, HE, F] ] = face.innerDCEL.innerFaces.map(_.data).toSeq
+  def directChildFaces[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HierarchicalFace[OD]] = face.innerDCEL.innerFaces.map(_.data).toSeq
+
   //todo check
-  def allChildFaces[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[HierarchicalFace[V, HE, F] ] = directChildFaces.flatMap(a => Seq(a) ++ allChildFaces(a)).toSeq
+  def allChildFaces[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[HierarchicalFace[OD]] = directChildFaces.flatMap(a => Seq(a) ++ allChildFaces(a)).toSeq
 
 
-  def outerPoly[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): PolygonRegion = PolygonRegion(outerBorder.map(x => x.origin.data.position))
-  def holesPolys[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[PolygonRegion] = holesOwnContours.map(h => PolygonRegion(h.map(x => x.origin.data.position)))
-  def polygon[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Polygon = Polygon(outerPoly +: holesPolys) //todo maybe difference???
-  def obstacles[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Seq[SegmentPlanar] = ownArea.regions.flatMap(_.sides) //todo cache
+  def outerPoly[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): PolygonRegion = PolygonRegion(outerBorder.map(x => x.origin.data.position))
+
+  def holesPolys[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[PolygonRegion] = holesOwnContours.map(h => PolygonRegion(h.map(x => x.origin.data.position)))
+
+  def polygon[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Polygon = Polygon(outerPoly +: holesPolys) //todo maybe difference???
+
+  def obstacles[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[SegmentPlanar] = ownArea.regions.flatMap(_.sides) //todo cache
 
   //todo check if hole contours necessary
-  def ownArea[V, HE, F](implicit face: HierarchicalFace[V, HE, F]): Polygon = {
+  def ownArea[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Polygon = {
     val container = polygon
     val insides = holesPolys ++: face.innerDCEL.outerFace.holesContours.map(hc => PolygonRegion(hc.map(x => x.origin.data.position).toSeq)).toSeq
     val toCut = Polygon(insides)
@@ -61,12 +69,11 @@ object HierarchicalDCELCache {
   }
 
 
-
-  def apply[V, HE, F](implicit area: HierarchicalFace[V, HE, F]): HierarchicalDCELCacheInstance[V, HE, F] = {
-    HierarchicalDCELCacheInstance[V, HE, F](
+  def apply[OD <: HierarchicalDCELOwnData](implicit area: HierarchicalFace[OD]): HierarchicalDCELCacheInstance[OD] = {
+    HierarchicalDCELCacheInstance[OD](
       outerBorder = outerBorder,
       holesOwnContours = holesOwnContours,
-      fullBorder= fullBorder,
+      fullBorder = fullBorder,
       holeAreas = holeAreas,
       neighbourFaces = neighbourFaces,
       directChildFaces = directChildFaces,
@@ -78,20 +85,21 @@ object HierarchicalDCELCache {
       obstacles = obstacles
     )
   }
-  case class HierarchicalDCELCacheInstance[V, HE, F](
-                                                      outerBorder: Seq[HalfEdge[V, HE, F]],
-                                                      holesOwnContours: Seq[Seq[HalfEdge[V, HE, F]]],
-                                                      fullBorder: Seq[HalfEdge[V, HE, F]],
-                                                      holeAreas: Seq[HierarchicalFace[V, HE, F] ],
-                                                      neighbourFaces: Seq[HierarchicalFace[V, HE, F] ],
-                                                      directChildFaces: Seq[HierarchicalFace[V, HE, F] ],
-                                                      allChildFaces: Seq[HierarchicalFace[V, HE, F] ],
-                                                      outerPoly: PolygonRegion,
-                                                      holesPolys: Seq[PolygonRegion],
-                                                      polygon: Polygon,
-                                                      ownArea: Polygon,
-                                                      obstacles: Seq[SegmentPlanar]
-                                            ) {
+
+  case class HierarchicalDCELCacheInstance[OD <: HierarchicalDCELOwnData](
+                                                                           outerBorder: Seq[HalfEdge[OD]],
+                                                                           holesOwnContours: Seq[Seq[HalfEdge[OD]]],
+                                                                           fullBorder: Seq[HalfEdge[OD]],
+                                                                           holeAreas: Seq[HierarchicalFace[OD]],
+                                                                           neighbourFaces: Seq[HierarchicalFace[OD]],
+                                                                           directChildFaces: Seq[HierarchicalFace[OD]],
+                                                                           allChildFaces: Seq[HierarchicalFace[OD]],
+                                                                           outerPoly: PolygonRegion,
+                                                                           holesPolys: Seq[PolygonRegion],
+                                                                           polygon: Polygon,
+                                                                           ownArea: Polygon,
+                                                                           obstacles: Seq[SegmentPlanar]
+                                                                         ) {
 
   }
 }
