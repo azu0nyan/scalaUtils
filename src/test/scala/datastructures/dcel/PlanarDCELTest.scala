@@ -3,12 +3,12 @@ package datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCEL.{DCELData, Face}
-import utils.datastructures.dcel.{DCEL, DCELOps, PlanarDCEL}
+import utils.datastructures.dcel.{DCEL, DCELDataProvider, DCELOps, PlanarDCEL}
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.V2
 
 class PlanarDCELTest extends AnyFunSuite {
-  type Data = DCELData{
+  type Data = DCELData {
     type VertexData = V2
     type HalfEdgeData = Unit
     type FaceData = Unit
@@ -17,7 +17,12 @@ class PlanarDCELTest extends AnyFunSuite {
   type Face = DCEL.Face[Data]
 
   def cut(dcel: DCEL, poly: Seq[V2]): Face = {
-    val res = dcel.cutPoly(poly, x => x, (a, b) => ((), ()), (a, b) => ((), ()), x => ())
+    val res = dcel.cutPoly(poly, new DCELDataProvider[Data] {
+      override def newFaceData(edge: DCEL.HalfEdge[Data]): Unit = ()
+      override def newVertexData(v: _root_.utils.math.planar.V2): PlanarDCELTest.this.Data#VertexData = v
+      override def newEdgeData(v1: _root_.utils.datastructures.dcel.DCEL.Vertex[PlanarDCELTest.this.Data], v2: _root_.utils.datastructures.dcel.DCEL.Vertex[PlanarDCELTest.this.Data]): (PlanarDCELTest.this.Data#HalfEdgeData, PlanarDCELTest.this.Data#HalfEdgeData) = ((), ())
+      override def splitEdgeData(edge: _root_.utils.datastructures.dcel.DCEL.HalfEdge[PlanarDCELTest.this.Data], data: _root_.utils.math.planar.V2): (PlanarDCELTest.this.Data#HalfEdgeData, PlanarDCELTest.this.Data#HalfEdgeData) = ((), ())
+    })
     res.head.edgeTo(res(1)).get.leftFace
   }
 
@@ -36,8 +41,8 @@ class PlanarDCELTest extends AnyFunSuite {
 
     val e1 = dcel.makeEdge(v1, v2, f, dcel.outerFace, 1, 4)
     assert(e1.next == e1.twin) withClue s"e1.next should be twin"
-//    assert(e1.data == 1)
-//    assert(e1.twin.data == 4)
+    //    assert(e1.data == 1)
+    //    assert(e1.twin.data == 4)
     assert(f.incidentEdge.contains(e1))
     assert(v1.edgesWithOriginHere.toSeq.equals(Seq(e1))) withClue s"${v1.edgesWithOriginHere.toSeq}"
     assert(v2.edgesWithOriginHere.toSeq.equals(Seq(e1.twin))) withClue s"${v2.edgesWithOriginHere.toSeq}"
@@ -52,7 +57,6 @@ class PlanarDCELTest extends AnyFunSuite {
     assert(e2.next == e3) withClue s"e2.next == e3; e2.next = ${e2.next.data}"
     assert(e3.next == e1) withClue s"e3.next == e1; e3.next = ${e3.next.data}"
   }
-
 
 
   test("vertices merge case 1") {
