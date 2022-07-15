@@ -17,11 +17,9 @@ object PolygonDrawer {
   Logger.getLogger("utils.math.planar.algo.PolygonContains$").setLevel(Level.SEVERE)
   var addToParent: Boolean = true
 
-  var parent: Polygon = Polygon(List(PolygonRegion(List(V2(-500.0, 200.0), V2(-100.0, -200.0), V2(300.0, 200.0), V2(-100.0, 600.0), V2(-300.0, 400.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-400.0, 300.0)))))
-  var child: Polygon = Polygon(List(PolygonRegion(List(V2(-300.0, 200.0), V2(-300.0, 0.0), V2(-100.0, -200.0), V2(0.0, -100.0), V2(0.0, 100.0), V2(-100.0, 0.0), V2(-200.0, 0.0), V2(-200.0, 100.0))), PolygonRegion(List(V2(-200.0, 100.0), V2(-200.0, 0.0), V2(-100.0, 0.0)))))
-
-  var curPoly: Seq[V2] = Seq()
-
+  var parent: Polygon = Polygon(List(PolygonRegion(List(V2(200.0, 0.0), V2(400.0, 0.0), V2(400.0, 200.0), V2(200.0, 200.0), V2(300.0, 100.0))), PolygonRegion(List(V2(0.0, 0.0), V2(200.0, 0.0), V2(100.0, 100.0), V2(100.0, 200.0), V2(0.0, 200.0)))))
+  var child: Polygon = Polygon(List())
+  var curPoly: Seq[V2] = List()
 
   var dumpID: Int = 0
 

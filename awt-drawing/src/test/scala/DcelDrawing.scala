@@ -3,7 +3,7 @@ import drawing.core.DrawingWindow
 import drawing.library.{DrawableDcel, DrawingUtils, TimeOps, ToggleableDrawable}
 import utils.abstractions.EnabledDisabled
 import utils.datastructures.IntV2
-import utils.datastructures.dcel.PlanarDCEL
+import utils.datastructures.dcel.{DCELDataProvider, PlanarDCEL}
 import utils.math.planar.{AngleOps, PolygonRegion, V2}
 import utils.math._
 import utils.system.ConcurrentOps
@@ -12,7 +12,7 @@ import java.awt.Color
 import java.awt.event.{KeyEvent, MouseEvent, MouseListener}
 import java.util.concurrent.atomic.AtomicInteger
 import drawing.library.ColorOps._
-import utils.datastructures.dcel.DCELOps.DCELOps
+import utils.datastructures.dcel.DCEL.{DCELData, HalfEdge, Vertex}
 import utils.datastructures.spatial.AARectangle
 import utils.sugar.SeqOps
 
@@ -58,11 +58,22 @@ object DcelDrawing extends App {
     }
   }
 
+  type DCELType = DCELData {
+    type VertexData = V2
+    type HalfEdgeData = Int
+    type FaceData = Int
+  }
+  object DataProvider extends DCELDataProvider[DCELType] {
+    override def newVertexData(v: V2): V2 = v
+    override def newEdgeData(v1: Vertex[DcelDrawing.DCELType], v2: Vertex[DcelDrawing.DCELType]): (Int, Int) = (heIds.getAndIncrement(), heIds.getAndIncrement())
+    override def newFaceData(edge: HalfEdge[DcelDrawing.DCELType]): Int = faceIds.getAndIncrement()
+    override def splitEdgeData(edge: HalfEdge[DcelDrawing.DCELType], data: V2): (Int, Int) = (heIds.getAndIncrement(), heIds.getAndIncrement())
+  }
 
-  val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
+  val dcel = new PlanarDCEL[DCELType](0, x => x)
 
 
-  def faceAt(pos: V2): String = dcel.faceAt(pos) match {
+  def faceAt(position: V2): String = dcel.faceAt(position) match {
     case x if x == dcel.outerFace => "outer"
     case x => s"id:${x.data.toString} vs: ${x.vertices.size}"
   }
@@ -75,27 +86,27 @@ object DcelDrawing extends App {
     waitIdNeeded()
   })
   dcel.onNewHalfEdge.subscribe(e => {
-    println(s"new edge:${e.data} twin: ${e.twin.data} pos:${dcel.pos(e.origin).toProduct}->${dcel.pos(e.ending).toProduct} " +
+    println(s"new edge:${e.data} twin: ${e.twin.data} position:${dcel.position(e.origin).toProduct}->${dcel.position(e.ending).toProduct} " +
       s"face ${if (e.leftFace == dcel.outerFace) "outer" else e.leftFace.data.toString} " +
       s"twinFace ${if (e.twin.leftFace == dcel.outerFace) "outer" else e.twin.leftFace.data.toString} " +
       s"prev  ${e.prev.data} next ${e.next.data} ${e.twin.prev.data}, ${e.twin.next.data} ")
   })
   dcel.onNewVertex.subscribe(v => {
-    val face = dcel.faceAt(dcel.pos(v))
-    println("new vertex", v.data, dcel.pos(v), v.edgesWithOriginHere.size, if (face == dcel.outerFace) "outer" else face.data.toString)
+    val face = dcel.faceAt(dcel.position(v))
+    println("new vertex", v.data, dcel.position(v), v.edgesWithOriginHere.size, if (face == dcel.outerFace) "outer" else face.data.toString)
     waitIdNeeded()
   })
   dcel.onHalfEdgeRemoved.subscribe(e => {
-    println("edge removed", e.data, e.twin.data, dcel.pos(e.origin), dcel.pos(e.ending), "leftFace", e.leftFace.data, e.twin.leftFace.data)
+    println("edge removed", e.data, e.twin.data, dcel.position(e.origin), dcel.position(e.ending), "leftFace", e.leftFace.data, e.twin.leftFace.data)
     waitIdNeeded()
   })
   dcel.onEdgeSplit.subscribe { case (e1, e2) =>
     println("SPLIT")
-    println(s"old edge:${e1.data} twin: ${e1.twin.data} pos:${dcel.pos(e1.origin).toProduct}->${dcel.pos(e1.ending).toProduct} " +
+    println(s"old edge:${e1.data} twin: ${e1.twin.data} position:${dcel.position(e1.origin).toProduct}->${dcel.position(e1.ending).toProduct} " +
       s"face: ${if (e1.leftFace == dcel.outerFace) "outer" else e1.leftFace.data.toString} " +
       s"twinFace: ${if (e1.twin.leftFace == dcel.outerFace) "outer" else e1.twin.leftFace.data.toString} " +
       s"prev:  ${e1.prev.data} next: ${e1.next.data} ${e1.twin.prev.data}, ${e1.twin.next.data} ")
-    println(s"new edge:${e2.data} twin: ${e2.twin.data} pos:${dcel.pos(e2.origin).toProduct}->${dcel.pos(e2.ending).toProduct} " +
+    println(s"new edge:${e2.data} twin: ${e2.twin.data} position:${dcel.position(e2.origin).toProduct}->${dcel.position(e2.ending).toProduct} " +
       s"face: ${if (e2.leftFace == dcel.outerFace) "outer" else e2.leftFace.data.toString} " +
       s"twinFace: ${if (e2.twin.leftFace == dcel.outerFace) "outer" else e2.twin.leftFace.data.toString} " +
       s"prev:  ${e2.prev.data} next: ${e2.next.data} ${e2.twin.prev.data}, ${e2.twin.next.data} ")
@@ -117,7 +128,7 @@ object DcelDrawing extends App {
         pw.println(s"Await.result(addPoly($s), Duration.Inf)")
       }
       ConcurrentOps.withLock(w.drawUpdateLock) {
-        dcel.cutPoly(p, x => x, (x, y) => (heIds.getAndIncrement(), heIds.getAndIncrement()), (x, y) => (heIds.getAndIncrement(), heIds.getAndIncrement()), x => faceIds.getAndIncrement())
+        dcel.cutPoly(p, DataProvider)
       }
       //      dcel.halfEdges.foreach(he => println(s"${he.data.toString} ${he.prev.data.toString} ${he.next.data.toString}"))
       println("Added")
@@ -138,7 +149,7 @@ object DcelDrawing extends App {
       ConcurrentOps.withLock(w.drawUpdateLock) {
         val mf = dcel.faceAt(main)
         val tmf = dcel.faceAt(toMerge)
-        dcel.mergeAdjancedFaces(mf, tmf)
+        dcel.mergeAdjancedFaces(mf, tmf, DataProvider)
       }
       println("Merged")
       prom.success(())
@@ -157,7 +168,7 @@ object DcelDrawing extends App {
         pw.println(s"Await.result(addChain($s), Duration.Inf)")
       }
       ConcurrentOps.withLock(w.drawUpdateLock) {
-        dcel.cutPoly(s, x => x, (x, y) => (heIds.getAndIncrement(), heIds.getAndIncrement()), (x, y) => (heIds.getAndIncrement(), heIds.getAndIncrement()), x => faceIds.getAndIncrement())
+        dcel.cutPoly(s, DataProvider)
       }
       //      dcel.halfEdges.foreach(he => println(s"${he.data.toString} ${he.prev.data.toString} ${he.next.data.toString}"))
       println("Added")
@@ -169,7 +180,7 @@ object DcelDrawing extends App {
   }
 
 
-  val drawableDcel = Drawing.addDrawable(new DrawableDcel(dcel)).asInstanceOf[DrawableDcel[V2, Int, Int]]
+  val drawableDcel = Drawing.addDrawable(new DrawableDcel(dcel)).asInstanceOf[DrawableDcel[DCELType]]
   Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_1), V2(50, 30), V2(30, 30), "PAU", {
     pauseOnEvent.enable()
   }, {
@@ -236,7 +247,7 @@ object DcelDrawing extends App {
   Drawing.addMouseRightClickBinding { v =>
     if (mergeMode) {
       println(s"Right merge at $v")
-      if(selectedPoint.nonEmpty) mergePoly(selectedPoint.get, v)
+      if (selectedPoint.nonEmpty) mergePoly(selectedPoint.get, v)
     } else {
       val point = if (Drawing.shiftControlAlt.shiftPressed) {
         val x = Math.floor((v + V2(snapValue / 2)).x / snapValue) * snapValue
@@ -246,9 +257,9 @@ object DcelDrawing extends App {
       } else v
 
       if (Drawing.shiftControlAlt.controlPressed) {
-        println(dcel.halfEdges.map(he => (he, dcel.seg(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
+        println(dcel.halfEdges.map(he => (he, dcel.asSegment(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
           .map { case (he, seg) => (he, seg, seg.distanceTo(point)) }.minByOption(_._3))
-        dcel.halfEdges.map(he => (he, dcel.seg(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
+        dcel.halfEdges.map(he => (he, dcel.asSegment(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
           .map { case (he, seg) => (he, seg, seg.distanceTo(point)) }.minByOption(_._3) match {
           case Some((he, seg, dist)) if (true /*dist < snapValue */) =>
             ConcurrentOps.withLock(w.drawUpdateLock) {
@@ -290,25 +301,25 @@ object DcelDrawing extends App {
   }, -100)
 
 
-/*
-  Await.result(addPoly(List(V2(-200.0, -100.0), V2(200.0, -100.0), V2(200.0, 200.0), V2(-200.0, 200.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(-100.0, 0.0), V2(0.0, 0.0), V2(0.0, 100.0), V2(-100.0, 100.0))), Duration.Inf)
-  Await.result(addPoly(List(V2(0.0, 0.0), V2(100.0, 0.0), V2(100.0, 100.0), V2(0.0, 100.0))), Duration.Inf)
-  pauseOnEvent.enable()
-//  waitIdNeeded()
-  Await.result(mergePoly(V2(-36.0, -62.0), V2(-46.0, 51.0)), Duration.Inf)
-*/
-/*
-  Await.result(addPoly(List(V2(452.0, 448.0), V2(450.8284271247462, 445.1715728752538), V2(448.0, 444.0), V2(448.0, 452.0), V2(450.8284271247462, 450.8284271247462)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
-  Await.result(addPoly(List(V2(464.0, 448.0), V2(452.0, 448.0), V2(450.8284271247462, 450.8284271247462), V2(448.0, 452.0), V2(448.0, 464.0), V2(459.31370849898474, 459.31370849898474)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
-  Await.result(addPoly(List(V2(468.0, 448.0), V2(462.14213562373095, 433.85786437626905), V2(448.0, 428.0), V2(433.85786437626905, 433.85786437626905), V2(428.0, 448.0), V2(433.85786437626905, 462.14213562373095), V2(448.0, 468.0), V2(462.14213562373095, 462.14213562373095)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
-  Await.result(addPoly(List(V2(459.31370849898474, 459.31370849898474), V2(448.0, 464.0), V2(436.68629150101526, 459.31370849898474), V2(432.0, 448.0), V2(436.68629150101526, 436.68629150101526), V2(448.0, 432.0), V2(459.31370849898474, 436.68629150101526), V2(464.0, 448.0)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+  /*
+    Await.result(addPoly(List(V2(-200.0, -100.0), V2(200.0, -100.0), V2(200.0, 200.0), V2(-200.0, 200.0))), Duration.Inf)
+    Await.result(addPoly(List(V2(-100.0, 0.0), V2(0.0, 0.0), V2(0.0, 100.0), V2(-100.0, 100.0))), Duration.Inf)
+    Await.result(addPoly(List(V2(0.0, 0.0), V2(100.0, 0.0), V2(100.0, 100.0), V2(0.0, 100.0))), Duration.Inf)
+    pauseOnEvent.enable()
+  //  waitIdNeeded()
+    Await.result(mergePoly(V2(-36.0, -62.0), V2(-46.0, 51.0)), Duration.Inf)
+  */
+  /*
+    Await.result(addPoly(List(V2(452.0, 448.0), V2(450.8284271247462, 445.1715728752538), V2(448.0, 444.0), V2(448.0, 452.0), V2(450.8284271247462, 450.8284271247462)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+    Await.result(addPoly(List(V2(464.0, 448.0), V2(452.0, 448.0), V2(450.8284271247462, 450.8284271247462), V2(448.0, 452.0), V2(448.0, 464.0), V2(459.31370849898474, 459.31370849898474)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+    Await.result(addPoly(List(V2(468.0, 448.0), V2(462.14213562373095, 433.85786437626905), V2(448.0, 428.0), V2(433.85786437626905, 433.85786437626905), V2(428.0, 448.0), V2(433.85786437626905, 462.14213562373095), V2(448.0, 468.0), V2(462.14213562373095, 462.14213562373095)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+    Await.result(addPoly(List(V2(459.31370849898474, 459.31370849898474), V2(448.0, 464.0), V2(436.68629150101526, 459.31370849898474), V2(432.0, 448.0), V2(436.68629150101526, 436.68629150101526), V2(448.0, 432.0), V2(459.31370849898474, 436.68629150101526), V2(464.0, 448.0)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
 
-  Await.result(addPoly(List(V2(464.0, 448.0), V2(459.31370849898474, 436.68629150101526), V2(448.0, 432.0), V2(448.0, 436.0), V2(439.5147186257614, 439.5147186257614), V2(436.0, 448.0), V2(444.0, 448.0), V2(445.1715728752538, 445.1715728752538), V2(448.0, 444.0), V2(450.8284271247462, 445.1715728752538), V2(452.0, 448.0)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
-  Await.result(addPoly(List(V2(448.0, 452.0), V2(448.0, 444.0), V2(445.1715728752538, 445.1715728752538), V2(444.0, 448.0), V2(445.1715728752538, 450.8284271247462)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
-  Await.result(addPoly(List(V2(448.0, 436.0), V2(448.0, 432.0), V2(436.68629150101526, 436.68629150101526), V2(432.0, 448.0), V2(436.0, 448.0), V2(439.5147186257614, 439.5147186257614)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
-  Await.result(addPoly(List(V2(448.0, 464.0), V2(448.0, 452.0), V2(445.1715728752538, 450.8284271247462), V2(444.0, 448.0), V2(432.0, 448.0), V2(436.68629150101526, 459.31370849898474)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
-*/
+    Await.result(addPoly(List(V2(464.0, 448.0), V2(459.31370849898474, 436.68629150101526), V2(448.0, 432.0), V2(448.0, 436.0), V2(439.5147186257614, 439.5147186257614), V2(436.0, 448.0), V2(444.0, 448.0), V2(445.1715728752538, 445.1715728752538), V2(448.0, 444.0), V2(450.8284271247462, 445.1715728752538), V2(452.0, 448.0)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+    Await.result(addPoly(List(V2(448.0, 452.0), V2(448.0, 444.0), V2(445.1715728752538, 445.1715728752538), V2(444.0, 448.0), V2(445.1715728752538, 450.8284271247462)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+    Await.result(addPoly(List(V2(448.0, 436.0), V2(448.0, 432.0), V2(436.68629150101526, 436.68629150101526), V2(432.0, 448.0), V2(436.0, 448.0), V2(439.5147186257614, 439.5147186257614)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+    Await.result(addPoly(List(V2(448.0, 464.0), V2(448.0, 452.0), V2(445.1715728752538, 450.8284271247462), V2(444.0, 448.0), V2(432.0, 448.0), V2(436.68629150101526, 459.31370849898474)).map(v => (v - V2(450, 450)) * 20)), Duration.Inf)
+  */
 
   println()
 }

@@ -3,7 +3,7 @@ package drawing.library
 import drawing.core.SimpleDrawable
 import drawing.library.ColorOps._
 import drawing.library.ColorOps
-import utils.datastructures.dcel.DCEL.RawHalfEdge
+import utils.datastructures.dcel.DCEL.{DCELData, HalfEdge}
 import utils.datastructures.dcel.PlanarDCEL
 import utils.datastructures.dcel.PlanarDCEL
 import utils.datastructures.dcel.PlanarDCEL._
@@ -12,11 +12,11 @@ import utils.math.planar.{AngleOps, PolygonRegion, V2}
 
 import java.awt.{Color, Graphics2D}
 
-class DrawableDcel[VD, HED, FD](
-                                       var dcel: PlanarDCEL[VD, HED, FD],
-                                       var verticesColor: VD => Color = (x: VD) => new Color(0, 0, 255),
-                                       var edgesColor: HED => Color = (x: HED) => new Color(10, 159, 10),
-                                       var faceColor: FD => Color = (x: FD) => {
+class DrawableDcel[D <: DCELData](
+                                       var dcel: PlanarDCEL[D],
+                                       var verticesColor: D#VertexData => Color = (x: D#VertexData) => new Color(0, 0, 255),
+                                       var edgesColor: D#HalfEdgeData => Color = (x: D#HalfEdgeData) => new Color(10, 159, 10),
+                                       var faceColor: D#FaceData => Color = (x: D#FaceData) => {
                                          import drawing.library.ColorOps._
                                          import drawing.library.ColorOps.ColorOps
                                          randomColor(x.##).setAlpha(30)
@@ -43,12 +43,12 @@ class DrawableDcel[VD, HED, FD](
   override def drawAndUpdate(g: Graphics2D, dt: Scalar): Unit = {
     dcel.vertices.foreach { v =>
       val c = verticesColor(v.data)
-      DrawingUtils.drawCircle(dcel.pos(v), angleOffset.toFloat / 4f, g, c, true)
+      DrawingUtils.drawCircle(dcel.position(v), angleOffset.toFloat / 4f, g, c, true)
 
       if (drawVertexConnections && v.incidentEdge.nonEmpty) {
         val (io, ie) = fromTo(v.incidentEdge.get)
         val to = utils.math.v2Lerp(io, ie, 0.1)
-        DrawingUtils.drawArrow(dcel.pos(v), to, g, vertexConnectionColors, 2, 10)
+        DrawingUtils.drawArrow(dcel.position(v), to, g, vertexConnectionColors, 2, 10)
       }
     }
 
@@ -112,17 +112,17 @@ class DrawableDcel[VD, HED, FD](
       }
     }
 
-    def fromTo(he: RawHalfEdge[VD, HED, FD]): (V2, V2) = {
+    def fromTo(he: HalfEdge[D]): (V2, V2) = {
 
-      val p = dcel.pos(he.prev.origin)
-      val c = dcel.pos(he.origin)
-      val n = dcel.pos(he.next.origin)
-      val nn = dcel.pos(he.next.ending)
+      val p = dcel.position(he.prev.origin)
+      val c = dcel.position(he.origin)
+      val n = dcel.position(he.next.origin)
+      val nn = dcel.position(he.next.ending)
       val offsetVector = AngleOps.ccwBisectorPath(p, c, n) * angleOffset
       val offsetVector2 = AngleOps.ccwBisectorPath(c, n, nn) * angleOffset
 
-      val origin: V2 = dcel.pos(he.origin) + offsetVector
-      val ending = dcel.pos(he.ending) + offsetVector2
+      val origin: V2 = dcel.position(he.origin) + offsetVector
+      val ending = dcel.position(he.ending) + offsetVector2
       (origin, ending)
     }
 
