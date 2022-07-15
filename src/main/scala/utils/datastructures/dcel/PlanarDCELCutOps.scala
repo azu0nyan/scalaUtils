@@ -75,13 +75,13 @@ object PlanarDCELCutOps {
   def group[D <: DCELData](originalVertices: Seq[V2], result: Seq[Vertex[D]], ex: Vertex[D] => V2, circullar: Boolean): Seq[Seq[Vertex[D]]] = {
     val grouped: mutable.Buffer[Seq[Vertex[D]]] = mutable.Buffer()
     var curGroup: Seq[Vertex[D]] = Seq()
-    var resultLeft = result.dropRight(1) //skip last vertex because it's duplicated
+    var resultLeft = result
     var originalLeft = originalVertices.tail //skip first
     while (resultLeft.nonEmpty && originalLeft.nonEmpty) {
       val cur = resultLeft.head //poll
       resultLeft = resultLeft.tail
 
-      if (ex(cur) ~= originalLeft) { //new group
+      if (ex(cur) ~= originalLeft.head) { //new group
         grouped += curGroup
         curGroup = Seq(cur)
         originalLeft = originalLeft.tail
@@ -148,7 +148,7 @@ object PlanarDCELCutOps {
           var ctx = context
 
           if (edgeLabels.nonEmpty || edgeTwinLabels.nonEmpty || vertexLabels.nonEmpty) {
-            val grouped = group(chain, result, context.dcel.position, true)
+            val grouped = group(chain, result, context.dcel.position, false)
 
             val edgeLabelSeq = for ((label, g) <- edgeLabels.zip(grouped);
                                     Seq(start, end) <- g.sliding(2);
@@ -175,13 +175,13 @@ object PlanarDCELCutOps {
         for (main <- mainFaceSelector(context);
              toMerge <- toMereFaceSelector(context)) context.dcel.mergeAdjancedFaces(main, toMerge, context.provider)
 
-        if (main.nonEmpty && resultingFaceLabel.nonEmpty) context.addFaceLabels(Seq((main.get, resultingFaceLabel.get)))
+        if (main.nonEmpty && resultingFaceLabel.nonEmpty) context.addFaceLabels(Seq((resultingFaceLabel.get, main.get)))
         else context
     }
   }
 
   def connectVertices[D <: DCELData, L <: Labels](c: ConnectVertices[D, L], context: CuttingContext[D, L]): CuttingContext[D, L] = {
-    c match {
+    c match { //todo vertex labels
       case ConnectVertices(centerVertexSelector, otherVertexSelector, edgeLabel, twinEdgeLabel) =>
         val edgeLabels: Seq[(L#HalfEdgeLabel, HalfEdge[D])] =
           for (center <- centerVertexSelector(context).toSeq;
@@ -214,7 +214,7 @@ object PlanarDCELCutOps {
     val dcel = context.dcel
     val nvl = dcel.onNewVertex.subscribe(newVertices.addOne)
     val nhel = dcel.onNewHalfEdge.subscribe(newHalfEdges.addOne)
-    val nf = dcel.onFaceRemoved.subscribe(newFaces.addOne)
+    val nf = dcel.onNewFace.subscribe(newFaces.addOne)
 
     val rvl = dcel.onVertexRemoved.subscribe(removedVertices.addOne)
     val rhel = dcel.onHalfEdgeRemoved.subscribe(removedHalfEdges.addOne)

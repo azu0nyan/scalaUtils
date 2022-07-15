@@ -24,23 +24,28 @@ object PlanarDCELCutPipeline
 
   case class CuttingContext[D <: DCELData, L <: Labels](dcel: PlanarDCEL[D],
                                                         provider: DCELDataProvider[D],
-                                                        vertexProduced: Set[Vertex[D]] = Set(),
-                                                        edgesProduced: Set[HalfEdge[D]] = Set(),
-                                                        areasProduced: Set[Face[D]] = Set(),
-                                                        edgesLabels: Map[L#HalfEdgeLabel, Set[HalfEdge[D]]] = Map[L#HalfEdgeLabel, Set[HalfEdge[D]]](),
-                                                        areaLabels: Map[L#FaceLabel, Set[Face[D]]] = Map[L#FaceLabel, Set[Face[D]]](),
-                                                        vertexLabels: Map[L#VertexLabel, Set[Vertex[D]]] = Map[L#VertexLabel, Set[Vertex[D]]]()) {
+                                                        vertexProduced: Set[Vertex[D]] = Set[Vertex[D]](),
+                                                        halfEdgesProduced: Set[HalfEdge[D]] = Set[HalfEdge[D]](),
+                                                        faceProduced: Set[Face[D]] = Set[Face[D]](),
+                                                        labelToHalfEdge: Map[L#HalfEdgeLabel, Set[HalfEdge[D]]] = Map[L#HalfEdgeLabel, Set[HalfEdge[D]]](),
+                                                        labelToFace: Map[L#FaceLabel, Set[Face[D]]] = Map[L#FaceLabel, Set[Face[D]]](),
+                                                        labelToVertex: Map[L#VertexLabel, Set[Vertex[D]]] = Map[L#VertexLabel, Set[Vertex[D]]]()) {
     def addVertices(vertices: Iterable[Vertex[D]]): CuttingContext[D, L] = copy(vertexProduced = vertexProduced | vertices.toSet)
-    def addFaces(areas: Iterable[Face[D]]): CuttingContext[D, L] = copy(areasProduced = areasProduced | areas.toSet)
-    def addHalfEdges(edges: Iterable[HalfEdge[D]]): CuttingContext[D, L] = copy(edgesProduced = edgesProduced | edges.toSet)
+    def addFaces(areas: Iterable[Face[D]]): CuttingContext[D, L] = copy(faceProduced = faceProduced | areas.toSet)
+    def addHalfEdges(edges: Iterable[HalfEdge[D]]): CuttingContext[D, L] = copy(halfEdgesProduced = halfEdgesProduced | edges.toSet)
 
     def removeVertices(vertices: Iterable[Vertex[D]]): CuttingContext[D, L] = copy(vertexProduced = vertexProduced &~ vertices.toSet)
-    def removeFaces(areas: Iterable[Face[D]]): CuttingContext[D, L] = copy(areasProduced = areasProduced &~ areas.toSet)
-    def removeHalfEdges(edges: Iterable[HalfEdge[D]]): CuttingContext[D, L] = copy(edgesProduced = edgesProduced &~ edges.toSet)
+    def removeFaces(areas: Iterable[Face[D]]): CuttingContext[D, L] = copy(faceProduced = faceProduced &~ areas.toSet)
+    def removeHalfEdges(edges: Iterable[HalfEdge[D]]): CuttingContext[D, L] = copy(halfEdgesProduced = halfEdgesProduced &~ edges.toSet)
 
-    def addEdgeLabels(labels: Iterable[(L#HalfEdgeLabel, HalfEdge[D])]): CuttingContext[D, L] = copy(edgesLabels = MapOps.addSeqToMapToSet(edgesLabels, labels.toSeq))
-    def addFaceLabels(labels: Iterable[(L#FaceLabel, Face[D])]): CuttingContext[D, L] = copy(areaLabels = MapOps.addSeqToMapToSet(areaLabels, labels.toSeq))
-    def addVertexLabels(labels: Iterable[(L#VertexLabel, Vertex[D])]): CuttingContext[D, L] = copy(vertexLabels = MapOps.addSeqToMapToSet(vertexLabels, labels.toSeq))
+    def addEdgeLabels(labels: Iterable[(L#HalfEdgeLabel, HalfEdge[D])]): CuttingContext[D, L] = copy(labelToHalfEdge = MapOps.addSeqToMapToSet(labelToHalfEdge, labels.toSeq))
+    def addFaceLabels(labels: Iterable[(L#FaceLabel, Face[D])]): CuttingContext[D, L] = copy(labelToFace = MapOps.addSeqToMapToSet(labelToFace, labels.toSeq))
+    def addVertexLabels(labels: Iterable[(L#VertexLabel, Vertex[D])]): CuttingContext[D, L] = copy(labelToVertex = MapOps.addSeqToMapToSet(labelToVertex, labels.toSeq))
+    //maybe store in reverse map to speed up??
+    def vertexToLabel(v: Vertex[D]): Set[L#VertexLabel] = labelToVertex.filter(_._2.contains(v)).keySet
+    def halfEdgeToLabel(h: HalfEdge[D]): Set[L#HalfEdgeLabel] = labelToHalfEdge.filter(_._2.contains(h)).keySet
+    def faceToLabel(f: Face[D]): Set[L#FaceLabel] = labelToFace.filter(_._2.contains(f)).keySet
+
   }
 
   type SingleFaceSelector[D <: DCELData, L <: Labels] = CuttingContext[D, L] => Option[Face[D]]
@@ -111,7 +116,7 @@ object PlanarDCELCutPipeline
                                                    ) extends PlanarDCELCutPipeline[D, L]
 
   /**
-    * 
+    *
     * @param centerVertexSelector
     * @param otherVertexSelector
     * @param edgeLabel edge will be directed from centerVertex, to other

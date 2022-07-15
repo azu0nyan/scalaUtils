@@ -23,5 +23,5 @@ trait PlanarDCELCutPipelineMarkers {
     }
 
   def FindAndMarkEdges[D <: DCELData, L <: Labels](fillter: HalfEdge[D] => Boolean, label: L#HalfEdgeLabel): PlanarDCELCutPipeline[D, L] =
-    MarkEdges(ctx => ctx.edgesProduced.find(fillter).map(e => (label, e)).toSeq)
+    MarkEdges(ctx => ctx.halfEdgesProduced.find(fillter).map(e => (label, e)).toSeq)
 }

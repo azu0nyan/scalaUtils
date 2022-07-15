@@ -39,7 +39,7 @@ object DCELOps {
     }
   }
 
-  def toClosedChain[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] = toClosedChainOpt(vs).flatten
+  def toClosedChain[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[HalfEdge[D]] = toClosedChainOpt(vs).flatten
 
   def toClosedChainOpt[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] =
     if (vs.size >= 2) CircullarOps.toCyclicPairs(vs).map{case (a,b )=> a.edgeTo(b)}

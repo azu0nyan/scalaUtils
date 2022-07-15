@@ -1,4 +1,4 @@
-package datastructures
+package utils.datastructures
 
 import org.scalatest.funsuite.AnyFunSuite
 import utils.datastructures.containers.DisjointSet

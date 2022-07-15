@@ -1,4 +1,4 @@
-package datastructures.dcel
+package utils.datastructures.dcel
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
@@ -9,7 +9,7 @@ import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
 
 import java.util.concurrent.atomic.AtomicInteger
 
-class HierarchicalDCEL extends AnyFunSuite {
+class HierarchicalDCELTest extends AnyFunSuite {
 
   val x = new AtomicInteger()
   type HData = HierarchicalDCELOwnData {

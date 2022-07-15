@@ -40,10 +40,29 @@ class PlanarDCEL[D <: DCELData](
 
   def polygon(f: Face[D]): Polygon = Polygon(outerContour(f) +: f.holesIncidentEdges.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
 
+  def getEdge(from: V2, to: V2): Option[HalfEdge[D]] =
+    for (f <- getVertex(from); to <- getVertex(to); e <- f.edgeTo(to)) yield e
+
 
   def faceAt(pos: V2): Face[D] = {
     innerFaces.find(f => f.polygon.contains(pos) &&
       !f.holesContours.exists(c => PolygonRegion(c.map(_.origin.position).toSeq).contains(pos))).getOrElse(outerFace)
+  }
+
+  def getVertex(pos: V2): Option[Vertex[D]] = vertices.find(_.position ~= pos)
+
+  def getOrAddVertex(pos: V2, newVdProvider: NewVertexDataProvider[D], splitEdProvider: SplitEdgeDataProvider[D]): Vertex[D] = {
+    val res = vertices.find(_.position ~= pos)
+      .orElse(
+        halfEdges.find(_.asSegment.contains(pos)).map {
+          e =>
+            val (l, r) = splitEdProvider.splitEdgeData(e, pos)
+            val res = split(e, newVdProvider.newVertexData(pos), l, r)
+
+            res
+        }
+      ).getOrElse(makeVertex(newVdProvider.newVertexData(pos)))
+    res
   }
 
   /*innerFaces.filter(_._holes.isEmpty).find(_.polygon.contains(pos)).getOrElse {
@@ -66,22 +85,6 @@ class PlanarDCEL[D <: DCELData](
   def cutPoly(poly: Seq[V2],
               dcelDataProvider: DCELDataProvider[D]
              ): Seq[Vertex[D]] = cutChain(poly :+ poly.head, dcelDataProvider)
-
-  def getVertex(pos: V2): Option[Vertex[D]] = vertices.find(_.position ~= pos)
-
-  def getOrAddVertex(pos: V2, newVdProvider: NewVertexDataProvider[D], splitEdProvider: SplitEdgeDataProvider[D]): Vertex[D] = {
-    val res = vertices.find(_.position ~= pos)
-      .orElse(
-        halfEdges.find(_.asSegment.contains(pos)).map {
-          e =>
-            val (l, r) = splitEdProvider.splitEdgeData(e, pos)
-            val res = split(e, newVdProvider.newVertexData(pos), l, r)
-
-            res
-        }
-      ).getOrElse(makeVertex(newVdProvider.newVertexData(pos)))
-    res
-  }
 
   def cutFromTo(from: V2, to: V2, dcelDataProvider: DCELDataProvider[D]): Seq[Vertex[D]] =
     cutChain(Seq(from, to), dcelDataProvider)

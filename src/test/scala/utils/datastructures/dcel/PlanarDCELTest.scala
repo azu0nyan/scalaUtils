@@ -1,4 +1,4 @@
-package datastructures.dcel
+package utils.datastructures.dcel
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
