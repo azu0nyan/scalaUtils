@@ -24,15 +24,20 @@ object PlanarDCELCutPipeline
 
   case class CuttingContext[D <: DCELData, L <: Labels](dcel: PlanarDCEL[D],
                                                         provider: DCELDataProvider[D],
-                                                        vertexProduced: Seq[Vertex[D]] = Seq(),
-                                                        edgesProduced: Seq[HalfEdge[D]] = Seq(),
-                                                        areasProduced: Seq[Face[D]] = Seq(),
-                                                        edgesLabels: Map[L#HalfEdgeLabel, Set[HalfEdge[D]]] = Map(),
-                                                        areaLabels: Map[L#FaceLabel, Set[Face[D]]] = Map(),
-                                                        vertexLabels: Map[L#VertexLabel, Set[Vertex[D]]] = Map()) {
-    def addVertices(vertices: Iterable[Vertex[D]]): CuttingContext[D, L] = copy(vertexProduced = vertexProduced ++ vertices)
-    def addFaces(areas: Iterable[Face[D]]): CuttingContext[D, L] = copy(areasProduced = areasProduced ++ areas)
-    def addEdges(edges: Iterable[HalfEdge[D]]): CuttingContext[D, L] = copy(edgesProduced = edgesProduced ++ edges)
+                                                        vertexProduced: Set[Vertex[D]] = Set(),
+                                                        edgesProduced: Set[HalfEdge[D]] = Set(),
+                                                        areasProduced: Set[Face[D]] = Set(),
+                                                        edgesLabels: Map[L#HalfEdgeLabel, Set[HalfEdge[D]]] = Map[L#HalfEdgeLabel, Set[HalfEdge[D]]](),
+                                                        areaLabels: Map[L#FaceLabel, Set[Face[D]]] = Map[L#FaceLabel, Set[Face[D]]](),
+                                                        vertexLabels: Map[L#VertexLabel, Set[Vertex[D]]] = Map[L#VertexLabel, Set[Vertex[D]]]()) {
+    def addVertices(vertices: Iterable[Vertex[D]]): CuttingContext[D, L] = copy(vertexProduced = vertexProduced | vertices.toSet)
+    def addFaces(areas: Iterable[Face[D]]): CuttingContext[D, L] = copy(areasProduced = areasProduced | areas.toSet)
+    def addHalfEdges(edges: Iterable[HalfEdge[D]]): CuttingContext[D, L] = copy(edgesProduced = edgesProduced | edges.toSet)
+
+    def removeVertices(vertices: Iterable[Vertex[D]]): CuttingContext[D, L] = copy(vertexProduced = vertexProduced &~ vertices.toSet)
+    def removeFaces(areas: Iterable[Face[D]]): CuttingContext[D, L] = copy(areasProduced = areasProduced &~ areas.toSet)
+    def removeHalfEdges(edges: Iterable[HalfEdge[D]]): CuttingContext[D, L] = copy(edgesProduced = edgesProduced &~ edges.toSet)
+
     def addEdgeLabels(labels: Iterable[(L#HalfEdgeLabel, HalfEdge[D])]): CuttingContext[D, L] = copy(edgesLabels = MapOps.addSeqToMapToSet(edgesLabels, labels.toSeq))
     def addFaceLabels(labels: Iterable[(L#FaceLabel, Face[D])]): CuttingContext[D, L] = copy(areaLabels = MapOps.addSeqToMapToSet(areaLabels, labels.toSeq))
     def addVertexLabels(labels: Iterable[(L#VertexLabel, Vertex[D])]): CuttingContext[D, L] = copy(vertexLabels = MapOps.addSeqToMapToSet(vertexLabels, labels.toSeq))
@@ -53,7 +58,7 @@ object PlanarDCELCutPipeline
   case class If[D <: DCELData, L <: Labels](pred: Predicate[D, L], doThen: PlanarDCELCutPipeline[D, L]) extends PlanarDCELCutPipeline[D, L]
   case class IfElse[D <: DCELData, L <: Labels](pred: Predicate[D, L], doThen: PlanarDCELCutPipeline[D, L], doElse: PlanarDCELCutPipeline[D, L]) extends PlanarDCELCutPipeline[D, L]
   case class Empty[D <: DCELData, L <: Labels]() extends PlanarDCELCutPipeline[D, L]
-  case class Do[D <: DCELData, L <: Labels](code: CuttingContext[D, L] => ()) extends PlanarDCELCutPipeline[D, L]
+  case class Do[D <: DCELData, L <: Labels](code: CuttingContext[D, L] => Unit) extends PlanarDCELCutPipeline[D, L]
 
   case class ForEachFace[D <: DCELData, L <: Labels](selector: FaceSelector[D, L], doWith: Face[D] => Unit) extends PlanarDCELCutPipeline[D, L]
   case class ForEachEdge[D <: DCELData, L <: Labels](selector: EdgeSelector[D, L], doWith: HalfEdge[D] => Unit) extends PlanarDCELCutPipeline[D, L]
@@ -105,8 +110,15 @@ object PlanarDCELCutPipeline
                                                     resultingFaceLabel: Option[L#FaceLabel] = None
                                                    ) extends PlanarDCELCutPipeline[D, L]
 
-  case class ConnectVertices[D <: DCELData, L <: Labels](mainVertexSelector: SingleVertexSelector[D, L],
-                                                         toConnectVertexSelector: VertexSelector[D, L],
+  /**
+    * 
+    * @param centerVertexSelector
+    * @param otherVertexSelector
+    * @param edgeLabel edge will be directed from centerVertex, to other
+    * @param twinEdgeLabel edge will be directed from other, to centerVertex
+    */
+  case class ConnectVertices[D <: DCELData, L <: Labels](centerVertexSelector: SingleVertexSelector[D, L],
+                                                         otherVertexSelector: VertexSelector[D, L],
                                                          edgeLabel: Option[L#HalfEdgeLabel] = None,
                                                          twinEdgeLabel: Option[L#HalfEdgeLabel] = None
                                                         ) extends PlanarDCELCutPipeline[D, L]

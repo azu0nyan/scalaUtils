@@ -46,7 +46,8 @@ object BezierCurve {
     override def argEnd: Scalar = 1
 
     def controlPoints: Seq[V2]
-  }
+    override def tangentAt(arg: Scalar): V2 = tangentAtApproximation(arg)//todo make exact
+}
 
   case class BezierCurveNPoints(w: IndexedSeq[V2]) extends BezierCurve {
     override def posFromT(t: Scalar): V2 = bezier(t, w)

@@ -8,7 +8,9 @@ object CircullarOps {
 
   implicit def toCyclic[A](a: Array[A]):CircullarArray[A] =new CircullarArray(a)
 
-  implicit def toCyclicPairs[A](a: Seq[A]): Seq[(A, A)] = a.indices.map(i => (a(circullarIndex(i, a.length)), a(circullarIndex(i + 1, a.length))))
+  def toCyclicPairs[A](a: Seq[A]): Iterator[(A, A)] = {
+    (a :+ a.head).sliding(2).map{case Seq(a, b) => (a, b)}
+  }
 
   @inline def circullarIndex(element: Int, length: Int): Int = utils.math.circullarIndex(element, length)
 

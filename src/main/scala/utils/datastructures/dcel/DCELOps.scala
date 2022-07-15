@@ -1,5 +1,6 @@
 package utils.datastructures.dcel
 
+import utils.datastructures.CircullarOps
 import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
 import utils.math.planar.PolygonRegion
 
@@ -38,10 +39,18 @@ object DCELOps {
     }
   }
 
-  def toChainOpt[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] = if (vs.size >= 2) vs.sliding(2).map {
-    case List(o, e) => o.edgesWithOriginHere.find(_.ending == e)
-  } else Iterator.empty
-  
+  def toClosedChain[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] = toClosedChainOpt(vs).flatten
+
+  def toClosedChainOpt[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] =
+    if (vs.size >= 2) CircullarOps.toCyclicPairs(vs).map{case (a,b )=> a.edgeTo(b)}
+    else Iterator.empty
+
+
+  def toChainOpt[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] =
+    if (vs.size >= 2) vs.sliding(2).map {
+      case List(o, e) => o.edgeTo(e)
+    } else Iterator.empty
+
   def toChain[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[HalfEdge[D]] = toChainOpt(vs).flatten
 
 

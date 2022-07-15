@@ -488,8 +488,8 @@ class DCEL[D <: DCELData](
             if (chainBroken && !isMergingWithHole) { //if we created hole
               this match {
                 case p: PlanarDCEL[D] => //ugly typecast
-                  val nextPoly = PolygonRegion(next.traverseEdges.map(e => p.pos(e.origin)).toSeq)
-                  val prevPoly = PolygonRegion(prev.traverseEdges.map(e => p.pos(e.origin)).toSeq)
+                  val nextPoly = PolygonRegion(next.traverseEdges.map(e => p.position(e.origin)).toSeq)
+                  val prevPoly = PolygonRegion(prev.traverseEdges.map(e => p.position(e.origin)).toSeq)
                   if (nextPoly.contains(prevPoly)) {
                     main._holesIncidentEdges = main._holesIncidentEdges + prev
                     if (main.incidentEdge.isDefined && prev.traverseEdges.contains(main.incidentEdge.get)) main._incidentEdge = Some(next)

@@ -19,7 +19,7 @@ object Polygons {
       j <- 0 until size._2
     ) yield cell + offset + spacing * V2(i, j)
 
-  def pie(verts:Int, radius: Scalar):Seq[PolygonRegion] = CircullarOps.toCyclicPairs(NGon(V2.ZERO, verts, radius, 0d).vertices).map(v12 => new PolygonRegion(Seq(v12._1, v12._2, V2(0,0)) ))
+  def pie(verts:Int, radius: Scalar):Seq[PolygonRegion] = CircullarOps.toCyclicPairs(NGon(V2.ZERO, verts, radius, 0d).vertices).map(v12 => new PolygonRegion(Seq(v12._1, v12._2, V2(0,0)) )).toSeq
 }
 
 case class Polygons(polys:Seq[PolygonRegion]) {

@@ -96,6 +96,7 @@ case class BSpline(splines: IndexedSeq[BezierCurve]) extends PathWithTangent {
     sr._2.copy(argument = sr._2.argument + splines.indexOf(sr._1))
 
   }
+  override def tangentAt(arg: Scalar): V2 = tangentAtApproximation(arg) //todo correct
 }
 
 

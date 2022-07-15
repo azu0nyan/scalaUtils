@@ -32,7 +32,7 @@ class PlanarDCEL[D <: DCELData](
                                ) extends DCEL[D](outerFaceData) {
 
 
-  def pos(v: Vertex[D]): V2 = extractor(v.data)
+  def position(v: Vertex[D]): V2 = extractor(v.data)
 
   def asSegment(e: HalfEdge[D]): SegmentPlanar = e.asSegment
 
@@ -61,6 +61,7 @@ class PlanarDCEL[D <: DCELData](
     * @param newEdProvider     newHalfEdges to its halfEdgeData's
     * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with D#HalfEdgeData copied from args. Provide new EdgeData if needed.
     * @param splitFaceListener calls on face split, takes egde that splits face as parameter, its leftFace is newly created face with twin.leftFace D#FaceData copied. Provide new FaceData if needed.
+    * @return Seq of vertices that connected by cutted edges, first and last vertices are equal
     */
   def cutPoly(poly: Seq[V2],
               dcelDataProvider: DCELDataProvider[D]
@@ -68,7 +69,7 @@ class PlanarDCEL[D <: DCELData](
 
   def getVertex(pos: V2): Option[Vertex[D]] = vertices.find(_.position ~= pos)
 
-  def getOrAddVertex(pos: V2, newVdProvider: NewVertexDataProvider[D], splitEdProvider:SplitEdgeDataProvider[D]): Vertex[D] = {
+  def getOrAddVertex(pos: V2, newVdProvider: NewVertexDataProvider[D], splitEdProvider: SplitEdgeDataProvider[D]): Vertex[D] = {
     val res = vertices.find(_.position ~= pos)
       .orElse(
         halfEdges.find(_.asSegment.contains(pos)).map {

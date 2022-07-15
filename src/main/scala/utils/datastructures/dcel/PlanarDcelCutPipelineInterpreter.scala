@@ -1,15 +1,19 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.DCELData
+import utils.datastructures.dcel.DCEL._
 import utils.datastructures.dcel.PlanarDCELCutPipeline._
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 object PlanarDcelCutPipelineInterpreter {
+
+
+
   def cutPipeline[D <: DCELData, L <: Labels](at: PlanarDCEL[D],
                                               provider: DCELDataProvider[D],
                                               pipeline: PlanarDCELCutPipeline[D, L]): CuttingContext[D, L] = {
-    val context = CuttingContext(at, provider)
+    val context = CuttingContext[D, L](at, provider)
     cutPipelineWithContext(pipeline, context)
   }
 
@@ -44,15 +48,15 @@ object PlanarDcelCutPipelineInterpreter {
         for (v <- selector(context)) doWith(v)
         context
       case t: TraceSegmentAtAngle[D, L] =>
-        PlanarDCELCutOps.traceSegmentAtAngle(t, context)
+        PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.traceSegmentAtAngle(t, _), context)
       case c: CutPoly[D, L] =>
-        PlanarDCELCutOps.cutPoly(c, context)
+        PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.cutPoly(c, _), context)
       case c: CutChain[D, L] =>
-        PlanarDCELCutOps.cutChain(c, context)
+        PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.cutChain(c, _), context)
       case m: MergeFaces[D, L] =>
-        PlanarDCELCutOps.mergeFaces(m, context)
+        PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.mergeFaces(m, _), context)
       case c: ConnectVertices[D, L] =>
-        PlanarDCELCutOps.connectVertices(c, context)
+        PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.connectVertices(c, _), context)
     }
   }
 }
