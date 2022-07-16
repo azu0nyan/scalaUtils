@@ -4,7 +4,7 @@ package utils.datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCEL._
-import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutChain, Labels}
+import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutChain, CuttingContext, Labels}
 import utils.math.planar.V2
 
 import java.util.concurrent.atomic.AtomicInteger
@@ -44,6 +44,8 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
       Seq(1, 2, 3), Seq(4, 5, 6), Seq(-1, -2, -3, -4))
 
     val res = PlanarDcelCutPipelineInterpreter.cutPipeline(dcel, Provider, op1)
+    println(dcel.toLongSting)
+    dcel.sanityCheck()
 
     assert(res.vertexProduced.size == 5)
     assert(res.halfEdgesProduced.size == 5 * 2)
@@ -68,18 +70,13 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
     assert(res.vertexToLabel(v4) == Set(-4))
 
 
-    println(dcel.halfEdges.map(e => dcel.asSegment(e)))
-    println(v1.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e)))
-    println(v2.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e)))
-    println(v3.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e)))
-    println(v4.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e)))
-    println(v5.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e)))
+    println(dcel.halfEdges.mkString("\n"))
 
-    println(v1.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e.twin)))
-    println(v2.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e.twin)))
-    println(v3.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e.twin)))
-    println(v4.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e.twin)))
-    println(v5.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e.twin)))
+    println(v1.edgesWithOriginHere.toSeq)
+    println(v2.edgesWithOriginHere.toSeq)
+    println(v3.edgesWithOriginHere.toSeq)
+    println(v4.edgesWithOriginHere.toSeq)
+    println(v5.edgesWithOriginHere.toSeq)
 
     println(v1._incidentEdge)
     println(v2._incidentEdge)
@@ -103,6 +100,25 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
     assert(res.labelToHalfEdge(6) == Set(e4.twin, e5.twin))
 
 
+
+  }
+
+  test("Cut bug test2") {
+    val dcel = new PlanarDCEL[DATA](0, x => x)
+    /*
+         | e1
+         |
+     e5  |   e4
+     ___ |______
+         |    /
+      e2 |   / e3
+         |/
+      */
+    val chain = List(V2(0.0, 200.0), V2(0.0, -200.0), V2(200.0, 0.0), V2(-200.0, 0.0))
+
+    PlanarDCELCutOps.cutChain[DATA, Ls](CutChain(chain), CuttingContext[DATA, Ls](dcel, Provider))
+    println(dcel.toLongSting)
+    dcel.sanityCheck()
 
   }
 }

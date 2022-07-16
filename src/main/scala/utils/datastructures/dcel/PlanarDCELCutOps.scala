@@ -3,7 +3,7 @@ package utils.datastructures.dcel
 import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, MalformedDCELException, Vertex}
 import utils.datastructures.dcel.PlanarDCELCutPipeline.{ConnectVertices, CutChain, CutPoly, CuttingContext, Labels, MergeFaces, TraceSegmentAtAngle}
 import utils.math.planar.{PointIntersection, SegmentIntersection, SegmentPlanar, V2}
-import utils.math.WithAlmostEquals
+import utils.math.{WithAlmostEquals, compare}
 
 import scala.collection.mutable
 
@@ -143,7 +143,6 @@ object PlanarDCELCutOps {
     c match {
       case CutChain(chain, edgeLabels, edgeTwinLabels, vertexLabels) =>
         val result = context.dcel.cutChain(chain, context.provider)
-
         if (result.nonEmpty) {
           var ctx = context
 
@@ -164,6 +163,7 @@ object PlanarDCELCutOps {
           }
           ctx
         } else context
+      context
 
     }
 
@@ -221,6 +221,7 @@ object PlanarDCELCutOps {
     val rfl = dcel.onFaceRemoved.subscribe(removedFaces.addOne)
 
     val result: CuttingContext[D, L] = op(context)
+    dcel.sanityCheck()
 
     dcel.onNewVertex.unSubscribe(nvl)
     dcel.onNewHalfEdge.unSubscribe(nhel)
