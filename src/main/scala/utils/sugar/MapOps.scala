@@ -11,7 +11,6 @@ object MapOps {
       case (a, set) if seqMapped.contains(a) => (a, set | seqMapped(a))
       case (a, set) => (a, set)
     } ++ newKeys.map(k => (k, seqMapped(k)))
-    println(res)
     res
   }
 

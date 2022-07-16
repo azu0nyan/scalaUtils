@@ -3,7 +3,7 @@ package utils.datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCEL._
-import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutChain, CuttingContext, Labels}
+import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutChain, CutPoly, CuttingContext, Labels}
 import utils.datastructures.dcel.{DCEL, DCELDataProvider, DCELOps, PlanarDCEL}
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.V2

@@ -115,20 +115,20 @@ object PlanarDCELCutOps {
           val resultEdges = DCELOps.toChain(result) //toChainCircullar isn't needed because result contains end duplicate
 
           if (insideLabel.nonEmpty) {
-            val toLabelFaces = DCELOps.selectToTheLeft(resultEdges.toSeq)
-            ctx = ctx.addFaceLabels(toLabelFaces.map(f => (insideLabel.get, f)).toMap)
+            val toLabelFaces = DCELOps.selectToTheLeft(resultEdges.toSeq).toSeq
+            ctx = ctx.addFaceLabels(toLabelFaces.map(f => (insideLabel.get, f)))
           }
 
           if (edgeLabels.nonEmpty || edgeTwinLabels.nonEmpty || vertexLabels.nonEmpty) {
             //edge can be splitted during cut so group resulting vertices by edges
             val grouped = group(poly.vertices, result.dropRight(1), context.dcel.position, true)
-
+            //getStraightEdgePathVertex allow working with self intersected polygons
             val edgeLabelSeq = for ((label, g) <- edgeLabels.zip(grouped);
                                     Seq(start, end) <- g.sliding(2);
-                                    toLabel <- start.edgeTo(end)) yield (label, toLabel)
+                                    toLabel <- ctx.dcel.getStraightEdgePathVertex(start, end)) yield (label, toLabel)
             val twinLabelsSeq = for ((label, g) <- edgeTwinLabels.zip(grouped);
                                      Seq(start, end) <- g.sliding(2);
-                                     toLabel <- end.edgeTo(start)) yield (label, toLabel)
+                                     toLabel <- ctx.dcel.getStraightEdgePathVertex(end, start)) yield (label, toLabel)
             val vertexLabelSeq = for ((label, g) <- vertexLabels.zip(grouped);
                                       toLabel <- g.headOption) yield (label, toLabel)
             ctx = ctx
@@ -148,13 +148,13 @@ object PlanarDCELCutOps {
 
           if (edgeLabels.nonEmpty || edgeTwinLabels.nonEmpty || vertexLabels.nonEmpty) {
             val grouped = group(chain, result, context.dcel.position, false)
-
+            //getStraightEdgePathVertex allow working with self intersected chains
             val edgeLabelSeq = for ((label, g) <- edgeLabels.zip(grouped);
                                     Seq(start, end) <- g.sliding(2);
-                                    toLabel <- start.edgeTo(end)) yield (label, toLabel)
+                                    toLabel <- ctx.dcel.getStraightEdgePathVertex(start, end)) yield (label, toLabel)
             val twinLabelsSeq = for ((label, g) <- edgeTwinLabels.zip(grouped);
                                      Seq(start, end) <- g.sliding(2);
-                                     toLabel <- end.edgeTo(start)) yield (label, toLabel)
+                                     toLabel <- ctx.dcel.getStraightEdgePathVertex(end, start)) yield (label, toLabel)
             val vertexLabelSeq = for ((label, g) <- vertexLabels.zip(grouped);
                                       toLabel <- g.headOption) yield (label, toLabel)
             ctx = ctx
@@ -163,7 +163,7 @@ object PlanarDCELCutOps {
           }
           ctx
         } else context
-      context
+
 
     }
 
@@ -221,7 +221,6 @@ object PlanarDCELCutOps {
     val rfl = dcel.onFaceRemoved.subscribe(removedFaces.addOne)
 
     val result: CuttingContext[D, L] = op(context)
-    dcel.sanityCheck()
 
     dcel.onNewVertex.unSubscribe(nvl)
     dcel.onNewHalfEdge.unSubscribe(nhel)

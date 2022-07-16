@@ -38,11 +38,31 @@ class PlanarDCEL[D <: DCELData](
 
   def outerContour(f: Face[D]): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.position).toSeq)
 
-  def polygon(f: Face[D]): Polygon = Polygon(outerContour(f) +: f.holesIncidentEdges.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
+  def asPolygon(f: Face[D]): Polygon = Polygon(outerContour(f) +: f.holesIncidentEdges.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
 
   def getEdge(from: V2, to: V2): Option[HalfEdge[D]] =
     for (f <- getVertex(from); to <- getVertex(to); e <- f.edgeTo(to)) yield e
 
+  def getStraightEdgePath(from: V2, to: V2): Seq[HalfEdge[D]] = {
+    val f = getVertex(from)
+    val t = getVertex(to)
+    if (f.isEmpty || t.isEmpty) Seq()
+    else getStraightEdgePathVertex(f.get, t.get)
+  }
+
+  def getStraightEdgePathVertex(from: Vertex[D], to: Vertex[D]): Seq[HalfEdge[D]] =
+    if (from == to) Seq()
+    else {
+      var res: Seq[HalfEdge[D]] = Seq()
+      val dir = to.position - from.position
+      var cur = from.edgesWithOriginHere.find(_.asSegment.body.sameDirection(dir))
+      while (cur.nonEmpty && cur.get.ending != to) {
+        res = res :+ cur.get
+        cur = cur.get.ending.edgesWithOriginHere.find(_.asSegment.body.sameDirection(dir))
+      }
+      if (cur.nonEmpty && cur.get.ending == to) res :+ cur.get
+      else Seq()
+    }
 
   def faceAt(pos: V2): Face[D] = {
     innerFaces.find(f => f.polygon.contains(pos) &&
@@ -493,7 +513,7 @@ class PlanarDCEL[D <: DCELData](
               val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => v1oFacePoly.containsInside(e.origin.position))
               newFace._holesIncidentEdges = inNewFace
               //fix leftFace for holeEdges
-              for(ie <- inNewFace; e<- ie.traverseEdges) e._leftFace = newFace
+              for (ie <- inNewFace; e <- ie.traverseEdges) e._leftFace = newFace
               faceWeIn._holesIncidentEdges = inOldFace
 
             } else { //v2eNExtFacePoly should be CCW
@@ -509,7 +529,7 @@ class PlanarDCEL[D <: DCELData](
               val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => v2eNextFacePoly.containsInside(e.origin.position))
               newFace._holesIncidentEdges = inNewFace
               //fix leftFace for holeEdges
-              for(ie <- inNewFace; e<- ie.traverseEdges) e._leftFace = newFace
+              for (ie <- inNewFace; e <- ie.traverseEdges) e._leftFace = newFace
               faceWeIn._holesIncidentEdges = inOldFace
             }
           }
@@ -550,7 +570,7 @@ class PlanarDCEL[D <: DCELData](
               faceWeIn._holesIncidentEdges = inOldFace
               newFace._holesIncidentEdges = inNewFace
               //fix leftFace for holeEdges
-              for(ie <- inNewFace; e<- ie.traverseEdges) e._leftFace = newFace
+              for (ie <- inNewFace; e <- ie.traverseEdges) e._leftFace = newFace
             }
           }
 
@@ -620,5 +640,16 @@ class PlanarDCEL[D <: DCELData](
 
   }
 
-
+  def planarSanityCheck(): Unit = {
+    for (e1 <- halfEdges; e2 <- halfEdges if e1 != e2 && e1.twin != e2) if (e1.asSegment.haveSegmentIntersection(e2.asSegment))
+      throw new MalformedDCELException(s"$e1 intersects body of $e2 | ${e1.asSegment} ${e2.asSegment}")
+    for (f <- innerFaces if f.vertices.size >= 3) if (!f.polygon.isCcw)
+      throw new MalformedDCELException(s"$f not in ccw order")
+    for (f <- innerFaces; h <- f.holesContours.toSeq.map(_.toSeq) if h.toSeq.size >= 3; p = PolygonRegion(h.map(_.origin.position).toSeq) if p.isCcw)
+      throw new MalformedDCELException(s"Hole border in ccw order in $f ${h.toSeq.head}")
+    for (h <- outerFace.holesContours.toSeq.map(_.toSeq) if h.size >= 3; p = PolygonRegion(h.map(_.origin.position).toSeq) if p.isCcw)
+      throw new MalformedDCELException(s"Hole border in ccw order in outerFace ${h.toSeq.head}")
+    if (outerFace.incidentEdge.nonEmpty)
+      throw new MalformedDCELException(s"Outer face incidentEdge should be empty.")
+  }
 }

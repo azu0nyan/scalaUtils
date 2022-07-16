@@ -119,7 +119,7 @@ object PlanarDCELCutPipeline
     *
     * @param centerVertexSelector
     * @param otherVertexSelector
-    * @param edgeLabel edge will be directed from centerVertex, to other
+    * @param edgeLabel     edge will be directed from centerVertex, to other
     * @param twinEdgeLabel edge will be directed from other, to centerVertex
     */
   case class ConnectVertices[D <: DCELData, L <: Labels](centerVertexSelector: SingleVertexSelector[D, L],
