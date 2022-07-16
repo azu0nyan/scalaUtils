@@ -601,7 +601,7 @@ class PlanarDCEL[D <: DCELData](
     if (from.incidentEdge.isEmpty && to.incidentEdge.isEmpty) {
       val face = faceAt(from.position)
       val res = makeEdge(from, to, face, face, ld, rd)
-      face.holesIncidentEdges += res
+      face._holesIncidentEdges += res
       res
     } else if (from.incidentEdge.nonEmpty && to.incidentEdge.isEmpty) {
       val face = faceAt(to.position)
@@ -663,8 +663,8 @@ class PlanarDCEL[D <: DCELData](
             for (e <- res.traverseEdges) {
               e._leftFace = newFace
               if (faceWeIn.holesIncidentEdges.contains(e)) {
-                faceWeIn.holesIncidentEdges -= e
-                faceWeIn.holesIncidentEdges += res.twin
+                faceWeIn._holesIncidentEdges -= e
+                faceWeIn._holesIncidentEdges += res.twin
               }
             }
             val newFacePoly = PolygonRegion(newFace.vertices.map(_.position).toSeq)
@@ -679,7 +679,7 @@ class PlanarDCEL[D <: DCELData](
               e._leftFace = newFace
               if (faceWeIn.holesIncidentEdges.contains(e)) {
                 faceWeIn._holesIncidentEdges -= e
-                faceWeIn.holesIncidentEdges += res
+                faceWeIn._holesIncidentEdges += res
               }
             }
             val newFacePoly = PolygonRegion(newFace.vertices.map(_.position).toSeq)

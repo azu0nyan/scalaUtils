@@ -1,10 +1,7 @@
-package utils.datastructures
+package utils.datastructures.graph
 
-import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
-
-import utils.datastructures.IntV2
-import utils.datastructures.graph.{ArrayBufferGraph, GraphGenUtils}
+import org.scalatest.funsuite.AnyFunSuite
 class GraphTest extends AnyFunSuite {
 
 

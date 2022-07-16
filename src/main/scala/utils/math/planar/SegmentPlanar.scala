@@ -40,16 +40,16 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
   def center: V2 = (v1 + v2) * HALF
   /** calculate x(y) using corresponding line equation x = k_y * y + b_y */
-  @deprecated def xFromY(y: Scalar): Option[Scalar] = kY.flatMap(k => bY.map(b => k * y + b))
+  def xFromY(y: Scalar): Option[Scalar] = kY.flatMap(k => bY.map(b => k * y + b))
 
   /** k_y coeff in x(y) line equation */
-  @deprecated def kY: Option[Scalar] = {
+  def kY: Option[Scalar] = {
     val divisor = v1.y - v2.y //todo maybe in different order
     Option.when(divisor != 0)((v1.x - v2.x) / divisor)
   }
 
   /** b_y coeff in x(y) line equation */
-  @deprecated def bY: Option[Scalar] = kY.map(k => v2.x - k * v2.y)
+  def bY: Option[Scalar] = kY.map(k => v2.x - k * v2.y)
 
   def kX: Option[Scalar] = {
     val divisor = v2.x - v1.x

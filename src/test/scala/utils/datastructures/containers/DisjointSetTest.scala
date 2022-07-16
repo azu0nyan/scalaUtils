@@ -1,7 +1,6 @@
-package utils.datastructures
+package utils.datastructures.containers
 
 import org.scalatest.funsuite.AnyFunSuite
-import utils.datastructures.containers.DisjointSet
 
 class DisjointSetTest extends AnyFunSuite {
   test("Basic Ops") {
