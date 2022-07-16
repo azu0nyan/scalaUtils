@@ -351,7 +351,7 @@ class PlanarDCEL[D <: DCELData](
     * Assumes that v1 close to v2 or in the same place. Assumes that DCEL correct, but can have vertices in the same place.
     * Merge allowed only on planar DCEL's, since on usual DCEL winding order after merge undefined
     * */
-  def mergeVertices(v1: Vertex[D], v2: Vertex[D], fdProvider: HalfEdge[D] => D#FaceData): Unit =
+  def mergeVertices(v1: Vertex[D], v2: Vertex[D], newFaceDataProvider: NewFaceDataProvider[D]): Unit =
     if (v1.incidentEdge.nonEmpty && v2.incidentEdge.nonEmpty) {
       //for(e <- v1.edgeTo(v2)) deleteEdge(e) //Don't do it like that,  since deleteEdge can delete face that shouldn't be deleted  after vertex merge
       val edgeBetween = v1.edgeTo(v2)
@@ -484,7 +484,7 @@ class PlanarDCEL[D <: DCELData](
                 faceWeIn._holesIncidentEdges -= holeEdge
                 faceWeIn._holesIncidentEdges += v1oPrev
               }
-              val newFd = fdProvider(v1o)
+              val newFd = newFaceDataProvider.newFaceData(v1o)
               val newFace = makeFace(newFd)
               newFace._incidentEdge = Some(v1o)
               for (e <- v1oFaceEdges) e._leftFace = newFace
@@ -492,19 +492,24 @@ class PlanarDCEL[D <: DCELData](
               //holes in faceWeIn exists, so check isn't needed, maybe check if faceWeIn.holeIncidentEdges.size > 1
               val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => v1oFacePoly.containsInside(e.origin.position))
               newFace._holesIncidentEdges = inNewFace
+              //fix leftFace for holeEdges
+              for(ie <- inNewFace; e<- ie.traverseEdges) e._leftFace = newFace
               faceWeIn._holesIncidentEdges = inOldFace
+
             } else { //v2eNExtFacePoly should be CCW
               val v2eNextFaceEdges = v2eNext.traverseEdges.takeWhile(_ != v1o)
               if (v2eNextFaceEdges.contains(holeEdge)) {
                 faceWeIn._holesIncidentEdges -= holeEdge
                 faceWeIn._holesIncidentEdges += v1o
               }
-              val newFd = fdProvider(v2eNext)
+              val newFd = newFaceDataProvider.newFaceData(v2eNext)
               val newFace = makeFace(newFd)
               for (e <- v2eNextFaceEdges) e._leftFace = newFace
               val v2eNextFacePoly = PolygonRegion(v2eNextFaceEdges.map(_.origin.position).toSeq)
               val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => v2eNextFacePoly.containsInside(e.origin.position))
               newFace._holesIncidentEdges = inNewFace
+              //fix leftFace for holeEdges
+              for(ie <- inNewFace; e<- ie.traverseEdges) e._leftFace = newFace
               faceWeIn._holesIncidentEdges = inOldFace
             }
           }
@@ -533,7 +538,7 @@ class PlanarDCEL[D <: DCELData](
             if (v1.incidentEdge.contains(v1oPrev) || v1.incidentEdge.contains(v2eNext)) v1._incidentEdge = Some(v1oPrev.twin)
             mergeRemoveV1OPrevV2ENext()
           } else { //4 Because it's not hole's border, we can use either v1o and v2eNext for new face
-            val newFd = fdProvider(v1o)
+            val newFd = newFaceDataProvider.newFaceData(v1o)
             val newFaceEdges = v1o.traverseEdges.takeWhile(_ != v2eNext).toSeq
             faceWeIn._incidentEdge = Some(v2eNext) //faster overwrite than check if rewrite needed
             val newFace = makeFace(newFd)
@@ -544,6 +549,8 @@ class PlanarDCEL[D <: DCELData](
               val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => newFacePoly.containsInside(e.origin.position))
               faceWeIn._holesIncidentEdges = inOldFace
               newFace._holesIncidentEdges = inNewFace
+              //fix leftFace for holeEdges
+              for(ie <- inNewFace; e<- ie.traverseEdges) e._leftFace = newFace
             }
           }
 
@@ -572,7 +579,7 @@ class PlanarDCEL[D <: DCELData](
                             mapHalfEdgeData: HalfEdge[O] => D#HalfEdgeData,
                             mapFaceData: Face[O] => D#FaceData,
                             mergeVerticesAtSamePosition: Boolean,
-                            mergeFaceDataProvider: HalfEdge[D] => D#FaceData): Unit = {
+                            newFaceDataProvider: NewFaceDataProvider[D]): Unit = {
     val newFaces: mutable.Map[Face[O], Face[D]] = mutable.Map()
     val newHalfEdges: mutable.Map[HalfEdge[O], HalfEdge[D]] = mutable.Map()
     val newVertices: mutable.Map[Vertex[O], Vertex[D]] = mutable.Map()
@@ -607,9 +614,11 @@ class PlanarDCEL[D <: DCELData](
       for (v <- ot.vertices;
            nv = newVertices(v);
            toMerge <- getVertex(nv.position)) {
-        mergeVertices(toMerge, nv, mergeFaceDataProvider)
+        mergeVertices(toMerge, nv, newFaceDataProvider)
       }
     }
 
   }
+
+
 }

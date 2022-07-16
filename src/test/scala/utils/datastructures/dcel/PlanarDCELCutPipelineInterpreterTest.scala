@@ -81,6 +81,12 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
     println(v4.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e.twin)))
     println(v5.edgesWithOriginHere.toSeq.map(e => dcel.asSegment(e.twin)))
 
+    println(v1._incidentEdge)
+    println(v2._incidentEdge)
+    println(v3._incidentEdge)
+    println(v4._incidentEdge)
+    println(v5._incidentEdge)
+
 
     val e1 = dcel.getEdge(V2(0, 200), V2(0, 0)).get
     val e2 = dcel.getEdge(V2(0, 0), V2(0, -200)).get

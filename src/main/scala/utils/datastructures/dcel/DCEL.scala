@@ -76,6 +76,8 @@ object DCEL {
 
     /** requires O(twin.holeEdges) */
     def isHole: Boolean = incidentEdge.exists(_.twin.isHoleHalfSide)
+
+    override def toString: String = s"F: ${_data} iE: ${incidentEdge.map(_.data)} holes: ${holes.toSeq.map(_.data)}"
   }
 
   /**
@@ -160,6 +162,8 @@ object DCEL {
     def allReachableFaces(bfs: Boolean = true): Iterator[Face[D]] = traverseAllReachableEdges(bfs).map(_.leftFace).distinct
 
     def allReachableVertices(bfs: Boolean = true): Iterator[Vertex[D]] = traverseAllReachableEdges(bfs).map(_.origin).distinct
+
+    override def toString: String = s"HE: $data $origin->$ending n: ${_next.data} p: ${_prev.data} t: ${_twin.data} f: ${leftFace.data}"
   }
 
 
@@ -205,6 +209,9 @@ object DCEL {
         case 2 => throw new MultipleEdgesBetweenTwoVerticesException(this, ot)
       }
     }
+    override def toString: String = s"V: $data iE: ${incidentEdge.map(_.data)}"
+
+    def toLongString: String = toString + s" edges: ${edgesWithOriginHere.map(_.data).mkString("(", ",", ")")}"
   }
 }
 
@@ -517,5 +524,30 @@ class DCEL[D <: DCELData](
     }
   }
 
+
+  /**Checking some invariants throw MalformedDCELException*/
+  def sanityCheck() : Unit = {
+    for(v <- vertices){
+      for(e <- v.edgesWithOriginHere)
+        if(e.origin != v) throw new MalformedDCELException(s"Edge $e with origin at $v does not starts here, starts at ${e.origin}")
+    }
+
+    for(e <- halfEdges){
+      if(!vertices.contains(e.origin)) throw new MalformedDCELException(s"Vertices $vertices does not contains origin of $e - ${e.origin}" )
+      if(!vertices.contains(e.ending)) throw new MalformedDCELException(s"Vertices $vertices does not contains origin of $e - ${e.origin}" )
+      if(e.origin.incidentEdge.isEmpty) throw new MalformedDCELException(s"Vertex ${e.origin} have edge with origin $e but does not have incident edge ${e.origin.incidentEdge}")
+      if(e.twin.origin.incidentEdge.isEmpty) throw new MalformedDCELException(s"Vertex ${e.origin} have edge with origin ${e.twin} but does not have incident edge ${e.twin.origin.incidentEdge}")
+      if(!e.origin.edgesWithOriginHere.contains(e)) throw new MalformedDCELException(s"Edges starting at ${e.origin} - ${e.origin.edgesWithOriginHere} does not contains $e - edges starting at ${e.origin}")
+      if(!e.origin.edgesWithEndHere.contains(e.twin)) throw new MalformedDCELException(s"Edges ending at ${e.origin} - ${e.origin.edgesWithEndHere} does not contains ${e.twin} - edges ending at ${e.origin} twin of $e starting here/")
+    }
+
+    for(f <- innerFaces | Set(outerFace)) {
+      for(e <- f.edges) {
+        if(e.leftFace != f) throw new MalformedDCELException(s"Edges $e left face ${e.leftFace} != $f face that edge belons to $e")
+      }
+    }
+
+
+  }
 
 }
