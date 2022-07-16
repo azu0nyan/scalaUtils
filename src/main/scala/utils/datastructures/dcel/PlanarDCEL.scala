@@ -593,6 +593,112 @@ class PlanarDCEL[D <: DCELData](
       onVertexRemoved(v2)
     }
 
+  //todo face & heDataPrivider when scala 3
+  //todo check
+  /** Assumes that there is no intersections for adding edge, so makes no cuts */
+  def addEdgeUnsafe(from: Vertex[D], to: Vertex[D], dataProvider: DCELDataProvider[D]): HalfEdge[D] = {
+    val (ld, rd) = dataProvider.newEdgeData(from, to)
+    if (from.incidentEdge.isEmpty && to.incidentEdge.isEmpty) {
+      val face = faceAt(from.position)
+      val res = makeEdge(from, to, face, face, ld, rd)
+      face.holesIncidentEdges += res
+      res
+    } else if (from.incidentEdge.nonEmpty && to.incidentEdge.isEmpty) {
+      val face = faceAt(to.position)
+      makeEdge(from, to, face, face, ld, rd)
+    } else if (from.incidentEdge.isEmpty && to.incidentEdge.nonEmpty) {
+      val face = faceAt(from.position)
+      makeEdge(from, to, face, face, ld, rd)
+    } else {
+      val edgeDir = to.position - from.position
+      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => edgeDir.angleCCW0to2PI(e.asSegment.body))
+      val faceWeIn = fromFaceEdge.leftFace
+      var toFaceEdge = to.edgesWithOriginHere.find(_.leftFace == faceWeIn)
+
+      val fromBorderContains = faceWeIn.borderEdges.contains(fromFaceEdge)
+      val toBorderContains = faceWeIn.borderEdges.contains(toFaceEdge)
+
+
+      if (fromBorderContains && toBorderContains) {
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+        val newFace = makeFace(dataProvider.newFaceData(res.twin))
+        val newFaceEdges = res.twin.traverseEdges.toSeq
+        for (e <- newFaceEdges) e._leftFace = newFace
+        if (newFaceEdges.contains(faceWeIn.incidentEdge.get)) faceWeIn._incidentEdge = Some(res)
+        newFace._incidentEdge = Some(res.twin)
+        //split holes
+        if (faceWeIn._holesIncidentEdges.nonEmpty) {
+          val newFacePoly = PolygonRegion(newFaceEdges.map(_.origin.position))
+          val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => newFacePoly.containsInside(e.origin.position))
+          faceWeIn._holesIncidentEdges = inOldFace
+          newFace._holesIncidentEdges = inNewFace
+        }
+        res
+      } else if (fromBorderContains && !toBorderContains) {
+        // to - hole
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+        for (e <- res.traverseEdges) {
+          faceWeIn._holesIncidentEdges -= e
+        }
+        res
+
+      } else if (!fromBorderContains && toBorderContains) {
+        //from - hole
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+        for (e <- res.traverseEdges) {
+          faceWeIn._holesIncidentEdges -= e
+        }
+        res
+      } else {
+        //both - hole, we may connect two holes, or cut part from hole
+        val fromHole = faceWeIn.holesIncidentEdges.find(_.traverseEdges.contains(fromFaceEdge)).get
+        val toHole = faceWeIn.holesIncidentEdges.find(_.traverseEdges.contains(toFaceEdge)).get
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+
+        if (fromHole == toHole) {
+          val resFacePoly = PolygonRegion(res.traverseEdges.map(_.origin.position).toSeq)
+          if (resFacePoly.isCcw) { //res is cut part and new poly
+            val newFace = makeFace(dataProvider.newFaceData(res))
+            newFace._incidentEdge = Some(res)
+            for (e <- res.traverseEdges) {
+              e._leftFace = newFace
+              if (faceWeIn.holesIncidentEdges.contains(e)) {
+                faceWeIn.holesIncidentEdges -= e
+                faceWeIn.holesIncidentEdges += res.twin
+              }
+            }
+            val newFacePoly = PolygonRegion(newFace.vertices.map(_.position).toSeq)
+            val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => newFacePoly.containsInside(e.origin.position))
+            faceWeIn._holesIncidentEdges = inOldFace
+            newFace._holesIncidentEdges = inNewFace
+
+          } else { //res.twin is cut part and new poly
+            val newFace = makeFace(dataProvider.newFaceData(res.twin))
+            newFace._incidentEdge = Some(res.twin)
+            for (e <- res.twin.traverseEdges) {
+              e._leftFace = newFace
+              if (faceWeIn.holesIncidentEdges.contains(e)) {
+                faceWeIn._holesIncidentEdges -= e
+                faceWeIn.holesIncidentEdges += res
+              }
+            }
+            val newFacePoly = PolygonRegion(newFace.vertices.map(_.position).toSeq)
+            val (inNewFace, inOldFace) = faceWeIn.holesIncidentEdges.partition(e => newFacePoly.containsInside(e.origin.position))
+            faceWeIn._holesIncidentEdges = inOldFace
+            newFace._holesIncidentEdges = inNewFace
+          }
+
+          res
+        } else {
+          val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+          faceWeIn._holesIncidentEdges -= toHole
+          res
+        }
+      }
+    }
+  }
+
+
   /** untested */
   def insert[O <: DCELData](ot: DCEL[O],
                             mapVertexData: Vertex[O] => D#VertexData,

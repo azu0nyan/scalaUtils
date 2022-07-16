@@ -245,4 +245,8 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
     assert(dcel.asPolygon(res.labelToFace(-1).head).area ~= 100 * 100 * 5)
 
   }
+
+  test("Connect vertices") {
+    //todo
+  }
 }

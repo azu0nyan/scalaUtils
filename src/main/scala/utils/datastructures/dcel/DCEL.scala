@@ -56,7 +56,7 @@ object DCEL {
     def neighbourFaces: Iterator[Face[D]] = edges.map(_.twin.leftFace).distinct
 
     def outsideVertices: Iterator[Vertex[D]] = incidentEdge.map(_.traverseEdges.map(_.origin)).getOrElse(Iterator.empty)
-
+    /** Edges that belongs to face's border, not hole edges */
     def borderEdges: Iterator[HalfEdge[D]] = incidentEdge.map(_.traverseEdges).getOrElse(Iterator.empty)
 
     def holesVertices: Iterator[Vertex[D]] = _holesIncidentEdges.iterator.flatMap(_.traverseEdges.map(_.origin))
