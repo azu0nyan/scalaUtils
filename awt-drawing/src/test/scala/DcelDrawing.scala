@@ -139,6 +139,28 @@ object DcelDrawing extends App {
     prom.future
   }
 
+  def makeEdge(main: V2, toMerge: V2): Future[Unit] = {
+    val prom = Promise[Unit]
+    new Thread(() => try{
+      println("Merging vertices")
+      Using(new PrintWriter(new FileOutputStream(new File("polys.txt"), true))) { pw =>
+        pw.println(s"Await.result(makeEdge($main, $toMerge), Duration.Inf)")
+      }
+      ConcurrentOps.withLock(w.drawUpdateLock) {
+        val mf = dcel.closestVertexOpt(main).get
+        val tmf = dcel.closestVertexOpt(toMerge).get
+        dcel.connectVerticesUnsafe(mf, tmf, DataProvider)
+      }
+      println("Merged")
+      prom.success(())
+
+
+    }catch {
+      case t:Throwable => prom.failure(t)
+    }).start()
+    prom.future
+  }
+
   def mergePoly(main: V2, toMerge: V2): Future[Unit] = {
     val prom = Promise[Unit]
     new Thread(() => try {
@@ -217,12 +239,27 @@ object DcelDrawing extends App {
     drawableDcel.drawHalfEdges = false
   }))
 
-  var mergeMode = false
-  Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_8), V2(400, 30), V2(50, 30), "MERGE", {
-    mergeMode = true
-  }, {
-    mergeMode = false
-  }))
+
+  sealed trait Mode
+  case object Poly extends Mode
+  case object MergePolys extends Mode
+  case object MakeEdge extends Mode
+  var mode: Mode = Poly
+
+  Drawing.addKeyBinding(KeyEvent.VK_8, {
+    mode = mode match {
+      case Poly => MergePolys
+      case MergePolys => MakeEdge
+      case MakeEdge => Poly
+    }
+    println(s"Current mode $mode")
+  })
+
+  //  Drawing.addDrawable(new ToggleableDrawable(Some(false), Some(KeyEvent.VK_8), V2(400, 30), V2(50, 30), "MERGE", {
+  //    mode = true
+  //  }, {
+  //    mode = false
+  //  }))
 
   var poly: Seq[V2] = Seq()
 
@@ -230,48 +267,53 @@ object DcelDrawing extends App {
 
   var selectedPoint: Option[V2] = None
   Drawing.addMouseLeftClickBinding(v =>
-    if (mergeMode) {
-      println(s"Left merge at $v")
-      selectedPoint = Some(v)
-    } else {
-      val point = if (Drawing.shiftControlAlt.shiftPressed) {
-        val x = Math.floor((v + V2(snapValue / 2)).x / snapValue) * snapValue
-        val y = Math.floor((v + V2(snapValue / 2)).y / snapValue) * snapValue
+    mode match {
+      case Poly =>
+        val point = if (Drawing.shiftControlAlt.shiftPressed) {
+          val x = Math.floor((v + V2(snapValue / 2)).x / snapValue) * snapValue
+          val y = Math.floor((v + V2(snapValue / 2)).y / snapValue) * snapValue
+          V2(x, y)
+        } else v
+        poly = poly :+ point
+      case MergePolys | MakeEdge =>
+        println(s"Selected pos at $v")
+        selectedPoint = Some(v)
+    }  )
 
-        V2(x, y)
-      } else v
-
-      poly = poly :+ point
-    }
-  )
   Drawing.addMouseRightClickBinding { v =>
-    if (mergeMode) {
-      println(s"Right merge at $v")
-      if (selectedPoint.nonEmpty) mergePoly(selectedPoint.get, v)
-    } else {
-      val point = if (Drawing.shiftControlAlt.shiftPressed) {
-        val x = Math.floor((v + V2(snapValue / 2)).x / snapValue) * snapValue
-        val y = Math.floor((v + V2(snapValue / 2)).y / snapValue) * snapValue
+    mode match {
+      case Poly =>
+        val point = if (Drawing.shiftControlAlt.shiftPressed) {
+          val x = Math.floor((v + V2(snapValue / 2)).x / snapValue) * snapValue
+          val y = Math.floor((v + V2(snapValue / 2)).y / snapValue) * snapValue
 
-        V2(x, y)
-      } else v
+          V2(x, y)
+        } else v
 
-      if (Drawing.shiftControlAlt.controlPressed) {
-        println(dcel.halfEdges.map(he => (he, dcel.asSegment(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
-          .map { case (he, seg) => (he, seg, seg.distanceTo(point)) }.minByOption(_._3))
-        dcel.halfEdges.map(he => (he, dcel.asSegment(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
-          .map { case (he, seg) => (he, seg, seg.distanceTo(point)) }.minByOption(_._3) match {
-          case Some((he, seg, dist)) if (true /*dist < snapValue */) =>
-            ConcurrentOps.withLock(w.drawUpdateLock) {
-              dcel.split(he, point, heIds.incrementAndGet(), heIds.incrementAndGet())
-            }
-          case _ =>
+        if (Drawing.shiftControlAlt.controlPressed) {
+          println(dcel.halfEdges.map(he => (he, dcel.asSegment(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
+            .map { case (he, seg) => (he, seg, seg.distanceTo(point)) }.minByOption(_._3))
+          dcel.halfEdges.map(he => (he, dcel.asSegment(he))).filter { case (he, seg) => seg.receiveProjectionFrom(point) }
+            .map { case (he, seg) => (he, seg, seg.distanceTo(point)) }.minByOption(_._3) match {
+            case Some((he, seg, dist)) if (true /*dist < snapValue */) =>
+              ConcurrentOps.withLock(w.drawUpdateLock) {
+                dcel.split(he, point, heIds.incrementAndGet(), heIds.incrementAndGet())
+              }
+            case _ =>
+          }
+        } else {
+          addPoly(poly)
+          poly = Seq()
         }
-      } else {
-        addPoly(poly)
-        poly = Seq()
-      }
+      case MergePolys =>
+        println(s"Merging polys$selectedPoint $v")
+        if (selectedPoint.nonEmpty) mergePoly(selectedPoint.get, v)
+      case MakeEdge =>
+        println(s"Making edge $selectedPoint $v")
+        if(selectedPoint.nonEmpty)makeEdge(selectedPoint.get, v)
     }
+
+
   }
 
 

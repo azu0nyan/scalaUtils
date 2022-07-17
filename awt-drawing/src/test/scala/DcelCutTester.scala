@@ -53,6 +53,7 @@ object DcelCutTester extends App {
 
   val res = PlanarDcelCutPipelineInterpreter.cutPipeline(dcel, Provider, op1)
 
+//  println(dcel.getVertex(V2(0, 200)).get.incidentEdge)
 
 
 
