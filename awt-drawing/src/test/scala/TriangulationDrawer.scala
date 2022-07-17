@@ -16,7 +16,7 @@ import scala.util.Using
 object TriangulationDrawer {
   Logger.getLogger("UTILS").setLevel(Level.SEVERE)
   var poly: Polygon = Polygon(Seq())
-  var building: Seq[V2] = List()
+  var building: Seq[V2] = List(V2(-213.0, 414.0), V2(-273.0, 353.0), V2(-358.0, 361.0), V2(-393.0, 310.0), V2(-389.0, 254.0), V2(-343.0, 230.0), V2(-170.0, 249.0), V2(-87.0, 116.0), V2(-233.0, 41.0), V2(-157.0, -67.0), V2(93.0, 14.0))
 
 
   def dump(addStr: Option[String] = None): Unit = {
