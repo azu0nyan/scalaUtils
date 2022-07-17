@@ -25,7 +25,8 @@ object PolygonTriangulation {
   //merge вершина — два её соседа лежат выше её самой и ϕ>π
   //regular вершина — не является поворотной, в отличие от остальных, другими словами один её сосед находится выше, а другой ниже её самой.
 
-  def lower(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x < q.x) //??
+  def lower(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x > q.x) //??
+  def higher(p: V2, q: V2): Boolean = p.y > q.y || (p.y == q.y && p.x < q.x) //??
   sealed trait VType
   case object Start extends VType
   case object Split extends VType
@@ -34,14 +35,12 @@ object PolygonTriangulation {
   case object Regular extends VType
 
   def classify(prev: V2, v: V2, next: V2): VType = {
-    val l1 = lower(prev, v)
-    val l2 = lower(next, v)
     val inner = innerAngle(prev, v, next)
-    if (l1 && l2)
+    if (lower(prev, v) &&  lower(next, v))
       if (inner < PI) Start
       else if (inner > PI) Split
       else Regular //impossible???
-    else if (!l1 && !l2)
+    else if ( higher(prev, v) && higher(next, v))
       if (inner < PI) End
       else if (inner > PI) Merge
       else Regular //impossible??
@@ -105,7 +104,8 @@ object PolygonTriangulation {
     while (q.nonEmpty) {
       val cur = q.dequeue()
       curY = dcel.position(cur).y
-
+//      println(s"${dcel.position(cur)} ${classifyInner(cur)}")
+//      println(xStructure)
       classifyInner(cur) match {
         case Start => handleStart(cur)
         case Split => handleSplit(cur)
@@ -153,9 +153,14 @@ object PolygonTriangulation {
       helper += ej -> v
     }
 
+    //imagine slight CW rotation
+    //only for regular vertices
+    def liesToTheRight(p: V2, v: V2): Boolean = {
+      v.y < p.y || (v.y == p.y && p.x < v.x)
+    }
     def handleRegular(v: Vertex[D]): Unit = {
       //if interior of P lies to the right of v
-      if (dcel.position(nextVertex(v)).y < dcel.position(v).y) {
+      if (liesToTheRight(dcel.position(prevVertex(v)), dcel.position(v))) {
         if (classifyInner(helper(prevEdge(v))) == Merge) {
           dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
         }
