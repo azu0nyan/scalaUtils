@@ -55,22 +55,24 @@ object BinaryTree {
       this match {
         case Node(a, _, _) if a == toFind => true
         case Node(a, left, _) if ord.lt(toFind, a) => left.contains(toFind)
-        case Node(a, _, right) => right.contains(toFind)
+        case Node(_, _, right) => right.contains(toFind)
         case Leaf(a) => a == toFind
         case EmptyTree => false
       }
 
-    def closestLessB[B](b: B, less: (A, B) => Boolean): Option[A] =
+    /**Assumes that condition depends on elements order*/
+    def maximumSatisfiesCondition(cond: A => Boolean): Option[A] =
       this match {
-        case Node(a, left, right) if less(a, b) => right.closestLessB(b, less).orElse(Some(a))
-        case Node(a, left, right) => left.closestLessB(b, less)
-        case Leaf(a) if less(a, b) => Some(a)
-        case Leaf(a) => None
+        case Node(a, _, right) if cond(a) => right.maximumSatisfiesCondition(cond).orElse(Some(a))
+        case Node(_, left, _) => left.maximumSatisfiesCondition(cond)
+        case Leaf(a) if cond(a) => Some(a)
+        case Leaf(_) => None
         case EmptyTree => None
       }
 
     def +=[A1 >: A](toAdd: A1)(implicit ord: Ordering[A1]): BinaryTree[A1] = add(toAdd)
     def -=[A1 >: A](toRemove: A1)(implicit ord: Ordering[A1]): BinaryTree[A1] = remove(toRemove)
+
     def remove[A1 >: A](toRemove: A1)(implicit ord: Ordering[A1]): BinaryTree[A1] =
       this match {
         case Node(a, EmptyTree, right) if a == toRemove => right
@@ -96,84 +98,4 @@ object BinaryTree {
   case class Leaf[A](a: A) extends BinaryTree[A]
   case object EmptyTree extends BinaryTree[Nothing]
 
-  //  def add[A](tree: BinaryTree[A], toAdd: A)(implicit ord: Ordering[A]): BinaryTree[A] =
-  //    tree match {
-  //      case Node(a, left, right) if ord.lt(toAdd, a) => Node(a, add(left, a), right)
-  //      case Node(a, left, right) => Node(a, left, add(right, a))
-  //      case Leaf(a) if ord.lt(toAdd, a) => Node(a, Leaf(toAdd), Empty)
-  //      case Leaf(a) => Node(a, Empty, Leaf(toAdd))
-  //      case Empty => Leaf(toAdd)
-  //    }
-  //
-  //  @tailrec
-  //  def minOpt[A](tree: BinaryTree[A]): Option[A] =
-  //    tree match {
-  //      case Node(a, Empty, _) => Some(a)
-  //      case Node(_, left, _) => minOpt(left)
-  //      case Leaf(a) => Some(a)
-  //      case Empty => None
-  //    }
-
-  //  @tailrec
-  //  def min[A](tree: BinaryTree[A]): A =
-  //    tree match {
-  //      case Node(a, Empty, _) => a
-  //      case Node(_, left, _) => min(left)
-  //      case Leaf(a) => a
-  //      case Empty => throw new NoSuchElementException()
-  //    }
-  //
-  //  @tailrec
-  //  def max[A](tree: BinaryTree[A]): A =
-  //    tree match {
-  //      case Node(a, _, Empty) => a
-  //      case Node(_, _, right) => max(right)
-  //      case Leaf(a) => a
-  //      case Empty => throw new NoSuchElementException()
-  //    }
-  //
-  //
-  //  @tailrec
-  //  def maxOpt[A](tree: BinaryTree[A]): Option[A] =
-  //    tree match {
-  //      case Node(a, _, Empty) => Some(a)
-  //      case Node(_, _, right) => maxOpt(right)
-  //      case Leaf(a) => Some(a)
-  //      case Empty => None
-  //    }
-
-
-  //  @tailrec
-  //  def find[A](tree: BinaryTree[A], toFind: A)(implicit ord: Ordering[A]): Boolean =
-  //    tree match {
-  //      case Node(a, left, right) if a == toFind => true
-  //      case Node(a, left, right) if ord.lt(toFind, a) => find(left, toFind)
-  //      case Node(a, left, right) => find(right, toFind)
-  //      case Leaf(a) => a == toFind
-  //      case Empty => false
-  //    }
-
-
-  //  def remove[A](tree: BinaryTree[A], toRemove: A)(implicit ord: Ordering[A]): BinaryTree[A] =
-  //    tree match {
-  //      case Node(a, Empty, right) if a == toRemove => right
-  //      case Node(a, left, Empty) if a == toRemove => left
-  //      case Node(a, left, right) if a == toRemove =>
-  //        val maxLeft = max(left)
-  //        Node(maxLeft, remove(left, maxLeft), right)
-  //      case Node(a, left, right) if ord.lt(toRemove, a) => Node(a, remove(left, toRemove), right)
-  //      case Node(a, left, right) => Node(a, left, remove(right, toRemove))
-  //      case Leaf(a) if a == toRemove => Empty
-  //      case Leaf(a) => Leaf(a)
-  //      case Empty => Empty
-  //    }
-
-  //  def closestLess[A, B](tree: BinaryTree[A], b: B, less: (A, B) => Boolean): Option[A] =
-  //    tree match {
-  //      case Node(a, left, right) if less(a, b) => closestLess(right, b, less).orElse(Some(a))
-  //      case Node(a, left, right) => closestLess(left, b, less)
-  //      case Leaf(a) if less(a, b) => Some(a)
-  //      case Leaf(a) => None
-  //      case Empty => None
-  //    }
 }

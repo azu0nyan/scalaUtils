@@ -13,6 +13,7 @@ import scala.collection.mutable
   * reference
   * https://neerc.ifmo.ru/wiki/index.php?title=%D0%A2%D1%80%D0%B8%D0%B0%D0%BD%D0%B3%D1%83%D0%BB%D1%8F%D1%86%D0%B8%D1%8F_%D0%BF%D0%BE%D0%BB%D0%B8%D0%B3%D0%BE%D0%BD%D0%BE%D0%B2_(%D1%83%D1%88%D0%BD%D0%B0%D1%8F_%2B_%D0%BC%D0%BE%D0%BD%D0%BE%D1%82%D0%BE%D0%BD%D0%BD%D0%B0%D1%8F)
   */
+
 object PolygonTriangulation {
 
   def innerAngle(prev: V2, v: V2, next: V2): Scalar = (v - next).angleCCW0to2PI(v - prev)
@@ -48,7 +49,7 @@ object PolygonTriangulation {
   }
 
 
-  def monotonePartition(p: PolygonRegion) = {
+  def monotonePartition(polygons: Seq[Seq[V2]]):Seq[Seq[V2]] = {
     type DATA = DCELData {
       type VertexData = V2
       type HalfEdgeData = Unit
@@ -62,16 +63,17 @@ object PolygonTriangulation {
     }
 
     val d = new PlanarDCEL[DATA]((), x => x)
-    d.cutPoly(p.vertices, provider)
+    for(p <- polygons)  d.cutPoly(p, provider)
 
     monotonePartitionDCEL[DATA](d, provider)
+    d.innerFaces.map(_.vertices.map(d.position).toSeq).toSeq
   }
 
   def monotonePartitionDCEL[D <: DCELData](dcel: PlanarDCEL[D], provider: DCELDataProvider[D]) = {
 
     var curY = 0d
 
-    def queueLt(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x < q.x) //??
+    def queueLt(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x > q.x) //??
     val q = new mutable.PriorityQueue[Vertex[D]]()(Ordering.fromLessThan((v1, v2) => queueLt(dcel.position(v1), dcel.position(v2))))
     for (v <- dcel.vertices) q += v
 
@@ -86,12 +88,12 @@ object PolygonTriangulation {
       else if (x2.nonEmpty) min(he1Seg.start.x, he1Seg.end.x) < x2.get
       else min(he1Seg.start.x, he1Seg.end.x) < min(he2Seg.start.x, he2Seg.end.x)
     }
-    val closestLt: (HalfEdge[D], Scalar) => Boolean = (he, x) => dcel.asSegment(he).xFromY(curY) match {
-      case Some(value) => value < x
-      case None => min(dcel.asSegment(he).start.x, dcel.asSegment(he).end.x) < x
+    def xleq(x:Scalar): HalfEdge[D] => Boolean = he => dcel.asSegment(he).xFromY(curY) match {
+      case Some(value) => value <= x
+      case None => min(dcel.asSegment(he).start.x, dcel.asSegment(he).end.x) <= x
     }
 
-    var t: BinaryTree[HalfEdge[D]] = EmptyTree
+    var xStructure: BinaryTree[HalfEdge[D]] = EmptyTree
     val helper: mutable.Map[HalfEdge[D], Vertex[D]] = mutable.Map()
 
     val prevEdge: Map[Vertex[D], HalfEdge[D]] = dcel.vertices.map(v => (v, v.edgesWithEndHere.find(_.leftFace != dcel.outerFace).get)).toMap
@@ -115,55 +117,55 @@ object PolygonTriangulation {
 
     def handleStart(v: Vertex[D]): Unit = {
       val next = nextEdge(v)
-      t = t.add(next)
+      xStructure = xStructure.add(next)
       helper += next -> v
     }
 
     def handleSplit(v: Vertex[D]): Unit = {
       //      Search ej in T
-      val ej = t.closestLessB( dcel.position(v).x, closestLt).get
+      val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
       //        Insert edge(vi, helper(ej)) in D
       val toConnect = helper(ej)
-      dcel.addEdgeUnsafe(v, toConnect, provider)
+      dcel.connectVerticesUnsafe(v, toConnect, provider)
       helper += ej -> v
-      t = t.add( nextEdge(v))
+      xStructure = xStructure.add( nextEdge(v))
       helper += nextEdge(v) -> v
     }
 
     def handleEnd(v: Vertex[D]): Unit = {
       if (classifyInner(prevVertex(v)) == Merge) {
-        dcel.addEdgeUnsafe(v, helper(prevEdge(v)), provider)
+        dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
       }
-      t = t.remove( prevEdge(v))
+      xStructure = xStructure.remove( prevEdge(v))
     }
 
     def handleMerge(v: Vertex[D]): Unit = {
       val toConnect = helper(prevEdge(v))
       if (classifyInner(toConnect) == Merge) {
-        dcel.addEdgeUnsafe(v, toConnect, provider)
+        dcel.connectVerticesUnsafe(v, toConnect, provider)
       }
-      t = t.remove( prevEdge(v))
+      xStructure = xStructure.remove( prevEdge(v))
 
-      val ej = t.closestLessB( dcel.position(v).x, closestLt).get
+      val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
       if (classifyInner(helper(ej)) == Merge) {
-        dcel.addEdgeUnsafe(v, helper(ej), provider)
+        dcel.connectVerticesUnsafe(v, helper(ej), provider)
       }
       helper += ej -> v
     }
 
     def handleRegular(v: Vertex[D]): Unit = {
       //if interior of P lies to the right of v
-      if (dcel.position(nextVertex(v)).y > dcel.position(v).y) {
+      if (dcel.position(nextVertex(v)).y < dcel.position(v).y) {
         if (classifyInner(helper(prevEdge(v))) == Merge) {
-          dcel.addEdgeUnsafe(v, helper(prevEdge(v)), provider)
+          dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
         }
-        t = t.remove( prevEdge(v))
-        t = t.add( nextEdge(v))
+        xStructure = xStructure.remove( prevEdge(v))
+        xStructure = xStructure.add( nextEdge(v))
         helper += nextEdge(v) -> v
       } else {
-        val ej = t.closestLessB( dcel.position(v).x, closestLt).get
+        val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
         if (classifyInner(helper(ej)) == Merge) {
-          dcel.addEdgeUnsafe(v, helper(ej), provider)
+          dcel.connectVerticesUnsafe(v, helper(ej), provider)
           helper += ej -> v
         }
       }

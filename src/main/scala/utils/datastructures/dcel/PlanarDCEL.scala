@@ -64,6 +64,8 @@ class PlanarDCEL[D <: DCELData](
       else Seq()
     }
 
+  def closestVertexOpt(pos:V2):Option[Vertex[D]] = vertices.minByOption(_.position.distance(pos))
+
   def faceAt(pos: V2): Face[D] = {
     innerFaces.find(f => f.polygon.contains(pos) &&
       !f.holesContours.exists(c => PolygonRegion(c.map(_.origin.position).toSeq).contains(pos))).getOrElse(outerFace)
@@ -596,7 +598,7 @@ class PlanarDCEL[D <: DCELData](
   //todo face & heDataPrivider when scala 3
   //todo check
   /** Assumes that there is no intersections for adding edge, so makes no cuts */
-  def addEdgeUnsafe(from: Vertex[D], to: Vertex[D], dataProvider: DCELDataProvider[D]): HalfEdge[D] = {
+  def connectVerticesUnsafe(from: Vertex[D], to: Vertex[D], dataProvider: DCELDataProvider[D]): HalfEdge[D] = {
     val (ld, rd) = dataProvider.newEdgeData(from, to)
     if (from.incidentEdge.isEmpty && to.incidentEdge.isEmpty) {
       val face = faceAt(from.position)
@@ -611,9 +613,15 @@ class PlanarDCEL[D <: DCELData](
       makeEdge(from, to, face, face, ld, rd)
     } else {
       val edgeDir = to.position - from.position
-      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => edgeDir.angleCCW0to2PI(e.asSegment.body))
+//      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => edgeDir.angleCCW0to2PI(e.asSegment.body))
+      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => e.asSegment.body.angleCCW0to2PI(edgeDir))
       val faceWeIn = fromFaceEdge.leftFace
-      var toFaceEdge = to.edgesWithOriginHere.find(_.leftFace == faceWeIn)
+      val toFaceEdge: HalfEdge[D] = to.edgesWithOriginHere.find(_.leftFace == faceWeIn).get
+
+      val next = toFaceEdge
+      val prev = fromFaceEdge.prev
+      val twinPrev = toFaceEdge.prev
+      val twinNext = fromFaceEdge
 
       val fromBorderContains = faceWeIn.borderEdges.contains(fromFaceEdge)
       val toBorderContains = faceWeIn.borderEdges.contains(toFaceEdge)
@@ -653,7 +661,7 @@ class PlanarDCEL[D <: DCELData](
         //both - hole, we may connect two holes, or cut part from hole
         val fromHole = faceWeIn.holesIncidentEdges.find(_.traverseEdges.contains(fromFaceEdge)).get
         val toHole = faceWeIn.holesIncidentEdges.find(_.traverseEdges.contains(toFaceEdge)).get
-        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd, Some(prev), Some(next), Some(twinPrev), Some(twinNext))
 
         if (fromHole == toHole) {
           val resFacePoly = PolygonRegion(res.traverseEdges.map(_.origin.position).toSeq)
@@ -690,7 +698,7 @@ class PlanarDCEL[D <: DCELData](
 
           res
         } else {
-          val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+          //val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd, Some(prev), Some(next), Some(twinPrev), Some(twinNext))
           faceWeIn._holesIncidentEdges -= toHole
           res
         }

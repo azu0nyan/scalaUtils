@@ -270,6 +270,46 @@ class PlanarDCELTest extends AnyFunSuite {
 
   }
 
+  test("connect vertices") {
+    val dcel = new PlanarDCEL[DATA](0, x => x)
+    dcel.cutPoly(AARectangle(V2(0, 0), V2(100, 100)).toPolygon.vertices, Provider)
+
+    val he = dcel.connectVerticesUnsafe(dcel.getVertex(V2(0, 0)).get, dcel.getVertex(V2(100, 100)).get, Provider)
+    dcel.sanityCheck()
+    dcel.planarSanityCheck()
+
+    assert(dcel.innerFaces.size == 2)
+    assert(dcel.innerFaces.forall(_.edges.size == 3))
+    assert(dcel.outerFace.edges.size == 4)
+
+  }
+
+
+  test("connect vertices holes") {
+    val dcel = new PlanarDCEL[DATA](0, x => x)
+    dcel.cutPoly(AARectangle(V2(0, 0), V2(100, 100)).toPolygon.vertices, Provider)
+    dcel.cutPoly(AARectangle(V2(200, 0), V2(300, 100)).toPolygon.vertices, Provider)
+
+    val he = dcel.connectVerticesUnsafe(dcel.getVertex(V2(100, 100)).get, dcel.getVertex(V2(200, 100)).get, Provider)
+    dcel.sanityCheck()
+    dcel.planarSanityCheck()
+
+    assert(dcel.outerFace.holes.size == 1)
+    assert(dcel.innerFaces.size == 2)
+    assert(dcel.halfEdges.size == 9 * 2)
+    assert(dcel.outerFace.holesIncidentEdges.size == 1)
+    assert(dcel.outerFace.holesIncidentEdges.head.traverseEdges.size == 10)
+
+
+    val he2 = dcel.connectVerticesUnsafe(dcel.getVertex(V2(100, 0)).get, dcel.getVertex(V2(200, 0)).get, Provider)
+
+    assert(dcel.outerFace.holes.size == 1)
+    assert(dcel.innerFaces.size == 3)
+    assert(dcel.halfEdges.size == 10 * 2)
+    assert(dcel.outerFace.holes.size == 1)
+    assert(dcel.outerFace.holesIncidentEdges.head.traverseEdges.size  == 8)
+
+  }
 
 
 }
