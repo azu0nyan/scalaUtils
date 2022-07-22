@@ -2,7 +2,7 @@ package utils.math.planar.algo
 
 import utils.datastructures.containers.BinaryTree.{BinaryTree, EmptyTree}
 import utils.datastructures.containers.ThreadedAVLTree.ThreadedAVLTree
-import utils.datastructures.dcel.DCEL.{DCELData, HalfEdge, Vertex}
+import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.{DCELDataProvider, PlanarDCEL}
 import utils.math.planar.{PolygonRegion, V2}
 import utils.math._
@@ -11,7 +11,7 @@ import scala.collection.mutable
 
 /**
   * reference
-  * https://neerc.ifmo.ru/wiki/index.php?title=%D0%A2%D1%80%D0%B8%D0%B0%D0%BD%D0%B3%D1%83%D0%BB%D1%8F%D1%86%D0%B8%D1%8F_%D0%BF%D0%BE%D0%BB%D0%B8%D0%B3%D0%BE%D0%BD%D0%BE%D0%B2_(%D1%83%D1%88%D0%BD%D0%B0%D1%8F_%2B_%D0%BC%D0%BE%D0%BD%D0%BE%D1%82%D0%BE%D0%BD%D0%BD%D0%B0%D1%8F)
+  * De berg
   */
 
 object PolygonTriangulation {
@@ -36,19 +36,24 @@ object PolygonTriangulation {
 
   def classify(prev: V2, v: V2, next: V2): VType = {
     val inner = innerAngle(prev, v, next)
-    if (lower(prev, v) &&  lower(next, v))
+    if (lower(prev, v) && lower(next, v))
       if (inner < PI) Start
       else if (inner > PI) Split
       else Regular //impossible???
-    else if ( higher(prev, v) && higher(next, v))
+    else if (higher(prev, v) && higher(next, v))
       if (inner < PI) End
       else if (inner > PI) Merge
       else Regular //impossible??
     else Regular
   }
 
+  def classifyVertex[D <: DCELData](d: PlanarDCEL[D], face: Face[D], v: Vertex[D]): VType = {
+    val prev = v.edgesWithEndHere.find(_.leftFace == face).get.origin
+    val next = v.edgesWithOriginHere.find(_.leftFace == face).get.origin
+    classify(d.position(prev), d.position(v), d.position(next))
+  }
 
-  def monotonePartition(polygons: Seq[Seq[V2]]):Seq[Seq[V2]] = {
+  def monotonePartition(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
     type DATA = DCELData {
       type VertexData = V2
       type HalfEdgeData = Unit
@@ -62,7 +67,7 @@ object PolygonTriangulation {
     }
 
     val d = new PlanarDCEL[DATA]((), x => x)
-    for(p <- polygons)  d.cutPoly(p, provider)
+    for (p <- polygons) d.cutPoly(p, provider)
 
     monotonePartitionDCEL[DATA](d, provider)
     d.innerFaces.map(_.vertices.map(d.position).toSeq).toSeq
@@ -87,7 +92,7 @@ object PolygonTriangulation {
       else if (x2.nonEmpty) min(he1Seg.start.x, he1Seg.end.x) < x2.get
       else min(he1Seg.start.x, he1Seg.end.x) < min(he2Seg.start.x, he2Seg.end.x)
     }
-    def xleq(x:Scalar): HalfEdge[D] => Boolean = he => dcel.asSegment(he).xFromY(curY) match {
+    def xleq(x: Scalar): HalfEdge[D] => Boolean = he => dcel.asSegment(he).xFromY(curY) match {
       case Some(value) => value <= x
       case None => min(dcel.asSegment(he).start.x, dcel.asSegment(he).end.x) <= x
     }
@@ -104,8 +109,8 @@ object PolygonTriangulation {
     while (q.nonEmpty) {
       val cur = q.dequeue()
       curY = dcel.position(cur).y
-//      println(s"${dcel.position(cur)} ${classifyInner(cur)}")
-//      println(xStructure)
+      //      println(s"${dcel.position(cur)} ${classifyInner(cur)}")
+      //      println(xStructure)
       classifyInner(cur) match {
         case Start => handleStart(cur)
         case Split => handleSplit(cur)
@@ -128,7 +133,7 @@ object PolygonTriangulation {
       val toConnect = helper(ej)
       dcel.connectVerticesUnsafe(v, toConnect, provider)
       helper += ej -> v
-      xStructure = xStructure.add( nextEdge(v))
+      xStructure = xStructure.add(nextEdge(v))
       helper += nextEdge(v) -> v
     }
 
@@ -136,7 +141,7 @@ object PolygonTriangulation {
       if (classifyInner(prevVertex(v)) == Merge) {
         dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
       }
-      xStructure = xStructure.remove( prevEdge(v))
+      xStructure = xStructure.remove(prevEdge(v))
     }
 
     def handleMerge(v: Vertex[D]): Unit = {
@@ -144,7 +149,7 @@ object PolygonTriangulation {
       if (classifyInner(toConnect) == Merge) {
         dcel.connectVerticesUnsafe(v, toConnect, provider)
       }
-      xStructure = xStructure.remove( prevEdge(v))
+      xStructure = xStructure.remove(prevEdge(v))
 
       val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
       if (classifyInner(helper(ej)) == Merge) {
@@ -164,8 +169,8 @@ object PolygonTriangulation {
         if (classifyInner(helper(prevEdge(v))) == Merge) {
           dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
         }
-        xStructure = xStructure.remove( prevEdge(v))
-        xStructure = xStructure.add( nextEdge(v))
+        xStructure = xStructure.remove(prevEdge(v))
+        xStructure = xStructure.add(nextEdge(v))
         helper += nextEdge(v) -> v
       } else {
         val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
@@ -177,5 +182,40 @@ object PolygonTriangulation {
 
     }
 
+  }
+
+  def triangulateMonotone[D <: DCELData](d: PlanarDCEL[D], face: Face[D]): Unit = {
+    val vs = face.vertices.toSeq
+    if (vs.size > 3) {
+
+      /** *_ start
+        * / |\
+        * /    \
+        * |_      \
+        * *        *
+        * \      /\
+        * _\  /
+        * *   end
+        */
+
+      val leftVertices = (vs ++ vs).dropWhile(classifyVertex(d, face, _) != Start).takeWhile(classifyVertex(d, face, _) != End).toSet
+//      val rightVertices = (vs ++ vs).dropWhile(classifyVertex(d, face, _) != End).takeWhile(classifyVertex(d, face, _) != Start).toSet
+
+      val u = vs.sortBy(v => {
+        val p = d.position(v);
+        (-p.y, -p.x)
+      }).toIndexedSeq
+      val s = mutable.Stack[Vertex[D]]()
+      s += u(0)
+      s += u(1)
+      for(j <- 2 to (u.size- 2)){
+        val slc =  leftVertices.contains(s.top)
+        val jlc = leftVertices.contains(u(j))
+        if(slc != jlc) { //if u_j and the vertex on top of S are on different chains
+
+        }
+      }
+
+    }
   }
 }
