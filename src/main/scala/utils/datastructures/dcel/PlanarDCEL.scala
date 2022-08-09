@@ -64,7 +64,7 @@ class PlanarDCEL[D <: DCELData](
       else Seq()
     }
 
-  def closestVertexOpt(pos:V2):Option[Vertex[D]] = vertices.minByOption(_.position.distance(pos))
+  def closestVertexOpt(pos: V2): Option[Vertex[D]] = vertices.minByOption(_.position.distance(pos))
 
   def faceAt(pos: V2): Face[D] = {
     innerFaces.find(f => f.polygon.contains(pos) &&
@@ -86,6 +86,28 @@ class PlanarDCEL[D <: DCELData](
       ).getOrElse(makeVertex(newVdProvider.newVertexData(pos)))
     res
   }
+
+  //  private def holeAreasOf(f:Face[D]):Seq[Face[D]] = f.holes.toSeq ++ f.holes.flatMap(h => h.holes.flatMap(holeAreasOf).toSeq)
+  //  def nonHoleFaces:Seq[Face[D]] = holeAreasOf(outerFace)
+
+
+  def holeNonHoleFaces: (Seq[Face[D]], Seq[Face[D]]) = {
+    val odd: mutable.Buffer[Face[D]] = mutable.Buffer()
+    val even: mutable.Buffer[Face[D]] = mutable.Buffer()
+    var curWave = 0
+    var curWaveFaces = Seq(outerFace)
+    while (curWaveFaces.nonEmpty){
+      val nextWave = curWaveFaces.flatMap(_.allHoleFaces)
+      if(curWave % 2 == 0) even ++= nextWave
+      else odd ++= nextWave
+      curWaveFaces = nextWave
+      curWave += 1
+    }
+    println((odd.toSeq, even.toSeq))
+    (odd.toSeq, even.toSeq)
+  }
+
+  def nonHoleFaces:Seq[Face[D]] = holeNonHoleFaces._2
 
   /*innerFaces.filter(_._holes.isEmpty).find(_.polygon.contains(pos)).getOrElse {
   val cont = innerFaces.filter(_._holes.nonEmpty).filter(_.polygon.contains(pos))
@@ -613,7 +635,7 @@ class PlanarDCEL[D <: DCELData](
       makeEdge(from, to, face, face, ld, rd)
     } else {
       val edgeDir = to.position - from.position
-//      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => edgeDir.angleCCW0to2PI(e.asSegment.body))
+      //      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => edgeDir.angleCCW0to2PI(e.asSegment.body))
       val fromFaceEdge = from.edgesWithOriginHere.minBy(e => e.asSegment.body.angleCCW0to2PI(edgeDir))
       val faceWeIn = fromFaceEdge.leftFace
       val toFaceEdge: HalfEdge[D] = to.edgesWithOriginHere.find(_.leftFace == faceWeIn).get

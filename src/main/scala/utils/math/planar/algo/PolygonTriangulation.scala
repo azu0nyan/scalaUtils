@@ -55,7 +55,7 @@ object PolygonTriangulation {
     classify(d.position(prev), d.position(v), d.position(next))
   }
 
-  def monotonePartition(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
+  def monotonePartitionNonHole(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
     type DATA = DCELData {
       type VertexData = V2
       type HalfEdgeData = Unit
@@ -69,19 +69,30 @@ object PolygonTriangulation {
     }
 
     val d = new PlanarDCEL[DATA]((), x => x)
+//    val sub = d.onNewHalfEdge.subscribe(he => println(s"${he.origin} ${he.ending}"))
+
     for (p <- polygons) d.cutPoly(p, provider)
 
-    monotonePartitionDCEL[DATA](d, provider)
-    d.innerFaces.map(_.vertices.map(d.position).toSeq).toSeq
+    var res:Seq[Face[DATA]] = d.nonHoleFaces
+
+    val sub = d.onNewFace.subscribe(f => res = res :+ f)
+    for(f <- d.nonHoleFaces ) monotonePartitionDCELFace(d, f, provider)
+    d.onNewFace.unSubscribe(sub)
+
+    val result = res.map(_.vertices.map(d.position).toSeq).toSeq
+    result
   }
 
-  def monotonePartitionDCEL[D <: DCELData](dcel: PlanarDCEL[D], provider: DCELDataProvider[D]): Unit = {
 
+  def monotonePartitionDCELFace[D <: DCELData](dcel: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Unit = {
     var curY = 0d
+
+    println(s"Monotone Partitioning s${face.vertices.toSeq}")
+
 
     def queueLt(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x > q.x) //??
     val q = new mutable.PriorityQueue[Vertex[D]]()(Ordering.fromLessThan((v1, v2) => queueLt(dcel.position(v1), dcel.position(v2))))
-    for (v <- dcel.vertices) q += v
+    for (v <- face.vertices) q += v
 
     //todo check
     implicit val heOrd: Ordering[HalfEdge[D]] = Ordering.fromLessThan { (he1, he2) =>
@@ -102,11 +113,11 @@ object PolygonTriangulation {
     var xStructure: BinaryTree[HalfEdge[D]] = EmptyTree
     val helper: mutable.Map[HalfEdge[D], Vertex[D]] = mutable.Map()
 
-    val prevEdge: Map[Vertex[D], HalfEdge[D]] = dcel.vertices.map(v => (v, v.edgesWithEndHere.find(_.leftFace != dcel.outerFace).get)).toMap
-    val nextEdge: Map[Vertex[D], HalfEdge[D]] = dcel.vertices.map(v => (v, v.edgesWithOriginHere.find(_.leftFace != dcel.outerFace).get)).toMap
-    val prevVertex: Map[Vertex[D], Vertex[D]] = dcel.vertices.map(v => (v, prevEdge(v).origin)).toMap
-    val nextVertex: Map[Vertex[D], Vertex[D]] = dcel.vertices.map(v => (v, nextEdge(v).ending)).toMap
-    val classifyInner: Map[Vertex[D], VType] = dcel.vertices.map(v => (v, classify(dcel.position(prevVertex(v)), dcel.position(v), dcel.position(nextVertex(v))))).toMap
+    val prevEdge: Map[Vertex[D], HalfEdge[D]] = face.vertices.map(v => (v, v.edgesWithEndHere.find(_.leftFace == face).get)).toMap
+    val nextEdge: Map[Vertex[D], HalfEdge[D]] = face.vertices.map(v => (v, v.edgesWithOriginHere.find(_.leftFace == face).get)).toMap
+    val prevVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, prevEdge(v).origin)).toMap
+    val nextVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, nextEdge(v).ending)).toMap
+    val classifyInner: Map[Vertex[D], VType] = face.vertices.map(v => (v, classify(dcel.position(prevVertex(v)), dcel.position(v), dcel.position(nextVertex(v))))).toMap
 
     while (q.nonEmpty) {
       val cur = q.dequeue()
@@ -184,9 +195,10 @@ object PolygonTriangulation {
 
     }
 
+
   }
 
-  def triangulate(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
+  def triangulateNonHoles(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
     type DATA = DCELData {
       type VertexData = V2
       type HalfEdgeData = Unit
@@ -202,14 +214,25 @@ object PolygonTriangulation {
     val d = new PlanarDCEL[DATA]((), x => x)
     for (p <- polygons) d.cutPoly(p, provider)
 
-    monotonePartitionDCEL[DATA](d, provider)
-    triangulateMonotonePartitionedDCEL(d, provider)
-    d.innerFaces.map(_.vertices.map(d.position).toSeq).toSeq
+    val (holesSeq, nonHolesSeq) = d.holeNonHoleFaces
+    val holes = holesSeq.toSet
+    var toTriangulate = nonHolesSeq
+
+    val sub = d.onNewFace.subscribe(f => toTriangulate = f +: toTriangulate )
+    for (nh <- nonHolesSeq) monotonePartitionDCELFace(d, nh, provider)
+
+    //continue adding new faces
+    for (f <- d.innerFaces.toSeq if !holes.contains(f))
+      triangulateMonotone(d, f, provider)
+
+    d.onNewFace.unSubscribe(sub)
+
+    toTriangulate.map(_.vertices.map(d.position).toSeq).toSeq
   }
 
 
   def triangulateMonotonePartitionedDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Unit = {
-    for (face <- d.innerFaces.toSeq) triangulateMonotone(d, face, provider)
+    for (face <- d.innerFaces) triangulateMonotone(d, face, provider)
   }
 
   def triangulateMonotone[D <: DCELData](d: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Unit = {
@@ -242,11 +265,11 @@ object PolygonTriangulation {
         (-p.y, p.x)
       }).toIndexedSeq
 
-      println( "vs: " + vs.map(_.toProduct).toString())
+      println("vs: " + vs.map(_.toProduct).toString())
       println("u: " + u.map(d.position).toString())
-      println( minI.toString)
-      println( maxI.toString)
-      println( "leftVertices: " + leftVertices.map(_.toProduct).toString())
+      println(minI.toString)
+      println(maxI.toString)
+      println("leftVertices: " + leftVertices.map(_.toProduct).toString())
 
       //Initialize an empty stack S, and push u1 and u2 onto it.
       val s = mutable.Stack[Vertex[D]]()
@@ -256,7 +279,7 @@ object PolygonTriangulation {
         val slc = leftVertices.contains(s.top)
         val ujlc = leftVertices.contains(u(j))
         println(s.map(_.toProduct))
-        println( s"${s.top.toProduct} ${u(j).toProduct} $slc $ujlc")
+        println(s"${s.top.toProduct} ${u(j).toProduct} $slc $ujlc")
         // if u_j and the vertex on top of S are on different chains
         if (slc != ujlc) {
           // then Pop all vertices from S.
@@ -286,7 +309,7 @@ object PolygonTriangulation {
       }
       //Add diagonals from u_n to all stack vertices except the first and the last one.
       s.pop()
-      while(s.size >= 2) {
+      while (s.size >= 2) {
         val c = s.pop()
         d.connectVerticesUnsafe(u.last, c, provider)
       }

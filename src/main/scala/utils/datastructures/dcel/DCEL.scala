@@ -77,6 +77,18 @@ object DCEL {
     /** requires O(twin.holeEdges) */
     def isHole: Boolean = incidentEdge.exists(_.twin.isHoleHalfSide)
 
+
+    /**Hole can consist from several adjanced faces, returns all faces that reachable from holeIncidentEdges exept this*/
+    def allHoleFaces: Seq[Face[D]] = {
+      val faces = mutable.Set[Face[D]]()
+      for(hIE <- holesIncidentEdges;
+          e <- hIE.traverseAllReachableEdges() if e.leftFace != this) {
+        faces += e.leftFace
+      }
+      println(faces)
+      faces.toSeq
+    }
+
     override def toString: String = s"F: ${_data} iE: ${incidentEdge.map(_.data)} holes: ${holes.toSeq.map(_.data)}"
   }
 
