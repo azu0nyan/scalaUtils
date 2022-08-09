@@ -1,12 +1,14 @@
 package utils.math.planar.algo
 
+import utils.Logging
 import utils.datastructures.containers.BinaryTree.{BinaryTree, EmptyTree}
 import utils.datastructures.containers.ThreadedAVLTree.ThreadedAVLTree
 import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.{DCELDataProvider, PlanarDCEL}
-import utils.math.planar.{PolygonRegion, V2}
+import utils.math.planar.{AngleOps, PolygonRegion, TrianglePlanar, V2}
 import utils.math._
 
+import java.util.logging.Level
 import scala.collection.mutable
 
 /**
@@ -73,7 +75,7 @@ object PolygonTriangulation {
     d.innerFaces.map(_.vertices.map(d.position).toSeq).toSeq
   }
 
-  def monotonePartitionDCEL[D <: DCELData](dcel: PlanarDCEL[D], provider: DCELDataProvider[D]) = {
+  def monotonePartitionDCEL[D <: DCELData](dcel: PlanarDCEL[D], provider: DCELDataProvider[D]): Unit = {
 
     var curY = 0d
 
@@ -184,7 +186,34 @@ object PolygonTriangulation {
 
   }
 
-  def triangulateMonotone[D <: DCELData](d: PlanarDCEL[D], face: Face[D]): Unit = {
+  def triangulate(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
+    type DATA = DCELData {
+      type VertexData = V2
+      type HalfEdgeData = Unit
+      type FaceData = Unit
+    }
+    object provider extends DCELDataProvider[DATA] {
+      override def splitEdgeData(edge: HalfEdge[DATA], data: V2): (Unit, Unit) = ((), ())
+      override def newVertexData(v: V2): V2 = v
+      override def newEdgeData(v1: Vertex[DATA], v2: Vertex[DATA]): (Unit, Unit) = ((), ())
+      override def newFaceData(edge: HalfEdge[DATA]): Unit = ()
+    }
+
+    val d = new PlanarDCEL[DATA]((), x => x)
+    for (p <- polygons) d.cutPoly(p, provider)
+
+    monotonePartitionDCEL[DATA](d, provider)
+    triangulateMonotonePartitionedDCEL(d, provider)
+    d.innerFaces.map(_.vertices.map(d.position).toSeq).toSeq
+  }
+
+
+  def triangulateMonotonePartitionedDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Unit = {
+    for (face <- d.innerFaces.toSeq) triangulateMonotone(d, face, provider)
+  }
+
+  def triangulateMonotone[D <: DCELData](d: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Unit = {
+    implicit def vToV2(v: Vertex[D]): V2 = d.position(v)
     val vs = face.vertices.toSeq
     if (vs.size > 3) {
 
@@ -196,25 +225,72 @@ object PolygonTriangulation {
         * \      /\
         * _\  /
         * *   end
+        * //rotating slightly CW
         */
 
-      val leftVertices = (vs ++ vs).dropWhile(classifyVertex(d, face, _) != Start).takeWhile(classifyVertex(d, face, _) != End).toSet
-//      val rightVertices = (vs ++ vs).dropWhile(classifyVertex(d, face, _) != End).takeWhile(classifyVertex(d, face, _) != Start).toSet
+      val max = vs.maxBy(v => (v.y, -v.x))
+      val min = vs.minBy(v => (v.y, -v.x))
+      val maxI = vs.indexOf(max)
+      val minI = vs.indexOf(min)
+      val leftVertices = if (maxI < minI) vs.slice(maxI, minI).toSet
+      else vs.slice(maxI, vs.size).toSet | vs.slice(0, minI).toSet
 
+      //      val leftVertices = (vs ++ vs).dropWhile(classifyVertex(d, face, _) != Start).takeWhile(classifyVertex(d, face, _) != End).toSet
+      //      val rightVertices = (vs ++ vs).dropWhile(classifyVertex(d, face, _) != End).takeWhile(classifyVertex(d, face, _) != Start).toSet
       val u = vs.sortBy(v => {
         val p = d.position(v);
-        (-p.y, -p.x)
+        (-p.y, p.x)
       }).toIndexedSeq
-      val s = mutable.Stack[Vertex[D]]()
-      s += u(0)
-      s += u(1)
-      for(j <- 2 to (u.size- 2)){
-        val slc =  leftVertices.contains(s.top)
-        val jlc = leftVertices.contains(u(j))
-        if(slc != jlc) { //if u_j and the vertex on top of S are on different chains
 
+      println( "vs: " + vs.map(_.toProduct).toString())
+      println("u: " + u.map(d.position).toString())
+      println( minI.toString)
+      println( maxI.toString)
+      println( "leftVertices: " + leftVertices.map(_.toProduct).toString())
+
+      //Initialize an empty stack S, and push u1 and u2 onto it.
+      val s = mutable.Stack[Vertex[D]]()
+      s.push(u(0))
+      s.push(u(1))
+      for (j <- 2 to (u.size - 2)) {
+        val slc = leftVertices.contains(s.top)
+        val ujlc = leftVertices.contains(u(j))
+        println(s.map(_.toProduct))
+        println( s"${s.top.toProduct} ${u(j).toProduct} $slc $ujlc")
+        // if u_j and the vertex on top of S are on different chains
+        if (slc != ujlc) {
+          // then Pop all vertices from S.
+          while (s.nonEmpty) {
+            val cur = s.pop()
+            //Insert into D a diagonal from u_j to each popped vertex, except the last one.
+            if (s.nonEmpty) d.connectVerticesUnsafe(u(j), cur, provider)
+          }
+          //Push u_{j−1} and u_j onto S
+          s.push(u(j - 1))
+          s.push(u(j))
+        } else {
+          // Pop one vertex from S.
+          var lastPopped = s.pop()
+          //Pop the other vertices from S as long as the diagonals from u_j to them are inside P.
+          println(s"${u(j).toProduct} ${lastPopped.toProduct} ${s.top.toProduct} ${AngleOps.isCCW(u(j), lastPopped, s.top)}")
+          while (s.nonEmpty && TrianglePlanar(u(j), lastPopped, s.top).nonDegenerate && (ujlc != AngleOps.isCCW(u(j), lastPopped, s.top))) {
+            lastPopped = s.pop()
+            // Insert these diagonals into D
+            d.connectVerticesUnsafe(u(j), lastPopped, provider)
+          }
+          //Push the last vertex that has been popped back onto S.
+          s.push(lastPopped)
+          // Push u_j onto S.
+          s.push(u(j))
         }
       }
+      //Add diagonals from u_n to all stack vertices except the first and the last one.
+      s.pop()
+      while(s.size >= 2) {
+        val c = s.pop()
+        d.connectVerticesUnsafe(u.last, c, provider)
+      }
+
 
     }
   }

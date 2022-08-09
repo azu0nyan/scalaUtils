@@ -5,6 +5,8 @@ import utils.math.{space}
 import utils.math.space.{Triangle, V3}
 
 object TrianglePlanar {
+  def fromSeq(s:Seq[V2]): TrianglePlanar = TrianglePlanar(s(0), s(1), s(2))
+
   implicit def toPoly(t: TrianglePlanar): PolygonRegion = PolygonRegion(Seq(t.v1, t.v2, t.v3))
 
   def toBarycentric(a:V2, b:V2, c:V2, p:V2):V3 = {
