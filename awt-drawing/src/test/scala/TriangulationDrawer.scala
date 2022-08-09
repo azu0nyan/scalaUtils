@@ -16,7 +16,7 @@ import scala.util.Using
 object TriangulationDrawer {
   Logger.getLogger("UTILS").setLevel(Level.SEVERE)
   var poly: Polygon = Polygon(Seq())
-  var building: Seq[V2] = List(V2(-213.0, 414.0), V2(-273.0, 353.0), V2(-358.0, 361.0), V2(-393.0, 310.0), V2(-389.0, 254.0), V2(-343.0, 230.0), V2(-170.0, 249.0), V2(-87.0, 116.0), V2(-233.0, 41.0), V2(-157.0, -67.0), V2(93.0, 14.0))
+  var building: Seq[V2] = Seq()
 
 
   def dump(addStr: Option[String] = None): Unit = {
@@ -30,6 +30,9 @@ object TriangulationDrawer {
     }
   }
   var monotonePartition: Either[Throwable, Seq[Seq[V2]]] = Right(Seq())
+  var triangulation: Either[Throwable, Seq[Seq[V2]]] = Right(Seq())
+
+
   def setPoly(p:Polygon): Unit = {
     poly = p
     try{
@@ -40,9 +43,18 @@ object TriangulationDrawer {
         dump(Some(t.getStackTrace.map(_.toString).mkString("\n")))
         monotonePartition = Left(t)
     }
+    try{
+      triangulation = Right(PolygonTriangulation.triangulate(poly.regions.map(_.vertices)))
+    }catch {
+      case t:Throwable =>
+        t.printStackTrace()
+        dump(Some(t.getStackTrace.map(_.toString).mkString("\n")))
+        triangulation = Left(t)
+    }
   }
 
 
+  setPoly(Polygon(List(PolygonRegion(List(V2(-200.0, 300.0), V2(-100.0, 200.0), V2(0.0, 200.0), V2(0.0, 300.0), V2(100.0, 300.0), V2(100.0, 200.0), V2(100.0, 100.0), V2(0.0, 100.0), V2(-100.0, 100.0), V2(-200.0, 100.0), V2(-300.0, 200.0))))))
   var dumpID: Int = 0
 
   def main(args: Array[String]): Unit = {
@@ -160,6 +172,11 @@ object TriangulationDrawer {
         case Left(value) => DrawingUtils.drawText(value.toString, V2(-100, 100), g, 20,  false)
         case Right(m) =>
           for (p <- m) DrawingUtils.drawPolygon(PolygonRegion(p), g, false, Color.BLACK, 3)
+      }
+      triangulation match {
+        case Left(value) => DrawingUtils.drawText(value.toString, V2(-100, 50), g, 20,  false)
+        case Right(m) =>
+          for (p <- m) DrawingUtils.drawPolygon(PolygonRegion(p), g, false, Color.RED, 1)
       }
 
 
