@@ -36,7 +36,7 @@ object TriangulationDrawer {
   def setPoly(p:Polygon): Unit = {
     poly = p
     try{
-      monotonePartition = Right(PolygonTriangulation.monotonePartition(poly.regions.map(_.vertices)))
+      monotonePartition = Right(PolygonTriangulation.monotonePartitionNonHole(poly.regions.map(_.vertices)))
     }catch {
       case t:Throwable =>
         t.printStackTrace()
@@ -44,7 +44,7 @@ object TriangulationDrawer {
         monotonePartition = Left(t)
     }
     try{
-      triangulation = Right(PolygonTriangulation.triangulate(poly.regions.map(_.vertices)))
+      triangulation = Right(PolygonTriangulation.triangulateNonHoles(poly.regions.map(_.vertices)))
     }catch {
       case t:Throwable =>
         t.printStackTrace()
@@ -54,7 +54,7 @@ object TriangulationDrawer {
   }
 
 
-  setPoly(Polygon(List(PolygonRegion(List(V2(-200.0, 300.0), V2(-100.0, 200.0), V2(0.0, 200.0), V2(0.0, 300.0), V2(100.0, 300.0), V2(100.0, 200.0), V2(100.0, 100.0), V2(0.0, 100.0), V2(-100.0, 100.0), V2(-200.0, 100.0), V2(-300.0, 200.0))))))
+  setPoly(Polygon(List(PolygonRegion(List(V2(-28.0, 166.0), V2(4.0, 117.0), V2(67.0, 179.0))), PolygonRegion(List(V2(-200.0, 0.0), V2(-200.0, 300.0), V2(200.0, 300.0), V2(200.0, 0.0))), PolygonRegion(List(V2(-300.0, 400.0), V2(-300.0, -100.0), V2(300.0, -100.0), V2(300.0, 400.0))))))
   var dumpID: Int = 0
 
   def main(args: Array[String]): Unit = {
