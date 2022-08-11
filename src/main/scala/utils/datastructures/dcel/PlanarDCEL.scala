@@ -638,7 +638,7 @@ class PlanarDCEL[D <: DCELData](
       //      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => edgeDir.angleCCW0to2PI(e.asSegment.body))
       val fromFaceEdge = from.edgesWithOriginHere.minBy(e => e.asSegment.body.angleCCW0to2PI(edgeDir))
       val faceWeIn = fromFaceEdge.leftFace
-      val toFaceEdge: HalfEdge[D] = to.edgesWithOriginHere.find(_.leftFace == faceWeIn).get
+      val toFaceEdge: HalfEdge[D] = to.edgesWithOriginHere.minBy(e => e.asSegment.body.angleCCW0to2PI(edgeDir.opposite))//find(_.leftFace == faceWeIn).get
 
       val next = toFaceEdge
       val prev = fromFaceEdge.prev
@@ -650,7 +650,7 @@ class PlanarDCEL[D <: DCELData](
 
 
       if (fromBorderContains && toBorderContains) {
-        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd, Some(prev), Some(next), Some(twinPrev), Some(twinNext))
         val newFace = makeFace(dataProvider.newFaceData(res.twin))
         val newFaceEdges = res.twin.traverseEdges.toSeq
         for (e <- newFaceEdges) e._leftFace = newFace
@@ -666,7 +666,7 @@ class PlanarDCEL[D <: DCELData](
         res
       } else if (fromBorderContains && !toBorderContains) {
         // to - hole
-        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd, Some(prev), Some(next), Some(twinPrev), Some(twinNext))
         for (e <- res.traverseEdges) {
           faceWeIn._holesIncidentEdges -= e
         }
@@ -674,7 +674,7 @@ class PlanarDCEL[D <: DCELData](
 
       } else if (!fromBorderContains && toBorderContains) {
         //from - hole
-        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd)
+        val res = makeEdge(from, to, faceWeIn, faceWeIn, ld, rd, Some(prev), Some(next), Some(twinPrev), Some(twinNext))
         for (e <- res.traverseEdges) {
           faceWeIn._holesIncidentEdges -= e
         }

@@ -170,6 +170,7 @@ object PolygonTriangulation {
     face.edges.map(vHe => (vHe, classify(dcel.position(prevEdge(vHe).origin), dcel.position(vHe.origin), dcel.position(vHe.ending)))).toMap
 
     while (q.nonEmpty) {
+      val xst = xStructure.elements
       val cur = q.dequeue()
       curY = dcel.position(cur.origin).y
       //      println(s"${dcel.position(cur)} ${classifyInner(cur)}")
@@ -193,6 +194,7 @@ object PolygonTriangulation {
     }
 
     def handleSplit(v: HalfEdge[D]): Unit = {
+      val xst = xStructure.elements
       //      Search ej in T
       val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v.origin).x)).get
       //        Insert edge(vi, helper(ej)) in D
@@ -239,6 +241,7 @@ object PolygonTriangulation {
         xStructure = xStructure.add(v)
         helper += v -> v
       } else {
+        val x = xStructure.elements
         val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v.origin).x)).get
         if (classifyInner(helper(ej)) == Merge) {
           dcel.connectVerticesUnsafe(v.origin, helper(ej).origin, provider)

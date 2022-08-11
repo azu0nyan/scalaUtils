@@ -4,6 +4,15 @@ import scala.annotation.tailrec
 
 object BinaryTree {
   sealed trait BinaryTree[+A] {
+
+    def elements:Seq[A] = this match {
+      case Node(a, left, right) => left.elements ++ Seq(a) ++ right.elements
+      case Leaf(a) => Seq(a)
+      case EmptyTree => Seq()
+    }
+
+    override def toString: String = elements.mkString(s"Tree(", ",", ")")
+
     def add[A1 >: A](toAdd: A1)(implicit ord: Ordering[A1]): BinaryTree[A1] =
       this match {
         case Node(a, left, right) if ord.lt(toAdd, a) => Node(a, left.add(toAdd), right)
