@@ -66,7 +66,7 @@ object TriangulationDrawer {
 
 //  setPoly(Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(200.0, 0.0), V2(400.0, 200.0), V2(300.0, 300.0), V2(431.0, 335.0), V2(564.0, 422.0), V2(416.0, 480.0), V2(183.0, 468.0), V2(-2.0, 408.0), V2(36.0, 347.0), V2(191.0, 269.0), V2(266.0, 223.0), V2(212.0, 163.0), V2(127.0, 204.0))))))
 //  setPoly(Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(200.0, 0.0), V2(400.0, 200.0),  V2(266.0, 223.0), V2(212.0, 163.0), V2(127.0, 204.0))))))
-  setPoly(Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(200.0, -100.0), V2(500.0, 200.0), V2(400.0, 500.0), V2(200.0, 100.0), V2(100.0, 300.0))))))
+  setPoly(Polygon(List(PolygonRegion(List(V2(1000.0, 0.0), V2(1000.0, 300.0))), PolygonRegion(List(V2(600.0, 500.0), V2(600.0, 100.0))), PolygonRegion(List(V2(400.0, 500.0), V2(400.0, 0.0), V2(1200.0, 0.0), V2(1200.0, 500.0))))))
   var dumpID: Int = 0
 
   def main(args: Array[String]): Unit = {
@@ -187,7 +187,7 @@ object TriangulationDrawer {
       }
 
       convexPartition match {
-        case Left(value) => DrawingUtils.drawText(value.toString, V2(-100, 100), g, 20,  false)
+        case Left(value) => DrawingUtils.drawText(value.toString, V2(-100, 0), g, 20,  false)
         case Right(m) =>
           for (p <- m) DrawingUtils.drawPolygon(PolygonRegion(p), g, false, Color.YELLOW, 3)
       }
