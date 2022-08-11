@@ -36,14 +36,17 @@ object PolygonTriangulation {
 
   def classify(prev: V2, v: V2, next: V2): VType = {
     val inner = innerAngle(prev, v, next)
-    if (lower(prev, v) && lower(next, v))
-      if (inner < PI) Start
+    if (lower(prev, v) && lower(next, v)) {
+      if (inner ~= 0) Split
+      else if (inner < PI) Start
       else if (inner > PI) Split
-      else Regular //impossible???
-    else if (higher(prev, v) && higher(next, v))
-      if (inner < PI) End
+      else Regular //impossible for both lower
+    } else if (higher(prev, v) && higher(next, v)) {
+      if(inner ~= 0) Merge
+      else if (inner < PI) End
       else if (inner > PI) Merge
-      else Regular //impossible??
+      else Regular
+    } //impossible??
     else Regular
   }
 
@@ -135,8 +138,9 @@ object PolygonTriangulation {
 
 
     def queueLt(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x > q.x) //??
-    val q = new mutable.PriorityQueue[Vertex[D]]()(Ordering.fromLessThan((v1, v2) => queueLt(dcel.position(v1), dcel.position(v2))))
-    for (v <- face.vertices) q += v
+    //using halfEdges instead of vertices to prevent duplicate vertices in chains
+    val q = new mutable.PriorityQueue[HalfEdge[D]]()(Ordering.fromLessThan((v1, v2) => queueLt(dcel.position(v1.origin), dcel.position(v2.origin))))
+    for (v <- face.edges) q += v
 
     //todo check
     implicit val heOrd: Ordering[HalfEdge[D]] = Ordering.fromLessThan { (he1, he2) =>
@@ -155,17 +159,19 @@ object PolygonTriangulation {
     }
 
     var xStructure: BinaryTree[HalfEdge[D]] = EmptyTree
-    val helper: mutable.Map[HalfEdge[D], Vertex[D]] = mutable.Map()
+    val helper: mutable.Map[HalfEdge[D], HalfEdge[D]] = mutable.Map()
 
-    val prevEdge: Map[Vertex[D], HalfEdge[D]] = face.vertices.map(v => (v, v.edgesWithEndHere.find(_.leftFace == face).get)).toMap
-    val nextEdge: Map[Vertex[D], HalfEdge[D]] = face.vertices.map(v => (v, v.edgesWithOriginHere.find(_.leftFace == face).get)).toMap
-    val prevVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, prevEdge(v).origin)).toMap
-    val nextVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, nextEdge(v).ending)).toMap
-    val classifyInner: Map[Vertex[D], VType] = face.vertices.map(v => (v, classify(dcel.position(prevVertex(v)), dcel.position(v), dcel.position(nextVertex(v))))).toMap
+    //bake since can be changed during algo(is it important??)
+    val prevEdge: Map[HalfEdge[D], HalfEdge[D]] = face.edges.map(he => (he, he.prev)).toMap //face.vertices.map(v => (v, v.edgesWithEndHere.find(_.leftFace == face).get)).toMap
+    //    val nextEdge: Map[HalfEdge[D], HalfEdge[D]] = face.edges.map(he => (he, he.next)).toMap //face.vertices.map(v => (v, v.edgesWithOriginHere.find(_.leftFace == face).get)).toMap
+    //    val prevVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, prevEdge(v).origin)).toMap
+    //    val nextVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, nextEdge(v).ending)).toMap
+    val classifyInner: Map[HalfEdge[D], VType] =
+    face.edges.map(vHe => (vHe, classify(dcel.position(prevEdge(vHe).origin), dcel.position(vHe.origin), dcel.position(vHe.ending)))).toMap
 
     while (q.nonEmpty) {
       val cur = q.dequeue()
-      curY = dcel.position(cur).y
+      curY = dcel.position(cur.origin).y
       //      println(s"${dcel.position(cur)} ${classifyInner(cur)}")
       //      println(xStructure)
       classifyInner(cur) match {
@@ -177,40 +183,43 @@ object PolygonTriangulation {
       }
     }
 
-    def handleStart(v: Vertex[D]): Unit = {
-      val next = nextEdge(v)
-      xStructure = xStructure.add(next)
-      helper += next -> v
+
+    //vi = v.origin
+    //ei =v
+    def handleStart(v: HalfEdge[D]): Unit = {
+      // Insert ei in T and set helper(ei ) to vi.
+      xStructure = xStructure.add(v)
+      helper += v -> v
     }
 
-    def handleSplit(v: Vertex[D]): Unit = {
+    def handleSplit(v: HalfEdge[D]): Unit = {
       //      Search ej in T
-      val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
+      val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v.origin).x)).get
       //        Insert edge(vi, helper(ej)) in D
       val toConnect = helper(ej)
-      dcel.connectVerticesUnsafe(v, toConnect, provider)
+      dcel.connectVerticesUnsafe(v.origin, toConnect.origin, provider)
       helper += ej -> v
-      xStructure = xStructure.add(nextEdge(v))
-      helper += nextEdge(v) -> v
+      xStructure = xStructure.add(v)
+      helper += v -> v
     }
 
-    def handleEnd(v: Vertex[D]): Unit = {
+    def handleEnd(v: HalfEdge[D]): Unit = {
       if (classifyInner(helper(prevEdge(v))) == Merge) {
-        dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
+        dcel.connectVerticesUnsafe(v.origin, helper(prevEdge(v)).origin, provider)
       }
       xStructure = xStructure.remove(prevEdge(v))
     }
 
-    def handleMerge(v: Vertex[D]): Unit = {
+    def handleMerge(v: HalfEdge[D]): Unit = {
       val toConnect = helper(prevEdge(v))
       if (classifyInner(toConnect) == Merge) {
-        dcel.connectVerticesUnsafe(v, toConnect, provider)
+        dcel.connectVerticesUnsafe(v.origin, toConnect.origin, provider)
       }
       xStructure = xStructure.remove(prevEdge(v))
 
-      val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
+      val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v.origin).x)).get
       if (classifyInner(helper(ej)) == Merge) {
-        dcel.connectVerticesUnsafe(v, helper(ej), provider)
+        dcel.connectVerticesUnsafe(v.origin, helper(ej).origin, provider)
       }
       helper += ej -> v
     }
@@ -220,19 +229,19 @@ object PolygonTriangulation {
     def liesToTheRight(p: V2, v: V2): Boolean = {
       v.y < p.y || (v.y == p.y && p.x < v.x)
     }
-    def handleRegular(v: Vertex[D]): Unit = {
+    def handleRegular(v: HalfEdge[D]): Unit = {
       //if interior of P lies to the right of v
-      if (liesToTheRight(dcel.position(prevVertex(v)), dcel.position(v))) {
+      if (liesToTheRight(dcel.position(prevEdge(v).origin), dcel.position(v.origin))) {
         if (classifyInner(helper(prevEdge(v))) == Merge) {
-          dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
+          dcel.connectVerticesUnsafe(v.origin, helper(prevEdge(v)).origin, provider)
         }
         xStructure = xStructure.remove(prevEdge(v))
-        xStructure = xStructure.add(nextEdge(v))
-        helper += nextEdge(v) -> v
+        xStructure = xStructure.add(v)
+        helper += v -> v
       } else {
-        val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v).x)).get
+        val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v.origin).x)).get
         if (classifyInner(helper(ej)) == Merge) {
-          dcel.connectVerticesUnsafe(v, helper(ej), provider)
+          dcel.connectVerticesUnsafe(v.origin, helper(ej).origin, provider)
           helper += ej -> v
         }
       }
