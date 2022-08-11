@@ -1,7 +1,7 @@
 package utils.math
 
 import org.scalatest.funsuite.AnyFunSuite
-import utils.math.planar.{Polygon, PolygonRegion, V2}
+import utils.math.planar.{AngleCCWPlanar, AngleOps, Polygon, PolygonRegion, V2}
 
 class PolygonOpsTest extends AnyFunSuite {
 
@@ -17,7 +17,7 @@ class PolygonOpsTest extends AnyFunSuite {
   test("bug2") {
     testP(Seq((-1d, -1d), (1d, -1d), (1d, 1d), (-1d, 1d)), (-2d, -1d), PolygonRegion.OUTSIDE)
   }
-  test("bug3"){
+  test("bug3") {
     testP(Seq((1d, 0d), (2d, 1.5d), (3d, 1d), (2d, 3d), (2d, 2d), (1d, 2d), (1d, 3d), (0d, 1d), (1d, 1.5d)),
       (3d, 1.5d), PolygonRegion.OUTSIDE)
   }
@@ -152,5 +152,12 @@ class PolygonOpsTest extends AnyFunSuite {
     assert(Polygon(List(PolygonRegion(List(V2(330.0, -310.0), V2(330.0, -320.0), V2(320.0, -320.0))))).contains(V2(322.0, -315.0)))
   }
 
+  test("isConvex bug") {
+    val p = PolygonRegion(List((200.0, 200.0), (400.0, 0.0), (500.0, 100.0), (400.0, 200.0), (500.0, 300.0), (400.0, 400.0)))
+    println(p.sideAngles)
+//    println(p.sideAngles.map({ case AngleCCWPlanar(l, c, r) => AngleOps.turnAngleCCW(l, c, r) }))
+    println(p.sideAngles.map({ case AngleCCWPlanar(l, c, r) => AngleOps.turnAngleCCW02PI(l, c, r) }))
+    assert(!p.isConvex)
+  }
 
 }

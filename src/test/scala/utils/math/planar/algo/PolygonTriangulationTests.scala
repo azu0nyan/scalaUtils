@@ -20,6 +20,12 @@ class PolygonTriangulationTests extends AnyFunSuite {
     PolygonTriangulation.monotonePartitionNonHole(Seq(poly))
   }
 
+  test("bu31") {
+    val poly = List(V2(0.0, 200.0), V2(200.0, -100.0), V2(500.0, 200.0), V2(400.0, 500.0), V2(200.0, 100.0), V2(100.0, 300.0))
+    val res = PolygonTriangulation.monotonePartitionNonHole(Seq(poly))
+
+  }
+
   def testTriag(s: Seq[Seq[V2]]): Unit = {
     val poly = Polygon(s.map(PolygonRegion(_)))
     val pArea = poly.area
@@ -70,6 +76,14 @@ class PolygonTriangulationTests extends AnyFunSuite {
   }
   test("bug9") {
     val poly = List(List(V2(600.0, 200.0), V2(500.0, 200.0), V2(400.0, 300.0), V2(400.0, 100.0)))
+    testTriag(poly)
+  }
+  test("bug10") {
+    val poly = List(List(V2(0.0, 200.0), V2(200.0, -100.0), V2(500.0, 200.0), V2(400.0, 500.0), V2(200.0, 100.0), V2(100.0, 300.0)))
+    testTriag(poly)
+  }
+  test("lineSideBug") {
+    val poly = List(List(V2(200.0, 100.0), V2(200.0, 0.0)), List(V2(0.0, 0.0), V2(400.0, 0.0), V2(400.0, 300.0), V2(0.0, 300.0)))
     testTriag(poly)
   }
 //  test("bug7") {

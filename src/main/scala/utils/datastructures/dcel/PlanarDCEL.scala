@@ -216,7 +216,7 @@ class PlanarDCEL[D <: DCELData](
           val eend = e.ending.position
           val v2 = estart - eend
           //min ccw
-          val res = AngleOps.ccwAngleFromTo(v1, v2)
+          val res = AngleOps.ccwAngleFromTo02PI(v1, v2)
           //          println(estart, eend, v1, v2, res)
           res
         }
@@ -236,7 +236,7 @@ class PlanarDCEL[D <: DCELData](
           val eend = e.ending.position
           val v2 = eend - estart
           //min cw
-          val res = -AngleOps.ccwAngleFromTo(v1, v2)
+          val res = -AngleOps.ccwAngleFromTo02PI(v1, v2)
           //              println(estart, eend, v1, v2, res)
           res
         }
@@ -273,7 +273,7 @@ class PlanarDCEL[D <: DCELData](
               val eend = e.ending.position
               val v2 = eend - estart
               //min cw
-              val res = -AngleOps.ccwAngleFromTo(v1, v2)
+              val res = -AngleOps.ccwAngleFromTo02PI(v1, v2)
               //              println(estart, eend, v1, v2, res)
               res
             }
@@ -284,7 +284,7 @@ class PlanarDCEL[D <: DCELData](
               val eend = e.ending.position
               val v2 = estart - eend
               //min ccw
-              val res = AngleOps.ccwAngleFromTo(v1, v2)
+              val res = AngleOps.ccwAngleFromTo02PI(v1, v2)
               //              println(estart, eend, v1, v2, res)
               res
             }

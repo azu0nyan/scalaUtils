@@ -21,8 +21,8 @@ object PolygonRegion {
 
     lazy val center: V2 = vertices.reduce(_ + _) * (1d / vertices.size)
 
-    def offsetInside(value:Scalar):PolygonRegion = PolygonRegion(
-      (vertices.last +: vertices :+ vertices.head).sliding(3).map{
+    def offsetInside(value: Scalar): PolygonRegion = PolygonRegion(
+      (vertices.last +: vertices :+ vertices.head).sliding(3).map {
         case Seq(p, c, n) => AngleOps.offsetLeft(p, c, n, value)
       }.toSeq
     )
@@ -34,14 +34,16 @@ object PolygonRegion {
     def areaSigned: Scalar = sides.map(fs => (fs.v1.x + fs.v2.x) * (fs.v1.y - fs.v2.y)).sum / 2.0
 
     /**
-     * todo tmp func
-     *
-     * @return
-     */
+      * todo tmp func
+      *
+      * @return
+      */
     def isCw: Boolean = areaSigned > 0
     def isCcw: Boolean = areaSigned < 0
 
     def area: Scalar = Math.abs(areaSigned)
+
+    def isConvex: Boolean = sideAngles.forall { case AngleCCWPlanar(l, c, r) => AngleOps.turnAngleCCW02PI(l, c, r) ~<= PI}
 
     def distanceTo(point: V2): Scalar = if (contains(point)) 0 else distanceToFromSides(point)
 
@@ -54,13 +56,13 @@ object PolygonRegion {
     def contains(p: V2): Boolean = classify(p) >= 0
 
     /**
-     *
-     * @param p
-     * BORDER = 0
-     * OUTSIDE = -1
-     * INSIDE = 1
-     * @return
-     */
+      *
+      * @param p
+      * BORDER = 0
+      * OUTSIDE = -1
+      * INSIDE = 1
+      * @return
+      */
     def classify(p: V2): Int = if (vertices.isEmpty) OUTSIDE
     else if (vertices.length == 1) if (vertices.head ~= p) BORDER else OUTSIDE
     else if (vertices.length == 2) if (SegmentPlanar(vertices.head, vertices.last).contains(p)) BORDER else OUTSIDE
@@ -174,7 +176,7 @@ object PolygonRegion {
       mergeVerticesWithAt(verticesToConnect._1, verticesToConnect._2, true, holeVs)
     }
 
-    /**-1 for ccw with Y-up, 1 for cw     */
+    /** -1 for ccw with Y-up, 1 for cw */
     def matchSign(sign: Int): MYTYPE = if (sign == areaSign) replacePoints(vertices) else this.reverse
 
     // IN CW order
@@ -190,7 +192,7 @@ object PolygonRegion {
 
     def withCache: PolygonRegionWithCache = PolygonRegionWithCache(vertices)
 
-    def intersectsOrContainsCircle(center:V2, rad: Scalar): Boolean = contains(center) || sides.map(_.distanceTo(center)).minOption.getOrElse(0d) < rad
+    def intersectsOrContainsCircle(center: V2, rad: Scalar): Boolean = contains(center) || sides.map(_.distanceTo(center)).minOption.getOrElse(0d) < rad
   }
 
 

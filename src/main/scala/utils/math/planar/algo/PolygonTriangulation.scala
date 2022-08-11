@@ -2,7 +2,6 @@ package utils.math.planar.algo
 
 import utils.Logging
 import utils.datastructures.containers.BinaryTree.{BinaryTree, EmptyTree}
-import utils.datastructures.containers.ThreadedAVLTree.ThreadedAVLTree
 import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.{DCELDataProvider, PlanarDCEL}
 import utils.math.planar.{AngleOps, PolygonRegion, TrianglePlanar, V2}
@@ -15,7 +14,6 @@ import scala.collection.mutable
   * reference
   * De berg
   */
-
 object PolygonTriangulation {
 
   def innerAngle(prev: V2, v: V2, next: V2): Scalar = (v - next).angleCCW0to2PI(v - prev)
@@ -49,11 +47,11 @@ object PolygonTriangulation {
     else Regular
   }
 
-  def classifyVertex[D <: DCELData](d: PlanarDCEL[D], face: Face[D], v: Vertex[D]): VType = {
-    val prev = v.edgesWithEndHere.find(_.leftFace == face).get.origin
-    val next = v.edgesWithOriginHere.find(_.leftFace == face).get.origin
-    classify(d.position(prev), d.position(v), d.position(next))
-  }
+  //  def classifyVertex[D <: DCELData](d: PlanarDCEL[D], face: Face[D], v: Vertex[D]): VType = {
+  //    val prev = v.edgesWithEndHere.find(_.leftFace == face).get.origin
+  //    val next = v.edgesWithOriginHere.find(_.leftFace == face).get.origin
+  //    classify(d.position(prev), d.position(v), d.position(next))
+  //  }
 
   def monotonePartitionNonHole(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
     type DATA = DCELData {
@@ -69,23 +67,69 @@ object PolygonTriangulation {
     }
 
     val d = new PlanarDCEL[DATA]((), x => x)
-//    val sub = d.onNewHalfEdge.subscribe(he => println(s"${he.origin} ${he.ending}"))
 
     for (p <- polygons) d.cutPoly(p, provider)
 
-    var res:Seq[Face[DATA]] = d.nonHoleFaces
-
-    val sub = d.onNewFace.subscribe(f => res = res :+ f)
-    for(f <- d.nonHoleFaces ) monotonePartitionDCELFace(d, f, provider)
-    d.onNewFace.unSubscribe(sub)
-
+    val res = monotonePartitionNonHolesDCEL(d, provider)
     val result = res.map(_.vertices.map(d.position).toSeq).toSeq
     result
   }
 
+  def monotonePartitionNonHolesDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
+    var res: Seq[Face[D]] = d.nonHoleFaces
+    val sub = d.onNewFace.subscribe(f => res = res :+ f)
+    for (f <- d.nonHoleFaces) monotonePartitionDCELFace(d, f, provider)
+    d.onNewFace.unSubscribe(sub)
+    res
+  }
 
-  def monotonePartitionDCELFace[D <: DCELData](dcel: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Unit = {
+
+  def triangulateNonHoles(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
+    type DATA = DCELData {
+      type VertexData = V2
+      type HalfEdgeData = Unit
+      type FaceData = Unit
+    }
+    object provider extends DCELDataProvider[DATA] {
+      override def splitEdgeData(edge: HalfEdge[DATA], data: V2): (Unit, Unit) = ((), ())
+      override def newVertexData(v: V2): V2 = v
+      override def newEdgeData(v1: Vertex[DATA], v2: Vertex[DATA]): (Unit, Unit) = ((), ())
+      override def newFaceData(edge: HalfEdge[DATA]): Unit = ()
+    }
+
+    val d = new PlanarDCEL[DATA]((), x => x)
+    for (p <- polygons) d.cutPoly(p, provider)
+    val triangulation = triangulateNoneHolesDCEL(d, provider)
+
+    triangulation.map(_.vertices.map(d.position).toSeq).toSeq
+  }
+
+  def triangulateNoneHolesDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
+    val (holesSeq, nonHolesSeq) = d.holeNonHoleFaces
+    val holes = holesSeq.toSet
+    var triangulation = nonHolesSeq
+
+    val sub = d.onNewFace.subscribe(f => triangulation = f +: triangulation)
+    for (nh <- nonHolesSeq) monotonePartitionDCELFace(d, nh, provider)
+
+    //continue adding new faces
+    for (f <- d.innerFaces.toSeq if !holes.contains(f))
+      triangulateMonotoneFace(d, f, provider)
+
+    d.onNewFace.unSubscribe(sub)
+    triangulation
+  }
+
+  //  def triangulateMonotonePartitionedDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Unit = {
+  //    for (face <- d.innerFaces) triangulateMonotone(d, face, provider)
+  //  }
+
+  //Actual working functions
+
+  def monotonePartitionDCELFace[D <: DCELData](dcel: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
     var curY = 0d
+    var res: Seq[Face[D]] = Seq(face)
+    val sub = dcel.onNewFace.subscribe(f => res = f +: res)
 
     println(s"Monotone Partitioning s${face.vertices.toSeq}")
 
@@ -151,7 +195,7 @@ object PolygonTriangulation {
     }
 
     def handleEnd(v: Vertex[D]): Unit = {
-      if (classifyInner(prevVertex(v)) == Merge) {
+      if (classifyInner(helper(prevEdge(v))) == Merge) {
         dcel.connectVerticesUnsafe(v, helper(prevEdge(v)), provider)
       }
       xStructure = xStructure.remove(prevEdge(v))
@@ -196,49 +240,17 @@ object PolygonTriangulation {
     }
 
 
-  }
-
-  def triangulateNonHoles(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
-    type DATA = DCELData {
-      type VertexData = V2
-      type HalfEdgeData = Unit
-      type FaceData = Unit
-    }
-    object provider extends DCELDataProvider[DATA] {
-      override def splitEdgeData(edge: HalfEdge[DATA], data: V2): (Unit, Unit) = ((), ())
-      override def newVertexData(v: V2): V2 = v
-      override def newEdgeData(v1: Vertex[DATA], v2: Vertex[DATA]): (Unit, Unit) = ((), ())
-      override def newFaceData(edge: HalfEdge[DATA]): Unit = ()
-    }
-
-    val d = new PlanarDCEL[DATA]((), x => x)
-    for (p <- polygons) d.cutPoly(p, provider)
-
-    val (holesSeq, nonHolesSeq) = d.holeNonHoleFaces
-    val holes = holesSeq.toSet
-    var toTriangulate = nonHolesSeq
-
-    val sub = d.onNewFace.subscribe(f => toTriangulate = f +: toTriangulate )
-    for (nh <- nonHolesSeq) monotonePartitionDCELFace(d, nh, provider)
-
-    //continue adding new faces
-    for (f <- d.innerFaces.toSeq if !holes.contains(f))
-      triangulateMonotone(d, f, provider)
-
-    d.onNewFace.unSubscribe(sub)
-
-    toTriangulate.map(_.vertices.map(d.position).toSeq).toSeq
+    dcel.onNewFace.unSubscribe(sub)
+    res
   }
 
 
-  def triangulateMonotonePartitionedDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Unit = {
-    for (face <- d.innerFaces) triangulateMonotone(d, face, provider)
-  }
-
-  def triangulateMonotone[D <: DCELData](d: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Unit = {
+  def triangulateMonotoneFace[D <: DCELData](d: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
     implicit def vToV2(v: Vertex[D]): V2 = d.position(v)
     val vs = face.vertices.toSeq
     if (vs.size > 3) {
+      var res = Seq(face)
+      val sub = d.onNewFace.subscribe(n => res = n +: res)
 
       /** *_ start
         * / |\
@@ -314,7 +326,8 @@ object PolygonTriangulation {
         d.connectVerticesUnsafe(u.last, c, provider)
       }
 
-
-    }
+      d.onNewFace.unSubscribe(sub)
+      res
+    } else Seq(face)
   }
 }

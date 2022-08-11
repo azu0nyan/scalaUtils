@@ -1,7 +1,7 @@
 package utils.math.planar
 
 import utils.math._
-
+//todo use AngleOps for implementation
 object AngleCCWPlanar {
   implicit def toScalar(angle: AngleCCWPlanar): Scalar = angle.rads
 }
