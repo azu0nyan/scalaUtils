@@ -2,7 +2,7 @@ import drawing.Drawing
 import drawing.core.DrawingWindow
 import drawing.library.{DrawableGrid, DrawingUtils}
 import utils.datastructures.IntV2
-import utils.math.planar.algo.{PolygonContains, PolygonTriangulation}
+import utils.math.planar.algo.{PolygonContains, PolygonToConvex, PolygonTriangulation}
 import utils.math.planar.{Polygon, PolygonRegion, V2}
 
 import java.awt.Font
@@ -31,6 +31,7 @@ object TriangulationDrawer {
   }
   var monotonePartition: Either[Throwable, Seq[Seq[V2]]] = Right(Seq())
   var triangulation: Either[Throwable, Seq[Seq[V2]]] = Right(Seq())
+  var convexPartition: Either[Throwable, Seq[Seq[V2]]] = Right(Seq())
 
 
   def setPoly(p:Polygon): Unit = {
@@ -51,10 +52,21 @@ object TriangulationDrawer {
         dump(Some(t.getStackTrace.map(_.toString).mkString("\n")))
         triangulation = Left(t)
     }
+
+    try{
+      convexPartition = Right(PolygonToConvex.toConvexPolygons(poly.regions.map(_.vertices)))
+    }catch {
+      case t:Throwable =>
+        t.printStackTrace()
+        dump(Some(t.getStackTrace.map(_.toString).mkString("\n")))
+        convexPartition = Left(t)
+    }
   }
 
 
-  setPoly(Polygon(List(PolygonRegion(List(V2(-28.0, 166.0), V2(4.0, 117.0), V2(67.0, 179.0))), PolygonRegion(List(V2(-200.0, 0.0), V2(-200.0, 300.0), V2(200.0, 300.0), V2(200.0, 0.0))), PolygonRegion(List(V2(-300.0, 400.0), V2(-300.0, -100.0), V2(300.0, -100.0), V2(300.0, 400.0))))))
+//  setPoly(Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(200.0, 0.0), V2(400.0, 200.0), V2(300.0, 300.0), V2(431.0, 335.0), V2(564.0, 422.0), V2(416.0, 480.0), V2(183.0, 468.0), V2(-2.0, 408.0), V2(36.0, 347.0), V2(191.0, 269.0), V2(266.0, 223.0), V2(212.0, 163.0), V2(127.0, 204.0))))))
+//  setPoly(Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(200.0, 0.0), V2(400.0, 200.0),  V2(266.0, 223.0), V2(212.0, 163.0), V2(127.0, 204.0))))))
+  setPoly(Polygon(List(PolygonRegion(List(V2(0.0, 200.0), V2(200.0, -100.0), V2(500.0, 200.0), V2(400.0, 500.0), V2(200.0, 100.0), V2(100.0, 300.0))))))
   var dumpID: Int = 0
 
   def main(args: Array[String]): Unit = {
@@ -171,8 +183,15 @@ object TriangulationDrawer {
       monotonePartition match {
         case Left(value) => DrawingUtils.drawText(value.toString, V2(-100, 100), g, 20,  false)
         case Right(m) =>
-          for (p <- m) DrawingUtils.drawPolygon(PolygonRegion(p), g, false, Color.BLACK, 3)
+          for (p <- m) DrawingUtils.drawPolygon(PolygonRegion(p), g, false, Color.BLACK, 7)
       }
+
+      convexPartition match {
+        case Left(value) => DrawingUtils.drawText(value.toString, V2(-100, 100), g, 20,  false)
+        case Right(m) =>
+          for (p <- m) DrawingUtils.drawPolygon(PolygonRegion(p), g, false, Color.YELLOW, 3)
+      }
+
       triangulation match {
         case Left(value) => DrawingUtils.drawText(value.toString, V2(-100, 50), g, 20,  false)
         case Right(m) =>

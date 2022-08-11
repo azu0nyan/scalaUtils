@@ -118,8 +118,8 @@ class DrawableDcel[D <: DCELData](
       val c = dcel.position(he.origin)
       val n = dcel.position(he.next.origin)
       val nn = dcel.position(he.next.ending)
-      val offsetVector = AngleOps.ccwBisectorPath(p, c, n) * angleOffset
-      val offsetVector2 = AngleOps.ccwBisectorPath(c, n, nn) * angleOffset
+      val offsetVector = AngleOps.ccwBisectorOfAngle(p, c, n) * angleOffset
+      val offsetVector2 = AngleOps.ccwBisectorOfAngle(c, n, nn) * angleOffset
 
       val origin: V2 = dcel.position(he.origin) + offsetVector
       val ending = dcel.position(he.ending) + offsetVector2
