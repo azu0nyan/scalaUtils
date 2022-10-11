@@ -39,6 +39,13 @@ object HierarchicalDCEL {
     def splitEdgeData(edge: RHalfEdge[OD], at: V2): (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData)
   }
 
+  trait OwnDataInit[OD <: HierarchicalDCELOwnData] {
+    def initVertex(v: HierarchicalVertex[OD]): Unit = {}
+    def initFace(f: HierarchicalFace[OD]): Unit = {}
+    def initHalfEdge(he: HierarchicalEdge[OD]): Unit = {}
+  }
+  object OwnDataInit extends OwnDataInit[HierarchicalDCELOwnData]
+
 
   class HierarchicalVertex[OD <: HierarchicalDCELOwnData](var ownData: OD#VertexOwnData)
                                                          (implicit extractor: OD#VertexOwnData => V2) {
@@ -123,7 +130,9 @@ object HierarchicalDCEL {
 
   class HierarchicalFace[OD <: HierarchicalDCELOwnData](
                                                          val parent: Option[HierarchicalFace[OD]],
-                                                         var ownData: OD#FaceOwnData)(implicit extractor: OD#VertexOwnData => V2) {
+                                                         var ownData: OD#FaceOwnData,
+                                                         ownDataProvider: OwnDataProvider[OD],
+                                                         hierarchicalDataInit: OwnDataInit[OD])(implicit extractor: OD#VertexOwnData => V2) {
     thisHierarchicalFace =>
 
     var face: RFace[OD] = _
@@ -231,14 +240,18 @@ object HierarchicalDCEL {
     }
 
 
-    private class HierarchicalDCElDataProvider(ownDataProvider: OwnDataProvider[OD]) extends DCELDataProvider[HierarchicalDCELData[OD]] {
+    private object HierarchicalDCElDataProvider extends DCELDataProvider[HierarchicalDCELData[OD]] {
 
       override def newFaceData(edge: HalfEdge[HierarchicalDCELData[OD]]): HierarchicalFace[OD] = {
-        new HierarchicalFace[OD](Some(thisHierarchicalFace), ownDataProvider.newFaceData(edge))
+        val f = new HierarchicalFace[OD](Some(thisHierarchicalFace), ownDataProvider.newFaceData(edge), ownDataProvider, hierarchicalDataInit)
+        hierarchicalDataInit.initFace(f)
+        f
       }
 
       override def newVertexData(v: V2): HierarchicalDCELData[OD]#VertexData = {
-        new HierarchicalVertex[OD](ownDataProvider.newVertexData(v))
+        val hv = new HierarchicalVertex[OD](ownDataProvider.newVertexData(v))
+        hierarchicalDataInit.initVertex(hv)
+        hv
       }
 
       override def newEdgeData(v1: RVertex[OD], v2: RVertex[OD]): (HierarchicalDCELData[OD]#HalfEdgeData, HierarchicalDCELData[OD]#HalfEdgeData) = {
@@ -247,7 +260,10 @@ object HierarchicalDCEL {
         val parents = findParentForEdge(seg)
         val twinParents = findParentForEdge(seg.reverse)
 
-        (new HierarchicalEdge[OD](parents, data), new HierarchicalEdge[OD](twinParents, twinData))
+        val (he, the) = (new HierarchicalEdge[OD](parents, data), new HierarchicalEdge[OD](twinParents, twinData))
+        hierarchicalDataInit.initHalfEdge(he)
+        hierarchicalDataInit.initHalfEdge(the)
+        (he, the)
       }
 
       override def splitEdgeData(edge: RHalfEdge[OD], at: V2): (HierarchicalDCELData[OD]#HalfEdgeData, HierarchicalDCELData[OD]#HalfEdgeData) = {
@@ -268,18 +284,18 @@ object HierarchicalDCEL {
     }
 
     //todo normalization needed?
-    def cutChain(chain: Seq[V2], dcelDataProvider: OwnDataProvider[OD]): Seq[RHalfEdge[OD]] = {
+    def cutChain(chain: Seq[V2]): Seq[RHalfEdge[OD]] = {
       val normalized = SeqOps.removeConsecutiveDuplicatesCircular(chain.toList)
-      val res = innerDCEL.cutChain(normalized, new HierarchicalDCElDataProvider(dcelDataProvider))
+      val res = innerDCEL.cutChain(normalized, HierarchicalDCElDataProvider)
       DCELOps.toChainOpt(res).flatten.toSeq
     }
 
     /** Cuts PolygonRegion inside face(in innerDCEL), polygonRegion should be clamped before cut. */
-    def cutClamped(poly: PolygonRegion, dcelDataProvider: OwnDataProvider[OD]): Seq[RHalfEdge[OD]] = {
+    def cutClamped(poly: PolygonRegion): Seq[RHalfEdge[OD]] = {
       val normalized = PolygonRegion(SeqOps.removeConsecutiveDuplicatesCircular(poly.vertices.toList))
       val p = if (normalized.isCw) normalized.reverse else normalized
 
-      val res = innerDCEL.cutPoly(p.vertices, new HierarchicalDCElDataProvider(dcelDataProvider))
+      val res = innerDCEL.cutPoly(p.vertices, HierarchicalDCElDataProvider)
       DCELOps.toChainOpt(res).flatten.toSeq
     }
 

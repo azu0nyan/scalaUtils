@@ -3,7 +3,7 @@ package utils.datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCELOps
-import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalFace, OwnDataProvider, RHalfEdge, RVertex}
+import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalFace, OwnDataInit, OwnDataProvider, RHalfEdge, RVertex}
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
 
@@ -29,12 +29,12 @@ class HierarchicalDCELTest extends AnyFunSuite {
 
 
   def cutInside(face: HierarchicalFace[HData], toCut: PolygonRegion) = {
-    face.cutClamped(toCut, new DataProvider() )
+    face.cutClamped(toCut )
   }
 
   test("Single rectangle cut") {
 
-    val root = new HierarchicalFace[HData](None, "ROOT")(x => x)
+    val root = new HierarchicalFace[HData](None, "ROOT", new DataProvider(), new OwnDataInit[HData]{})(x => x)
     val toCut = AARectangle(V2(-100, -100), V2(100, 100)).toPolygon
     val cutResult = cutInside(root, toCut)
 
@@ -90,7 +90,7 @@ class HierarchicalDCELTest extends AnyFunSuite {
 
    */
   test("Parent correctness") {
-    val root = new HierarchicalFace[HData](None, "ROOT")(x => x)
+    val root = new HierarchicalFace[HData](None, "ROOT", new DataProvider(), new OwnDataInit[HData]{})(x => x)
     val containerShape = AARectangle(V2(0, 0), V2(100, 100)).toPolygon
     val containerHole1 = AARectangle(V2(20, 20), V2(30, 30)).toPolygon
     val containerHole2 = AARectangle(V2(40, 30), V2(50, 40)).toPolygon
