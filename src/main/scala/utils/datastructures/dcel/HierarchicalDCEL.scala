@@ -39,13 +39,6 @@ object HierarchicalDCEL {
     def splitEdgeData(edge: RHalfEdge[OD], at: V2): (OD#HalfEdgeOwnData, OD#HalfEdgeOwnData)
   }
 
-  trait OwnDataInit[OD <: HierarchicalDCELOwnData] {
-    def initVertex(v: HierarchicalVertex[OD]): Unit = {}
-    def initFace(f: HierarchicalFace[OD]): Unit = {}
-    def initHalfEdge(he: HierarchicalEdge[OD]): Unit = {}
-  }
-  object OwnDataInit extends OwnDataInit[HierarchicalDCELOwnData]
-
 
   class HierarchicalVertex[OD <: HierarchicalDCELOwnData](var ownData: OD#VertexOwnData)
                                                          (implicit extractor: OD#VertexOwnData => V2) {
@@ -128,13 +121,78 @@ object HierarchicalDCEL {
 
   }
 
+
+  trait HierarchicalDCElDataProvider[OD <: HierarchicalDCELOwnData] extends DCELDataProvider[HierarchicalDCELData[OD]] {
+    var thisHierarchicalFace: HierarchicalFace[OD] = _
+    def setFace(f: HierarchicalFace[OD]): Unit = thisHierarchicalFace = f
+
+  }
+
+  class HierarchicalDCElDataProviderImpl[OD <: HierarchicalDCELOwnData](
+                                                                         ownDataProvider: OwnDataProvider[OD],
+                                                                         setupFace: HierarchicalFace[OD] => Unit = x => (),
+                                                                         setupHalfEdge: HierarchicalEdge[OD] => Unit = x => (),
+                                                                         setupVertex: HierarchicalVertex[OD] => Unit = x => (),
+                                                                       )
+                                                                       (implicit extractor: OD#VertexOwnData => V2)
+    extends HierarchicalDCElDataProvider[OD] {
+
+
+    override def newFaceData(edge: HalfEdge[HierarchicalDCELData[OD]]): HierarchicalFace[OD] = {
+      val pr = new HierarchicalDCElDataProviderImpl[OD](ownDataProvider, setupFace, setupHalfEdge, setupVertex)
+      val f = new HierarchicalFace[OD](Some(thisHierarchicalFace), ownDataProvider.newFaceData(edge), pr)
+      setupFace(f)
+      f
+    }
+
+    override def newVertexData(v: V2): HierarchicalDCELData[OD]#VertexData = {
+      val hv = new HierarchicalVertex[OD](ownDataProvider.newVertexData(v))
+      setupVertex(hv)
+      hv
+    }
+
+    override def newEdgeData(v1: RVertex[OD], v2: RVertex[OD]): (HierarchicalEdge[OD], HierarchicalEdge[OD]) = {
+      val (data, twinData) = ownDataProvider.newEdgeData(v1, v2)
+      val seg = SegmentPlanar(v1.data.position, v2.data.position)
+      val parents = thisHierarchicalFace.findParentForEdge(seg)
+      val twinParents = thisHierarchicalFace.findParentForEdge(seg.reverse)
+
+      val (he, the) = (new HierarchicalEdge[OD](parents, data), new HierarchicalEdge[OD](twinParents, twinData))
+      setupHalfEdge(he)
+      setupHalfEdge(the)
+      (he, the)
+    }
+
+    override def splitEdgeData(edge: RHalfEdge[OD], at: V2): (HierarchicalEdge[OD], HierarchicalEdge[OD]) = {
+      val (data, twinData) = ownDataProvider.splitEdgeData(edge, at)
+      val SegmentPlanar(start, end) = edge.data.asSegment
+      //todo do int here or in linstener??
+      val parents = thisHierarchicalFace.findParentForEdge(SegmentPlanar(start, at))
+      val twinParents = thisHierarchicalFace.findParentForEdge(SegmentPlanar(at, start))
+      edge.data.replaceParents(parents)
+      edge.twin.data.replaceParents(twinParents)
+
+      val newParents = thisHierarchicalFace.findParentForEdge(SegmentPlanar(at, end))
+      val newTwinParents = thisHierarchicalFace.findParentForEdge(SegmentPlanar(end, at))
+
+      val (he, the) = (new HierarchicalEdge[OD](newParents, data),
+        new HierarchicalEdge[OD](newTwinParents, twinData))
+
+      setupHalfEdge(he)
+      setupHalfEdge(the)
+      (he, the)
+    }
+  }
+
+
   class HierarchicalFace[OD <: HierarchicalDCELOwnData](
                                                          val parent: Option[HierarchicalFace[OD]],
                                                          var ownData: OD#FaceOwnData,
-                                                         ownDataProvider: OwnDataProvider[OD],
-                                                         hierarchicalDataInit: OwnDataInit[OD])(implicit extractor: OD#VertexOwnData => V2) {
+                                                         dataProvider: HierarchicalDCElDataProvider[OD]
+                                                       )(implicit extractor: OD#VertexOwnData => V2) {
     thisHierarchicalFace =>
 
+    dataProvider.setFace(thisHierarchicalFace)
     var face: RFace[OD] = _
 
     var cacheEnabled: Boolean = false
@@ -240,53 +298,10 @@ object HierarchicalDCEL {
     }
 
 
-    private object HierarchicalDCElDataProvider extends DCELDataProvider[HierarchicalDCELData[OD]] {
-
-      override def newFaceData(edge: HalfEdge[HierarchicalDCELData[OD]]): HierarchicalFace[OD] = {
-        val f = new HierarchicalFace[OD](Some(thisHierarchicalFace), ownDataProvider.newFaceData(edge), ownDataProvider, hierarchicalDataInit)
-        hierarchicalDataInit.initFace(f)
-        f
-      }
-
-      override def newVertexData(v: V2): HierarchicalDCELData[OD]#VertexData = {
-        val hv = new HierarchicalVertex[OD](ownDataProvider.newVertexData(v))
-        hierarchicalDataInit.initVertex(hv)
-        hv
-      }
-
-      override def newEdgeData(v1: RVertex[OD], v2: RVertex[OD]): (HierarchicalDCELData[OD]#HalfEdgeData, HierarchicalDCELData[OD]#HalfEdgeData) = {
-        val (data, twinData) = ownDataProvider.newEdgeData(v1, v2)
-        val seg = SegmentPlanar(v1.data.position, v2.data.position)
-        val parents = findParentForEdge(seg)
-        val twinParents = findParentForEdge(seg.reverse)
-
-        val (he, the) = (new HierarchicalEdge[OD](parents, data), new HierarchicalEdge[OD](twinParents, twinData))
-        hierarchicalDataInit.initHalfEdge(he)
-        hierarchicalDataInit.initHalfEdge(the)
-        (he, the)
-      }
-
-      override def splitEdgeData(edge: RHalfEdge[OD], at: V2): (HierarchicalDCELData[OD]#HalfEdgeData, HierarchicalDCELData[OD]#HalfEdgeData) = {
-        val (data, twinData) = ownDataProvider.splitEdgeData(edge, at)
-        val SegmentPlanar(start, end) = edge.data.asSegment
-        //todo do int here or in linstener??
-        val parents = findParentForEdge(SegmentPlanar(start, at))
-        val twinParents = findParentForEdge(SegmentPlanar(at, start))
-        edge.data.replaceParents(parents)
-        edge.twin.data.replaceParents(twinParents)
-
-        val newParents = findParentForEdge(SegmentPlanar(at, end))
-        val newTwinParents = findParentForEdge(SegmentPlanar(end, at))
-
-        (new HierarchicalEdge[OD](newParents, data),
-          new HierarchicalEdge[OD](newTwinParents, twinData))
-      }
-    }
-
     //todo normalization needed?
     def cutChain(chain: Seq[V2]): Seq[RHalfEdge[OD]] = {
       val normalized = SeqOps.removeConsecutiveDuplicatesCircular(chain.toList)
-      val res = innerDCEL.cutChain(normalized, HierarchicalDCElDataProvider)
+      val res = innerDCEL.cutChain(normalized, dataProvider)
       DCELOps.toChainOpt(res).flatten.toSeq
     }
 
@@ -295,7 +310,7 @@ object HierarchicalDCEL {
       val normalized = PolygonRegion(SeqOps.removeConsecutiveDuplicatesCircular(poly.vertices.toList))
       val p = if (normalized.isCw) normalized.reverse else normalized
 
-      val res = innerDCEL.cutPoly(p.vertices, HierarchicalDCElDataProvider)
+      val res = innerDCEL.cutPoly(p.vertices, dataProvider)
       DCELOps.toChainOpt(res).flatten.toSeq
     }
 
