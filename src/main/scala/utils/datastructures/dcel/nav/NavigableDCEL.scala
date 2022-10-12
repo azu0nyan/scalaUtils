@@ -6,7 +6,7 @@ import utils.math.planar.V2
 
 object NavigableDCEL {
 
-  type NavigableDCELOwnData  = HierarchicalDCELOwnData {
+  /*type NavigableDCELOwnData  = HierarchicalDCELOwnData {
     type NavigableHalfEdge <: NavigableHalfEdge
     type FaceOwnData <: NavigableFace
     type VertexData = V2
@@ -21,14 +21,14 @@ object NavigableDCEL {
 
   type NavigableDCEL = HierarchicalDCEL[NavigableDCELOwnData]
 
-  new HierarchicalFace[NavigableDCELOwnData](None, new NavigableFace {}, )
+//  new HierarchicalFace[NavigableDCELOwnData](None, new NavigableFace {}, )
 
 
   trait NavigableHalfEdge{
-    def setHalfEdge(he: HierarchicalEdge[NavigableDCELOwnData])
+    def setHalfEdge(he: HierarchicalEdge[NavigableDCELOwnData]): Unit
   }
 
   trait NavigableFace
 
-
+*/
 }

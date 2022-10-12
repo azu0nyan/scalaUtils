@@ -130,9 +130,9 @@ object HierarchicalDCEL {
 
   class HierarchicalDCElDataProviderImpl[OD <: HierarchicalDCELOwnData](
                                                                          ownDataProvider: OwnDataProvider[OD],
-                                                                         setupFace: HierarchicalFace[OD] => Unit = x => (),
-                                                                         setupHalfEdge: HierarchicalEdge[OD] => Unit = x => (),
-                                                                         setupVertex: HierarchicalVertex[OD] => Unit = x => (),
+                                                                         setupFace: HierarchicalFace[OD] => Unit = (x:HierarchicalFace[OD]) => (),
+                                                                         setupHalfEdge: HierarchicalEdge[OD] => Unit = (x:HierarchicalEdge[OD]) => (),
+                                                                         setupVertex: HierarchicalVertex[OD] => Unit = (x:HierarchicalVertex[OD]) => (),
                                                                        )
                                                                        (implicit extractor: OD#VertexOwnData => V2)
     extends HierarchicalDCElDataProvider[OD] {
