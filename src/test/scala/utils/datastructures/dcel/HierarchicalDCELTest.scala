@@ -3,7 +3,7 @@ package utils.datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCELOps
-import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalDCElDataProvider, HierarchicalDCElDataProviderImpl, HierarchicalFace, OwnDataInit, OwnDataProvider, RHalfEdge, RVertex}
+import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalDCElDataProvider, HierarchicalDCElDataProviderImpl, HierarchicalFace,  OwnDataProvider, RHalfEdge, RVertex}
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
 
