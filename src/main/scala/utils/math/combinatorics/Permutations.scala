@@ -54,10 +54,10 @@ object Permutations {
   def elementCycle(per: Seq[Int], elem: Int): Seq[Int] = {
     var cur = elem
     val res: mutable.Buffer[Int] = mutable.Buffer()
-    do {
+    while ({ {
       res += cur
       cur = per(cur)
-    } while (cur != elem)
+    } ; cur != elem}) ()
     res.toSeq
   }
 
@@ -68,11 +68,11 @@ object Permutations {
       if (!checked(i)) {
         val cycle: mutable.Buffer[Int] = mutable.Buffer()
         var cur = i
-        do {
+        while ({ {
           cycle += cur
           checked(cur) = true
           cur = per(cur)
-        } while (!checked(cur))
+        } ; !checked(cur)}) ()
         acc += cycle.toSeq
       }
     }

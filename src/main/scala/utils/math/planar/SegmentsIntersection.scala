@@ -213,10 +213,10 @@ import scala.collection.mutable.ArrayBuffer
       val pred = descentPredicate(p)
       var removed: Option[SegmentPlanar] = None
       var res = new ArrayBuffer[SegmentPlanar]()
-      do {
+      while ({ {
         removed = storage.removeByPredicate(pred)
         removed.foreach(s => res += s)
-      } while (removed.isDefined)
+      } ; removed.isDefined}) ()
       return res
     }
 
