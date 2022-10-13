@@ -1,7 +1,8 @@
 package utils.math.space
 
-import utils.math.space.Rotations.Rotation
+
 import utils.math._
+import utils.math.space.Rotations.Rotation
 
 object Quat extends QuatTrait
 
@@ -41,10 +42,10 @@ trait QuatTrait {
     val cosX = cos(angle)
 
     // variables used to reduce multiplication calls.
-    val cosYXcosZ:Scalar = cosY * cosZ
-    val sinYXsinZ:Scalar = sinY * sinZ
-    val cosYXsinZ:Scalar = cosY * sinZ
-    val sinYXcosZ:Scalar = sinY * cosZ
+    val cosYXcosZ: Scalar = cosY * cosZ
+    val sinYXsinZ: Scalar = sinY * sinZ
+    val cosYXsinZ: Scalar = cosY * sinZ
+    val sinYXcosZ: Scalar = sinY * cosZ
 
     Quat(
       cosYXcosZ * cosX - sinYXsinZ * sinX,
@@ -172,14 +173,14 @@ case class Quat(w: Scalar, x: Scalar, y: Scalar, z: Scalar) {
   def exponential: Quat = {
     val r: Scalar = sqrt(x * x + y * y + z * z);
     val et: Scalar = utils.math.exp(w)
-    val s = if (r >= SMALL_NUMBER) et * sin(r) / r else 0f
-    return Quat(et * cos(r), x * s, y * s, z * s) /*can be used to create exp internal*/
+    val s: Scalar = if (r >= SMALL_NUMBER) et * sin(r) / r else 0d
+    Quat(et * cos(r), x * s, y * s, z * s) /*can be used to create exp internal*/
   }
 
   def logarithm: Quat = {
-    val r = sqrt(x * x + y * y + z * z);
-    val t = if (r > SMALL_NUMBER) atan2(r, w) / r else 0f
-    return space.Quat(0.5f * log_e(w * w + x * x + y * y + z * z), x * t, y * t, z * t) /*can be used to create log internal*/
+    val r: Scalar = sqrt(x * x + y * y + z * z);
+    val t: Scalar = if (r > SMALL_NUMBER) atan2(r, w) / r else 0f
+    space.Quat(0.5f * log_e(w * w + x * x + y * y + z * z), x * t, y * t, z * t) /*can be used to create log internal*/
   }
 
   /** quaternion power, like rotate n times

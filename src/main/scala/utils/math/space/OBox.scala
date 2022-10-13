@@ -140,7 +140,7 @@ case class OBox(
                ) extends Shape with NormalAndClosest {
 
 
-  @inline def axes(i: Int): V3 = i match {
+  @inline def axeIds(i: Int): V3 = i match {
     case 0 => axes._1
     case 1 => axes._2
     case 2 => axes._3
@@ -228,12 +228,12 @@ case class OBox(
     while (i < 3) {
       // ...project d onto that axis to get the distance
       // along the axis of d from the box center
-      var dist: Scalar = d ** axes(i)
+      var dist: Scalar = d ** axeIds(i)
       // If distance farther than the box extents, clamp to the box
       if (dist > halfExtents(i)) dist = halfExtents(i)
       if (dist < -halfExtents(i)) dist = -halfExtents(i)
       // Step that distance along the axis to get world coordinate
-      q += dist * axes(i)
+      q += dist * axeIds(i)
 
       i += 1
     }

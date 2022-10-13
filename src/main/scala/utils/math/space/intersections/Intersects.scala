@@ -92,9 +92,9 @@ object Intersects {
 
   def oboxToPlane(b: OBox, p: Plane): Boolean = {
     // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-    val r: Scalar = b.halfExtents(0) * math.abs(p.normal ** b.axes(0)) +
-      b.halfExtents(1) * math.abs(p.normal ** b.axes(1)) +
-      b.halfExtents(2) * math.abs(p.normal ** b.axes(2))
+    val r: Scalar = b.halfExtents(0) * math.abs(p.normal ** b.axeIds(0)) +
+      b.halfExtents(1) * math.abs(p.normal ** b.axeIds(1)) +
+      b.halfExtents(2) * math.abs(p.normal ** b.axeIds(2))
     // Compute distance of box center from plane
     val s = p.normal ** b.center - p.dot
     // Intersection occurs when distance s falls within [-r,+r] interval

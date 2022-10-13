@@ -3,7 +3,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.math.planar.{SegmentPlanar, V2}
 
-class V2 extends AnyFunSuite {
+class V2Test extends AnyFunSuite {
   test("Same direction bug???"){
     val body1 = SegmentPlanar(V2(10.0, 30.0), V2(60.0, 30.0)).body
     val body2 = SegmentPlanar(V2(0.0, 0.0), V2(100.0, 0.0)).body

@@ -58,7 +58,8 @@ object TriangleToTriangle {
     val dv0dv1 = dv0 * dv1
     val dv0dv2 = dv0 * dv2
 
-    if (dv0dv1 > 0.0f && dv0dv2 > 0.0f) false /* same sign on all of them + not equal 0 ? *//* no intersection occurs */
+    //todo check fix
+    if (dv0dv1 > 0.0f && dv0dv2 > 0.0f) return false /* same sign on all of them + not equal 0 ? *//* no intersection occurs */
 
 
     /* compute direction of intersection line */

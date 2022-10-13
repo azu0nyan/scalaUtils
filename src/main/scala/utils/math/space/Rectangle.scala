@@ -8,7 +8,7 @@ case class Rectangle(
                       u: (V3, V3), // unit vectors determining local x and y axes for the rectangle
                       e: V2 // the halfwidth extents of the rectangle along the axes
                     ) extends ClosestPoint {
-  def u(i: Int): V3 = i match {
+  def uId(i: Int): V3 = i match {
     case 0 => u._1
     case 1 => u._2
   }
@@ -28,12 +28,12 @@ case class Rectangle(
     while(i < 2){
       // ...project d onto that axis to get the distance
       // along the axis of d from the rect center
-      var dist = d ** u(i)
+      var dist = d ** uId(i)
       // If distance farther than the rect extents, clamp to the rect
       if (dist > e(i)) dist = e(i)
       if (dist < -e(i)) dist = -e(i)
       // Step that distance along the axis to get world coordinate
-      q += dist * u(i)
+      q += uId(i) * dist
 
       i += 1
     }

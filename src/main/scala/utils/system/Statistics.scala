@@ -22,7 +22,7 @@ object Statistics {
     times.foreach { kv =>
       val name = kv._1
       val total = kv._2.size()
-      val avg: Double = kv._2.asScala.sum / (if (total == 0) 1.0 else total)
+      val avg: Double = kv._2.asScala.sum.toDouble / (if (total == 0) 1.0 else total.toDouble)
       log.info(f"$name%30s total: $total%10d avg: $avg%5.5f")
     }
   }

@@ -2,6 +2,7 @@ package utils.mesh.factory
 
 import utils.datastructures.{IndexedTriangle, IntV2}
 import utils.heightmap.HeightGrid
+import utils.math.space.Triangle.averageNormal
 import utils.math.space.{Plane, Triangle, V3}
 import utils.mesh.MutableMeshSection
 
@@ -29,7 +30,7 @@ object HeightGrid {
       heightGrid.toFlatHeightIndex(IntV2(ij.i + 1, ij.j)),
       heightGrid.toFlatHeightIndex(IntV2(ij.i + 1, ij.j + 1))), vertices)
 
-    val normals = heightGrid.indices.map(v =>
+    val normals:ArrayBuffer[V3] = heightGrid.indices.map(v =>
       Seq(
         triangle1(v + (-1, -1)),
         triangle2(v + (-1, -1)),
@@ -38,9 +39,9 @@ object HeightGrid {
         triangle2(v + (0, -1)),
         triangle1(v + (-1, 0)),
       ).map(t => t.flipToMatchNormal(up).triangle)
-    ).map(s => Triangle.averageNormal(s)).to(ArrayBuffer)
+    ).map(s => averageNormal(s)).to(ArrayBuffer)
 
-    val triangles = (heightGrid.resolution - IntV2(1, 1)).lesserIndices.flatMap(
+    val triangles: ArrayBuffer[(Int, Int, Int)] = (heightGrid.resolution - IntV2(1, 1)).lesserIndices.flatMap(
       i => Seq(triangle1(i).flipToMatchNormal(up).indices, triangle2(i).flipToMatchNormal(up).indices)).to(ArrayBuffer)
 
     new MutableMeshSection(vertices, triangles, normals, uvs)
