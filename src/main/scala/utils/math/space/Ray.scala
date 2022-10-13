@@ -16,7 +16,7 @@ case class Ray(origin: V3, direction: UnitV3) {
 
     // If t in [0..1] compute and return intersection point
     if (t >= 0.0f && t <= 1.0f) {
-      Some(origin + t * direction)
+      Some(origin + direction * t)
     }
     // Else no intersection
     None

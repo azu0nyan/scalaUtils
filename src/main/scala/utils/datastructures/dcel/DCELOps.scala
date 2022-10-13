@@ -48,7 +48,7 @@ object DCELOps {
 
   def toChainOpt[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[Option[HalfEdge[D]]] =
     if (vs.size >= 2) vs.sliding(2).map {
-      case List(o, e) => o.edgeTo(e)
+      case List(o: Vertex[D], e: Vertex[D]) => o.edgeTo(e)
     } else Iterator.empty
 
   def toChain[D <: DCELData](vs: Seq[Vertex[D]]): Iterator[HalfEdge[D]] = toChainOpt(vs).flatten

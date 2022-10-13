@@ -26,7 +26,7 @@ trait IntervalTrait[T] {
   def notContains(v: T)(implicit ev$1: T => Ordered[T]): Boolean = !contains(v)
 
   //def length: Float = math.abs(lengthSigned)
-
+  import math.Ordering.Implicits.infixOrderingOps
   def contains(point: T)(implicit ev$1: T => Ordered[T]): Boolean = (if (containsStart) {
     point >= start
   } else {

@@ -7,7 +7,7 @@ object V3 extends V3Constants {
 
   def apply(s:Scalar): V3 = from(s)
 
-  def apply[T](s:T)(implicit f:T => Scalar): V3 = from(s)
+  def apply[T](s:T)(implicit f:T => Scalar): V3 = from(f(s))
 
   def from(s:Scalar):V3 = V3.fromScalars(s,s,s)
 
@@ -21,7 +21,7 @@ object V3 extends V3Constants {
 
   def fromArray(a: Array[Scalar]): V3 = V3(a(0), a(1), a(2))
 
-  def fromArray[T](a: Array[T])(implicit f:T => Scalar): V3 = V3(a(0), a(1), a(2))
+  def fromArray[T](a: Array[T])(implicit f:T => Scalar): V3 = V3(f(a(0)), f(a(1)), f(a(2)))
 
   def toNormal(v: V3): Normal = if (v.lengthSquared ~= 1f) v else v.normalize
 }

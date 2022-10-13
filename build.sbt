@@ -13,8 +13,8 @@ scalacOptions ++= Seq(
   "-language:higherKinds",
   "-language:existentials",
   "-language:postfixOps",
-  "-source:3.0-migration",
-  "-rewrite",
+//  "-source:3.0-migration",
+//  "-rewrite",
  // "-explain",
  // "--explain-types"
 )

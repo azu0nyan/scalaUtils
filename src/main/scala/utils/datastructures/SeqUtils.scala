@@ -1,7 +1,7 @@
 package utils.datastructures
 
 object SeqUtils {
-
+  import math.Ordering.Implicits.infixOrderingOps
   def clamp[T](seq: Seq[T], min: T, max: T)(implicit ev$1: T => Ordered[T]): Seq[T] = seq.filter(x => x >= min && x <= max)
 
   def clampAndEnsureMinMaxExistence[T](seq: Seq[T], min: T, max: T)(implicit ev$1: T => Ordered[T]): Seq[T] =
