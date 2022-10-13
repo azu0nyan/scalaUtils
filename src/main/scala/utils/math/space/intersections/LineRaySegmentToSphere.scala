@@ -15,7 +15,7 @@ object LineRaySegmentToSphere {
     // A negative discriminant corresponds to ray missing sphere
     if (discr < 0.0f) return None
     // Ray now found to intersect sphere, compute smallest t value of intersection
-    var t = -b - math.sqrt(discr).toFloat
+    var t = -b - math.sqrt(discr).toDouble
     // If t is negative, ray started inside sphere so clamp t to zero
     if (t < 0.0f) t = 0.0f
     return Some(origin + direction * t)

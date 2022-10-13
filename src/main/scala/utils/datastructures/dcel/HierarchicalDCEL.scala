@@ -122,24 +122,20 @@ object HierarchicalDCEL {
   }
 
 
-  trait HierarchicalDCElDataProvider[OD <: HierarchicalDCELOwnData] extends DCELDataProvider[HierarchicalDCELData[OD]] {
+  class HierarchicalDCElDataProvider[OD <: HierarchicalDCELOwnData](
+                                                                     ownDataProvider: OwnDataProvider[OD],
+                                                                     setupFace: HierarchicalFace[OD] => Unit = (x: HierarchicalFace[OD]) => (),
+                                                                     setupHalfEdge: HierarchicalEdge[OD] => Unit = (x: HierarchicalEdge[OD]) => (),
+                                                                     setupVertex: HierarchicalVertex[OD] => Unit = (x: HierarchicalVertex[OD]) => (),
+                                                                   )
+                                                                   (implicit extractor: OD#VertexOwnData => V2)
+    extends DCELDataProvider[HierarchicalDCELData[OD]] {
     var thisHierarchicalFace: HierarchicalFace[OD] = _
     def setFace(f: HierarchicalFace[OD]): Unit = thisHierarchicalFace = f
 
-  }
-
-  class HierarchicalDCElDataProviderImpl[OD <: HierarchicalDCELOwnData](
-                                                                         ownDataProvider: OwnDataProvider[OD],
-                                                                         setupFace: HierarchicalFace[OD] => Unit = (x:HierarchicalFace[OD]) => (),
-                                                                         setupHalfEdge: HierarchicalEdge[OD] => Unit = (x:HierarchicalEdge[OD]) => (),
-                                                                         setupVertex: HierarchicalVertex[OD] => Unit = (x:HierarchicalVertex[OD]) => (),
-                                                                       )
-                                                                       (implicit extractor: OD#VertexOwnData => V2)
-    extends HierarchicalDCElDataProvider[OD] {
-
 
     override def newFaceData(edge: HalfEdge[HierarchicalDCELData[OD]]): HierarchicalFace[OD] = {
-      val pr = new HierarchicalDCElDataProviderImpl[OD](ownDataProvider, setupFace, setupHalfEdge, setupVertex)
+      val pr = new HierarchicalDCElDataProvider[OD](ownDataProvider, setupFace, setupHalfEdge, setupVertex)
       val f = new HierarchicalFace[OD](Some(thisHierarchicalFace), ownDataProvider.newFaceData(edge), pr)
       setupFace(f)
       f
