@@ -2,7 +2,9 @@ package utils.datastructures.dcel.nav
 
 import utils.datastructures.dcel.{DCEL, HierarchicalDCEL}
 import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCEL, HierarchicalDCELData, HierarchicalDCELOwnData, HierarchicalDCElDataProvider, HierarchicalEdge, HierarchicalFace, OwnDataProvider, RHalfEdge, RVertex}
+import utils.datastructures.dcel.nav.DCELPath.BorderNode
 import utils.datastructures.dcel.nav.NavigableDCEL.NavigableDCELOwnData
+import utils.datastructures.dcel.nav.Portal.Portal
 import utils.math.planar.V2
 
 object NavigableDCEL {
@@ -40,13 +42,33 @@ object NavigableDCEL {
 
 
   trait NavigableHalfEdge {
-    var hierarchicalEdge: HierarchicalEdge[_] = _
-    def setHalfEdge(he: HierarchicalEdge[_]): Unit = hierarchicalEdge = he
+
+
+    var hierarchicalEdge: HierarchicalEdge[NavigableDCELOwnData] = _
+    def setHalfEdge[D <: NavigableDCELOwnData](he: HierarchicalEdge[D]): Unit = hierarchicalEdge = he.asInstanceOf[HierarchicalEdge[NavigableDCELOwnData]]
+
+    def edgeNodeTwin:NavigableHalfEdge = hierarchicalEdge.edge.twin.data.ownData
+
+    def area : NavigableFace = hierarchicalEdge.face.data.ownData
+
+
+//    def portals: Seq[Portal]
+//
+//    def addPortal(door: Portal): Unit = {
+//      portals = portals :+ door
+//    }
+
+    def pathNodes: Seq[BorderNode]
+//      Option.when(wall.isEmpty && !isFake)(FreeBorderNode(this)).iterator.toSeq ++
+//        portals.map(p => PortalNode(this, p))
+
+
   }
 
-  trait NavigableFace {
-    var hierarchicalFace: HierarchicalFace[_] = _
-    def setFace(face: HierarchicalFace[_]): Unit = hierarchicalFace = face
+  trait NavigableFace{
+    var navData: FaceNavData = _
+    var hierarchicalFace: HierarchicalFace[NavigableDCELOwnData] = _
+    def setFace[D <: NavigableDCELOwnData](face: HierarchicalFace[D]): Unit = hierarchicalFace = face.asInstanceOf[HierarchicalFace[NavigableDCELOwnData]]
   }
 
 }

@@ -3,6 +3,7 @@ package utils.datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalFace}
+import utils.datastructures.dcel.nav.DCELPath._
 import utils.datastructures.dcel.nav.NavigableDCEL
 import utils.datastructures.dcel.nav.NavigableDCEL.{NavigableDCELOwnData, NavigableFace, NavigableHalfEdge}
 import utils.datastructures.spatial.AARectangle
@@ -33,7 +34,9 @@ class NavigableDCELTest extends AnyFunSuite {
     }
 
     case class FaceData(override val fd: String) extends NavigableFace with OtherFaceData
-    case class HaldEdgeData(override val ed: String) extends NavigableHalfEdge with OtherHalfEdgeData
+    case class HaldEdgeData(override val ed: String) extends NavigableHalfEdge with OtherHalfEdgeData{
+      override def pathNodes: Seq[BorderNode] = Seq(FreeBorderNode(this))
+}
 
     type NavData = NavigableDCELOwnData {
       type FaceOwnData = FaceData
