@@ -17,13 +17,14 @@ object DCELPath {
   sealed trait BorderNode extends PathNode
 
   case class PointNode(point: V2, area: NavigableFace) extends PathNode
-  case class FreeBorderNode(border: NavigableHalfEdge) extends BorderNode {
-    override def point: V2 = border.hierarchicalEdge.asSegment.center
+
+  case class FreeBorderNode(border: NavigableHalfEdge, startFraction: Scalar, endFraction: Scalar) extends BorderNode {
+    override def point: V2 = border.hierarchicalEdge.asSegment.sampleAt((startFraction + endFraction) / 2d)
     override def area: NavigableFace = border.hierarchicalEdge.face.data.ownData //area
 
     def twinNode: Option[FreeBorderNode] = {
       val twin = border.edgeNodeTwin
-      twin.pathNodes.collectFirst { case e: FreeBorderNode => e }
+      twin.ownPathNodes.collectFirst { case e: FreeBorderNode => e }
     }
 //    override def toString: String = s"EdgeNode(${border.name})"
   }

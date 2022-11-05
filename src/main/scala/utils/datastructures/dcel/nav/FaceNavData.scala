@@ -39,17 +39,21 @@ import utils.datastructures.dcel.nav.DCELPath._
 
 class FaceNavData(area: NavigableFace) {
 
-  /*
-  /** Portals on own edges that teleports outside area todo remove border to inside portal connections */
-  val borderWaysOut: Seq[BorderNode] = area.fullBorder
+
+  /** Portals on own edges that teleports outside area and free nodes */
+  val borderWaysOut: Seq[BorderNode] = area.hierarchicalFace.fullBorder.flatMap(e => e.data.ownData.ownPathNodes)
+
+  /*area.fullBorder
     .flatMap(e => e.data.portals.filter(p =>
       p.from.edge != e && p.from.edge.leftFace.data != area || p.to.edge != e && p.to.edge.leftFace.data != area)
       .map(p => PortalNode(e.data, p))) ++
-    area.fullBorder.filter(e => e.data.wall.isEmpty).map(e => FreeBorderNode(e.data))
+    area.fullBorder.filter(e => e.data.wall.isEmpty).map(e => FreeBorderNode(e.data))*/
 
-  /** inner dcel edges that has connection to my own area, portals or free edges on innerDcel.outerFace border */
-  val innerDcelToMeWays: Seq[BorderNode] =
-    area.innerDcel.halfEdges.iterator.flatMap { e =>
+
+  /** inner dcel edges that has connection to my own area, portals or free edges on innerDcel.outerFace border */ //todo what with childs
+  val innerDcelToMeWays: Seq[BorderNode] = area.hierarchicalFace.innerDCEL.halfEdges.flatMap(_.data.ownData.)
+
+   /* area.innerDcel.halfEdges.iterator.flatMap { e =>
       e.data.portals.filter { p =>
         val fFace = p.from.edge.leftFace
         val tFace = p.to.edge.leftFace
@@ -64,8 +68,9 @@ class FaceNavData(area: NavigableFace) {
                 EdgeOps.lowestTwin(e, e.asSegment.center).data.wall.isEmpty
           }
         }(FreeBorderNode(e.data)).toSeq
-    }.toSeq
+    }.toSeq*/
 
+  /*
 
   /** inner dcel edges that has portal to outside or share border with area  and have no wall */
   val innerDcelWaysOut: Seq[BorderNode] =

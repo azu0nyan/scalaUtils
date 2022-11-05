@@ -8,16 +8,17 @@ import utils.datastructures.dcel.PlanarDCEL.PlanarEdge
 import utils.math._
 import utils.sugar.{IteratorOps, SeqOps}
 
+
 object HierarchicalDCEL {
 
-  /**User data that stored in hierarchical DCEL*/
+  /** User data that stored in hierarchical DCEL */
   type HierarchicalDCELOwnData = {
     type VertexOwnData
     type HalfEdgeOwnData
     type FaceOwnData
   }
 
-  /**Utility type, that helps embed Hierarchical DCEL into PlanarDcel*/
+  /** Utility type, that helps embed Hierarchical DCEL into PlanarDcel */
   type HierarchicalDCELData[OwnData <: HierarchicalDCELOwnData] = DCELData {
     type VertexData = HierarchicalVertex[OwnData]
     type HalfEdgeData = HierarchicalEdge[OwnData]
@@ -31,7 +32,7 @@ object HierarchicalDCEL {
   type RHalfEdge[OwnData <: HierarchicalDCELOwnData] = DCEL.HalfEdge[HierarchicalDCELData[OwnData]]
   type RFace[OwnData <: HierarchicalDCELOwnData] = DCEL.Face[HierarchicalDCELData[OwnData]]
 
-  /**Collection of constructors for own data*/
+  /** Collection of constructors for own data */
   trait OwnDataProvider[OD <: HierarchicalDCELOwnData] {
     def newFaceData(edge: RHalfEdge[OD]): OD#FaceOwnData
 
@@ -103,7 +104,6 @@ object HierarchicalDCEL {
   }
 
 
-
   class HierarchicalVertex[OD <: HierarchicalDCELOwnData](var ownData: OD#VertexOwnData)
                                                          (implicit extractor: OD#VertexOwnData => V2) {
 
@@ -170,8 +170,8 @@ object HierarchicalDCEL {
       newParents.foreach(addParent)
     }
 
-    /** */
-    def parentCoveredParts: Seq[(HierarchicalEdge[OD], Scalar, Scalar)] = {
+    /** Fraction intervals of parent halfEdges, that intersects with this half Edge */
+    def parentCoveredIntervals: Seq[(HierarchicalEdge[OD], Scalar, Scalar)] = {
       val seg = asSegment
       parents.flatMap { parent =>
         //assumes that parent goes in the same direction as a child => start < end
@@ -183,9 +183,30 @@ object HierarchicalDCEL {
       }
     }
 
+    /** Fraction intervals of direct child halfEdges, that intersects with this half Edge */
+    def childCoveredIntervals: Seq[(HierarchicalEdge[OD], Scalar, Scalar)] = {
+      val seg = asSegment
+      childs.flatMap { child =>
+        //assumes that child goes in the same direction
+        val cSeg = child.asSegment
+        val start = clamp(seg.getFractionAt(cSeg.start), 0, 1)
+        val end = clamp(seg.getFractionAt(cSeg.end), 0, 1)
+        Option.when(start ~< 1 && (end !~= start))((child, start, end)) //todo mb delete check
+      }
+    }
+
+    /**Fraction intervals that didn't covered by any child*/
+    def childUncoveredIntervals: Seq[(Scalar, Scalar)] = {
+      val childsStartsEnds: Seq[Scalar] = childCoveredIntervals.sortBy(_._2).flatMap { case (_, start, end) => Seq(start, end) }
+      val points: Seq[Scalar] = 0d +: (childsStartsEnds :+ 1d)
+      points.sliding(2, 2).zipWithIndex.filter (_._2 % 2 == 0).flatMap {
+        case (Seq(a, b), _) if a !~= b => Some((a, b))
+        case _ => None
+      }.toSeq
+    }
+
+
   }
-
-
 
 
   class HierarchicalFace[OD <: HierarchicalDCELOwnData](

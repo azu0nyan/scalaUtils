@@ -2,7 +2,7 @@ package utils.datastructures.dcel.nav
 
 import utils.datastructures.dcel.{DCEL, HierarchicalDCEL}
 import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCEL, HierarchicalDCELData, HierarchicalDCELOwnData, HierarchicalDCElDataProvider, HierarchicalEdge, HierarchicalFace, OwnDataProvider, RHalfEdge, RVertex}
-import utils.datastructures.dcel.nav.DCELPath.BorderNode
+import utils.datastructures.dcel.nav.DCELPath.{BorderNode, FreeBorderNode, PortalNode}
 import utils.datastructures.dcel.nav.NavigableDCEL.NavigableDCELOwnData
 import utils.datastructures.dcel.nav.Portal.Portal
 import utils.math.planar.V2
@@ -15,7 +15,7 @@ object NavigableDCEL {
     type FaceOwnData <: NavigableFace
   }
 
-  /** Takes constructors for own data, returns data provider, required to guarantee call of setHalfEdge and setFace  */
+  /** Takes constructors for own data, returns data provider, required to guarantee call of setHalfEdge and setFace */
   def NavigableDCELDataProvider[D <: NavigableDCELOwnData](
                                                             vertexDataConstructor: V2 => D#VertexOwnData,
                                                             newHalfEdgeDataConstructor: (RVertex[D], RVertex[D]) => (D#HalfEdgeOwnData, D#HalfEdgeOwnData),
@@ -42,30 +42,36 @@ object NavigableDCEL {
 
 
   trait NavigableHalfEdge {
-
-
     var hierarchicalEdge: HierarchicalEdge[NavigableDCELOwnData] = _
     def setHalfEdge[D <: NavigableDCELOwnData](he: HierarchicalEdge[D]): Unit = hierarchicalEdge = he.asInstanceOf[HierarchicalEdge[NavigableDCELOwnData]]
 
-    def edgeNodeTwin:NavigableHalfEdge = hierarchicalEdge.edge.twin.data.ownData
+    def edgeNodeTwin: NavigableHalfEdge = hierarchicalEdge.edge.twin.data.ownData
 
-    def area : NavigableFace = hierarchicalEdge.face.data.ownData
+    def area: NavigableFace = hierarchicalEdge.face.data.ownData
 
+    /**true if nav agent can pass node*/
+    def passable: Boolean
+    def portals: Seq[Portal]
 
-//    def portals: Seq[Portal]
-//
-//    def addPortal(door: Portal): Unit = {
-//      portals = portals :+ door
-//    }
+    /**path that do not belongs to childs*/
+    def ownPathNodes: Seq[BorderNode] = portals.map(PortalNode(this, _)) ++ (if (passable) {
+      hierarchicalEdge.childUncoveredIntervals.map{case (start, end) => FreeBorderNode(this, start, end)}
+    } else Seq())
 
-    def pathNodes: Seq[BorderNode]
-//      Option.when(wall.isEmpty && !isFake)(FreeBorderNode(this)).iterator.toSeq ++
-//        portals.map(p => PortalNode(this, p))
 
 
   }
 
-  trait NavigableFace{
+  trait NavigableHalfEdgeWithPortals extends NavigableHalfEdge {
+    var _portals: Seq[Portal] = Seq()
+    override def portals: Seq[Portal] = Seq()
+    def addPortal(door: Portal): Unit = {
+      _portals = portals :+ door
+    }
+
+  }
+
+  trait NavigableFace {
     var navData: FaceNavData = _
     var hierarchicalFace: HierarchicalFace[NavigableDCELOwnData] = _
     def setFace[D <: NavigableDCELOwnData](face: HierarchicalFace[D]): Unit = hierarchicalFace = face.asInstanceOf[HierarchicalFace[NavigableDCELOwnData]]

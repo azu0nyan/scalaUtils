@@ -35,7 +35,7 @@ class NavigableDCELTest extends AnyFunSuite {
 
     case class FaceData(override val fd: String) extends NavigableFace with OtherFaceData
     case class HaldEdgeData(override val ed: String) extends NavigableHalfEdge with OtherHalfEdgeData{
-      override def pathNodes: Seq[BorderNode] = Seq(FreeBorderNode(this))
+      override def ownPathNodes: Seq[BorderNode] = Seq(FreeBorderNode(this))
 }
 
     type NavData = NavigableDCELOwnData {
