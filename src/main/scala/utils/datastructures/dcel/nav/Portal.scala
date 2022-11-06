@@ -12,7 +12,6 @@ object Portal {
     /** Connects two half edges */
     sealed trait Portal {
 
-
       def from: NavigableHalfEdge
       def to: NavigableHalfEdge
       def fromFraction: Scalar
@@ -51,20 +50,6 @@ object Portal {
           width / 2f <= side1 && width / 2f <= side2
         }
     }
-
-//    case class Door(from: NavigableHalfEdge, to: NavigableHalfEdge, style: DoorStyle, fromFraction: Scalar = .5d) extends Portal {
-//      override def isValid: Boolean = super.isValid && to.edge.asSegment.contains(from.edge.asSegment.sampleAt(fromFraction))
-//
-//
-//      override def toFraction: Scalar = {
-//        val at = from.edge.asSegment.sampleAt(fromFraction)
-//        val toSeg = to.edge.asSegment
-//        toSeg.start.distance(at) / toSeg.length
-//      }
-//      override def width: Scalar = {
-//        style.width
-//      }
-//    }
 
 
 }

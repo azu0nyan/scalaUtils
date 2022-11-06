@@ -49,25 +49,8 @@ object NavigableDCEL {
 
     def area: NavigableFace = hierarchicalEdge.face.data.ownData
 
-    /**true if nav agent can pass node*/
+    /**true if nav agent can pass edge*/
     def passable: Boolean
-    def portals: Seq[Portal]
-
-    /**path that do not belongs to childs*/
-    def ownPathNodes: Seq[BorderNode] = portals.map(PortalNode(this, _)) ++ (if (passable) {
-      hierarchicalEdge.childUncoveredIntervals.map{case (start, end) => FreeBorderNode(this, start, end)}
-    } else Seq())
-
-
-
-  }
-
-  trait NavigableHalfEdgeWithPortals extends NavigableHalfEdge {
-    var _portals: Seq[Portal] = Seq()
-    override def portals: Seq[Portal] = Seq()
-    def addPortal(door: Portal): Unit = {
-      _portals = portals :+ door
-    }
 
   }
 
