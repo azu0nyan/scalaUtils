@@ -40,7 +40,7 @@ import utils.datastructures.graph.Graph.Graph
  */
 
 class FaceNavData(area: NavigableFace) {
-
+/*
   //todo filter out edges filled with impassable childs
 
   /** Edges through you can leave area */
@@ -221,5 +221,6 @@ class FaceNavData(area: NavigableFace) {
         case _ => None //todo if fromFace == toDace && face has several connectivity components try search path in parent until maxLength hit
       }
     }
+  */
   */
 }

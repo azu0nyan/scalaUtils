@@ -2,7 +2,7 @@ package utils.datastructures.dcel.nav
 
 import utils.datastructures.dcel.{DCEL, HierarchicalDCEL}
 import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCEL, HierarchicalDCELData, HierarchicalDCELOwnData, HierarchicalDCElDataProvider, HierarchicalEdge, HierarchicalFace, OwnDataProvider, RHalfEdge, RVertex}
-import utils.datastructures.dcel.nav.DCELPath.{BorderNode, FreeBorderNode, PortalNode}
+//import utils.datastructures.dcel.nav.DCELPath.{BorderNode, FreeBorderNode, PortalNode}
 import utils.datastructures.dcel.nav.NavigableDCEL.NavigableDCELOwnData
 import utils.datastructures.dcel.nav.Portal.Portal
 import utils.math.planar.V2
