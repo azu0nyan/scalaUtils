@@ -49,6 +49,9 @@ object NavigableDCEL {
 
     def area: NavigableFace = hierarchicalEdge.face.data.ownData
 
+    /**todo check*/
+//    def isFake: Boolean = area.hierarchicalFace.parent.contains(hierarchicalEdge.face.data)
+    
     /**true if nav agent can pass edge*/
     def passable: Boolean
 
