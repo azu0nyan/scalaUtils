@@ -55,6 +55,8 @@ object NavigableDCEL {
     /**true if nav agent can pass edge*/
     def passable: Boolean
 
+
+
   }
 
   trait NavigableFace {
