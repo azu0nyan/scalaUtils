@@ -131,6 +131,8 @@ object HierarchicalDCEL {
       * and splitting child edge at parent vertices can be impossible */
     def parents: Seq[HierarchicalEdge[OD]] = _parents
 
+    def allLevelParents: Seq[HierarchicalEdge[OD]] = parents.flatMap(p => p +: p.allLevelParents)
+
     def face: RFace[OD] = edge.leftFace
 
     //    def hierarchicalFace: HierarchicalFace[OD] = edge.leftFace.data
