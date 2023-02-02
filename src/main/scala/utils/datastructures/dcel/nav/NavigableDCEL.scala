@@ -43,43 +43,5 @@ object NavigableDCEL {
   type NavigableDCEL[D <: NavigableDCELOwnData] = HierarchicalDCEL[D]
 
 
-  trait NavigableHalfEdge {
-    var hierarchicalEdge: HierarchicalEdge[NavigableDCELOwnData] = _
-    def setHalfEdge[D <: NavigableDCELOwnData](he: HierarchicalEdge[D]): Unit = hierarchicalEdge = he.asInstanceOf[HierarchicalEdge[NavigableDCELOwnData]]
-
-    def edgeNodeTwin: NavigableHalfEdge = hierarchicalEdge.edge.twin.data.ownData
-
-    def area: NavigableFace = hierarchicalEdge.face.data.ownData
-
-    /** todo check */
-    //    def isFake: Boolean = area.hierarchicalFace.parent.contains(hierarchicalEdge.face.data)
-
-    /** true if nav agent can pass edge */
-    def passable: Boolean
-
-    def myNodes: Seq[BorderNode] =
-      if (passable) {
-        val mySeg = hierarchicalEdge.asSegment
-        val blocked = (hierarchicalEdge.parents.filter(!_.ownData.passable) ++
-          hierarchicalEdge.allLevelChilds.filter(!_.ownData.passable)).map { he =>
-          val heSeg = he.asSegment
-          val p1 = clamp(mySeg.getFractionAt(heSeg.v1), 0, 1)
-          val p2 = clamp(mySeg.getFractionAt(heSeg.v2), 0, 1)
-          //if(p1 < p2) (p1, p2) else (p2, p1) //check not needed as parents and childs goes at the same direction
-          (p1, p2)
-        }.filter { case (p1, p2) => p1 != p2 }.sorted
-
-        blocked.foldLeft(Seq((0d, 1d))){ case (first :+ ((lastl, lastr)), (l, r)) =>
-        }
-
-      } else Seq()
-
-  }
-
-  trait NavigableFace {
-    var navData: FaceNavData = _
-    var hierarchicalFace: HierarchicalFace[NavigableDCELOwnData] = _
-    def setFace[D <: NavigableDCELOwnData](face: HierarchicalFace[D]): Unit = hierarchicalFace = face.asInstanceOf[HierarchicalFace[NavigableDCELOwnData]]
-  }
 
 }

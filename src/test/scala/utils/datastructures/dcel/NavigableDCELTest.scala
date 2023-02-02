@@ -4,8 +4,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalFace}
 import utils.datastructures.dcel.nav.DCELPath._
-import utils.datastructures.dcel.nav.NavigableDCEL
-import utils.datastructures.dcel.nav.NavigableDCEL.{NavigableDCELOwnData, NavigableFace, NavigableHalfEdge}
+import utils.datastructures.dcel.nav.{NavigableDCEL, NavigableFace, NavigableHalfEdge}
+import utils.datastructures.dcel.nav.NavigableDCEL._
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.V2
 
@@ -34,7 +34,7 @@ class NavigableDCELTest extends AnyFunSuite {
     }
 
     case class FaceData(override val fd: String) extends NavigableFace with OtherFaceData
-    case class HaldEdgeData(override val ed: String) extends NavigableHalfEdge with OtherHalfEdgeData{
+    case class HalfEdgeData(override val ed: String) extends NavigableHalfEdge with OtherHalfEdgeData{
       //def ownPathNodes: Seq[BorderNode] = ??? //Seq(FreeBorderNode(this))
       /**   true if nav agent can pass edge   */
       override def passable: Boolean = ???
@@ -42,14 +42,14 @@ class NavigableDCELTest extends AnyFunSuite {
 
     type NavData = NavigableDCELOwnData {
       type FaceOwnData = FaceData
-      type HalfEdgeOwnData = HaldEdgeData
+      type HalfEdgeOwnData = HalfEdgeData
       type VertexOwnData = V2
     }
 
     val prov = NavigableDCEL.NavigableDCELDataProvider[NavData](
       x => x,
-      (x, y) => (new HaldEdgeData("e"), new HaldEdgeData("t")),
-      (x, y) => (new HaldEdgeData("e"), new HaldEdgeData("t")),
+      (x, y) => (new HalfEdgeData("e"), new HalfEdgeData("t")),
+      (x, y) => (new HalfEdgeData("e"), new HalfEdgeData("t")),
       x => new FaceData("nf")
     )(x => x)
 

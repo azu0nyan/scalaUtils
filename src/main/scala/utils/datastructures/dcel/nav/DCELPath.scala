@@ -1,9 +1,9 @@
 package utils.datastructures.dcel.nav
 
-import utils.datastructures.dcel.nav.NavigableDCEL.{NavigableFace, NavigableHalfEdge}
-import utils.datastructures.dcel.nav.Portal.Portal
 import utils.datastructures.graph.Graph.Path
-import utils.math.Scalar
+import utils.math._
+import utils.math.WithAlmostEquals
+import utils.math.misc.IntervalOps
 import utils.math.planar.V2
 
 object DCELPath {
@@ -18,6 +18,50 @@ object DCELPath {
   case class BorderNode(border: NavigableHalfEdge, startFraction: Scalar, endFraction: Scalar) extends PathNode {
     override def point: V2 = border.hierarchicalEdge.asSegment.sampleAt((startFraction + endFraction) / 2d)
     override def area: NavigableFace = border.hierarchicalEdge.face.data.ownData //area
+
+
+    def nodeLength: Scalar = startPoint.distance(endPoint)
+    def startPoint: V2 = border.hierarchicalEdge.asSegment.sampleAt(startFraction)
+    def endPoint: V2 = border.hierarchicalEdge.asSegment.sampleAt(endFraction)
+
+
+    def overlapLength(ot: BorderNode): Scalar = commonNonemptyInterval(ot) match {
+      case Some((l, r)) => border.hierarchicalEdge.asSegment.sampleAt(l).distance(border.hierarchicalEdge.asSegment.sampleAt(r))
+      case None => 0d
+    }
+
+    /**Returns common interval in fractions of border's segment, assumes that ot is collinear(but no assumption on same direction)
+      * first fraction will be less than second
+      * return
+      * */
+    def commonNonemptyInterval(ot:BorderNode): Option[(Scalar, Scalar)] = {
+      val ef = clamp(border.hierarchicalEdge.asSegment.getFractionAt(ot.startPoint), 0, 1)
+      val sf = clamp(border.hierarchicalEdge.asSegment.getFractionAt(ot.endPoint), 0, 1)
+      if(ef ~< sf) Some((ef, sf))
+      else if(ef ~> sf) Some((sf, ef))
+      else None
+    }
+
+    /**Includes twin, twin's child's and twin's parent nodes*/
+    def allOppositeNodes(minLength: Scalar): Seq[BorderNode] = {
+      border.hierarchicalEdge.meAndAllLevelChilds.flatMap(e => e.ownData.borderNodes).filter(_.overlapLength(this) >= minLength)
+    }
+
+    /**Twin's opposite nodes*/
+    def oppositeNodes(minLength: Scalar): Seq[BorderNode] = {
+      border.hierarchicalEdge.ownData.edgeNodeTwin.borderNodes.filter(_.overlapLength(this) >= minLength)
+    }
+
+    /** Return true if exists segment that nonOverlapped by any child with specified minimum length*/
+    def existsNonChildSegment(minLength: Scalar): Boolean = {
+      val toCut = border.hierarchicalEdge.allLevelChilds.flatMap(c => c.ownData.borderNodes).map(bn => (
+        border.hierarchicalEdge.asSegment.getFractionAt(bn.startPoint),
+        border.hierarchicalEdge.asSegment.getFractionAt(bn.endPoint),
+      ))
+
+      IntervalOps.cutFrom((startFraction, endFraction), toCut).exists{case (l, r) => (r - l) >= minLength}
+    }
+
   }
 
 

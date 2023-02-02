@@ -1,6 +1,5 @@
 package utils.datastructures.dcel.nav
 
-import utils.datastructures.dcel.nav.NavigableDCEL.NavigableHalfEdge
 import utils.math.Scalar
 import utils.math.planar.{SegmentPlanar, V2}
 object Portal {

@@ -1,46 +1,45 @@
 package utils.datastructures.dcel.nav
 
-import utils.datastructures.dcel.nav.NavigableDCEL.NavigableFace
 import utils.datastructures.dcel.nav.DCELPath._
 import utils.datastructures.graph.ArrayBufferGraph
 import utils.datastructures.graph.Graph.Graph
 
 /*
-**==============================================================**=========================================
-||                                   e3                         ||
-||      Area A                                                  ||           Area G
-||                    *--------|d4|--------*-----------------*  ||
-||                    |                    |                  | ||
-||                    |                    |                  _ __
-||                    |                    |                 d6
-||                    |                    |                  _ __
-||                    |                    |                  | ||
-||                    |                    |                  | ||
-||                    |                    |                  | || *---------------------*
-||                    |                    |                  _ || _                     |
-||                    |    Area C          |     Area D      d5 ||        Area F         |
-||                    |                    |                  _ || _                     |
-||e4                  |                    |                  | || |                     |
-||                    |                    |                  | || |                     |
-|| *------|d2|--------*---------|d3|-------*------------------* || *---------------------*
-|| |            idE4      idE3             |                    ||
-|| |                                       |                    ||
-|| |                                       |                 e2 ||
-|| |idE5          Area B                   |                    __
-|| |                                  idE2 |                    d1
-|| |                idE1                   |                    __
-|| *-------------------------------------- *   e1               ||
-**==============================================================**==============================================
+**==============================================================**=======================================**
+||                                   e3                         ||                                       ||
+||      Area A                                                  ||           Area G                      ||
+||                    *--------|d4|--------*-----------------*  ||                                       ||
+||                    |                    |                  | ||                                       ||
+||                    |                    |                  _ __                                       ||
+||                    |                    |                 d6                                          ||
+||                    |                    |                  _ __                                       ||
+||                    |                    |                  | ||                                       ||
+||                    |                    |                  | ||                                       ||
+||                    |                    |                  | || *---------------------*               ||
+||                    |                    |                  _ || _                     |               ||
+||                    |    Area C          |     Area D      d5 ||        Area F         |               ||
+||                    |                    |                  _ || _                     |               ||
+||e4                  |                    |                  | || |                     |               ||
+||                    |                    |                  | || |                     |               ||
+|| *------|d2|--------*---------|d3|-------*------------------* || *---------------------*               ||
+|| |            idE4      idE3             |                    ||                                       ||
+|| |                                       |                    ||                                       ||
+|| |                                       |                 e2 ||                                       ||
+|| |idE5          Area B                   |                    __                                       ||
+|| |                                  idE2 |                    d1                                       ||
+|| |                idE1                   |                    __                                       ||
+|| *-------------------------------------- *   e1               ||                                       ||
+**==============================================================**=======================================**
                                                e1.twin
- Area A border ways out = d1
- Area A inner DCEL to me ways = d2, d4
+ Area A border own area ways out = d1
+ Area A inner DCEL to my area ways = d2, d4
  Area A inner DCEL ways out = d5, d6
  Area A ways out = d1, d6, d5
  Area A own area exits = d1, d2, d4
  */
-
-class FaceNavData(area: NavigableFace) {
 /*
+class FaceNavData(area: NavigableFace) {
+
   //todo filter out edges filled with impassable childs
 
   /** Edges through you can leave area */
@@ -222,5 +221,7 @@ class FaceNavData(area: NavigableFace) {
       }
     }
   */
-  */
+
 }
+
+*/
