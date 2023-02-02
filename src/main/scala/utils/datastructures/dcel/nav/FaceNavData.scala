@@ -56,7 +56,38 @@ class FaceNavData(area: NavigableFace) {
 
 
   //Graphs
+val visibilityGraph: Graph[V2, Scalar] = {
+  Logs.pathDataGeneration.trace(s"Calculating visibility graph for ${area.data.name}")
+  //cw, ccw
+  val (containers, holes) = area.ownArea.regions.partition(_.areaSign >= 0)
+  val addPoints = (borderWaysOut ++ innerDcelToMeWays map (_.point))
+    .filter(p => area.ownArea.contains(p))
+  VisibilityGraphOps.buildVisibilityGraph(containers ++ holes, addPoints)
+}
 
+def findPathOnVisibilityGraph(from: V2, to: V2): Option[AreaPath] = {
+  if (area.visible(from, to))
+    Some(AreaPath(Seq(GoBetweenPoints(PointNode(from, area), PointNode(to, area)))))
+  else {
+    val visFrom = visibilityGraph.nodes.filter(node => area.visible(node, from)).map(n => (n, n.distance(from))).toSeq
+    val visTo = visibilityGraph.nodes.filter(node => area.visible(node, to)).map(n => (n, n.distance(to))).toSeq
+    if (visFrom.nonEmpty && visTo.nonEmpty) {
+      GraphOps.shortestPath(visibilityGraph, visFrom, visTo, (e: Scalar) => e, (n: V2) => n.distance(to)) map {
+        path => {
+          val nodes =
+            (if (path.nodes.head != from) Seq(from) else Seq()) ++ path.nodes ++
+              (if (path.nodes.last != to) Seq(to) else Seq())
+          if (nodes.length == 1) {
+            log.info(s"Found path one node length")
+            AreaPath(Seq(GoBetweenPoints(PointNode(from, area), PointNode(to, area))))
+          } else
+            AreaPath(nodes.map(PointNode(_, area)).sliding(2).map { case Seq(f, s) => GoBetweenPoints(f, s) }.toSeq)
+          //            AreaPath(nodes.sliding(2).map{case Seq(f, s) => (PointNode(f), f.distance(s))}.toSeq)
+        }
+      }
+    } else None
+  }
+}
 
   /** Graph for finding patches on area level, contains inner DCEL edges and border edges
     * should be calculated and updated recursively for all childs first

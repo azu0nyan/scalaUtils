@@ -103,7 +103,7 @@ class PlanarDCEL[D <: DCELData](
       curWaveFaces = nextWave
       curWave += 1
     }
-    println((odd.toSeq, even.toSeq))
+//    println((odd.toSeq, even.toSeq))
     (odd.toSeq, even.toSeq)
   }
 

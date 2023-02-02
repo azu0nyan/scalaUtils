@@ -57,7 +57,7 @@ object HierarchicalDCELCache {
 
   def obstacles[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Seq[SegmentPlanar] = ownArea.regions.flatMap(_.sides) //todo cache
 
-  //todo check if hole contours necessary
+  //todo check if hole contours necessary( and then in navMesh)
   def ownArea[OD <: HierarchicalDCELOwnData](implicit face: HierarchicalFace[OD]): Polygon = {
     val container = polygon
     val insides = holesPolys ++: face.innerDCEL.outerFace.holesContours.map(hc => PolygonRegion(hc.map(x => x.origin.data.position).toSeq)).toSeq

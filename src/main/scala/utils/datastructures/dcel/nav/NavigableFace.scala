@@ -1,5 +1,6 @@
 package utils.datastructures.dcel.nav
 
+import utils.datastructures.dcel.DCEL.DCELData
 import utils.datastructures.dcel.HierarchicalDCEL._
 import utils.datastructures.dcel.nav.DCELPath.BorderNode
 import utils.datastructures.dcel.nav.NavigableDCEL._
@@ -25,12 +26,15 @@ object NavigableFace {
         .filter(_.data.isOuterEdge)
         .flatMap(_.data.ownData.borderNodes)
         .filter(bn => bn.oppositeNodes(params.minBorderEdgeLength).exists(on =>
-            area.hierarchicalFace.innerDCEL.innerFaces.contains(on.border.area.hierarchicalFace.face) //on.border.area.hierarchicalFace != area.hierarchicalFace not needed
+          area.hierarchicalFace.innerDCEL.innerFaces.contains(on.border.area.hierarchicalFace.face) //on.border.area.hierarchicalFace != area.hierarchicalFace not needed
         ))
 
-    /**Ways to leave own area*/
+    /** Ways to leave own area */
     val ownAreaExits: Seq[BorderNode] = borderOwnAreaWaysOut ++ innerDcelToOwnAreaWays
 
+    val navMesh = {
+
+    }
 
   }
 }

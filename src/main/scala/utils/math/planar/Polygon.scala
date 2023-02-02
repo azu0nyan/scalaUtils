@@ -65,6 +65,14 @@ object Polygon {
     def area: Scalar = outer.area - holes.map(_.area).sum
   }
 
+  /**Split nested polygon to seq of container-hole-container-hole-etc*/
+  def partitionNested(nested: Seq[NestedPolygon]): Seq[Seq[PolygonRegion]] = {
+    val curStep: Seq[PolygonRegion] = nested.map(_.outer)
+    val nextStep: Seq[NestedPolygon] = nested.flatMap(_.holes)
+    if(nextStep.nonEmpty ) curStep +: partitionNested(nextStep)
+    else Seq(curStep)
+  }
+
   def toNestedPolygons(regs: Seq[PolygonRegion]): Seq[NestedPolygon] = {
     toNestedPolygonsRec(regs.sortBy(-_.area))
   }
