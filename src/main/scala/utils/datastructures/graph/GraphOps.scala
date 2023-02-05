@@ -68,7 +68,7 @@ object GraphOps {
                                         from: Seq[(NodeData, Cost)], to: Seq[(NodeData, Cost)],
                                         pathCost: EdgeData => Cost,
                                         nodeHeuristic: NodeData => Cost = (nd:NodeData) => 0d,
-                                        maxCost: Option[Cost] = None
+                                        maxCost: Option[Cost] = None //todo use max cost
                                       ): Option[Path[NodeData, EdgeData]] = {
     // For node n, knownBest[n] is the cost of the cheapest path from start to n currently known.
     val knownBest: mutable.Map[NodeId, Cost] = mutable.Map[NodeId, Cost]()
