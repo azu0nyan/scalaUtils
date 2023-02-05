@@ -36,17 +36,13 @@ object PlanarDcelCutPipelineInterpreter {
       case Empty() =>
         context
       case Do(code) =>
-        code.apply(context)
-        context
+        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {code.apply(c);c}, context)
       case ForEachFace(selector, doWith) =>
-        for (f <- selector(context)) doWith(f)
-        context
+        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {for (f <- selector(c)) doWith(f); c}, context)
       case ForEachEdge(selector, doWith) =>
-        for (he <- selector(context)) doWith(he)
-        context
+        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {for (he <- selector(c)) doWith(he); c}, context)
       case ForEachVertex(selector, doWith) =>
-        for (v <- selector(context)) doWith(v)
-        context
+        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {for (v <- selector(c)) doWith(v); c}, context)
       case t: TraceSegmentAtAngle[D, L] =>
         PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.traceSegmentAtAngle(t, _), context)
       case c: CutPoly[D, L] =>

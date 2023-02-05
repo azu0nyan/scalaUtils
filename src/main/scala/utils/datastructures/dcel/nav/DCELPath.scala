@@ -1,5 +1,8 @@
 package utils.datastructures.dcel.nav
 
+import utils.datastructures.dcel.DCEL.{Face, HalfEdge}
+import utils.datastructures.dcel.PlanarDCEL.PlanarEdge
+import utils.datastructures.dcel.nav.NavMesh.{NavMeshDcelData, NavMeshPosition}
 import utils.datastructures.graph.Graph.Path
 import utils.math._
 import utils.math.WithAlmostEquals
@@ -10,14 +13,19 @@ object DCELPath {
 
   sealed trait PathNode {
     def point: V2
-    def area: NavigableFace
+    def face: NavigableFace
   }
 
-  case class PointNode(point: V2, area: NavigableFace) extends PathNode
+  case class NavMeshPosition(point: V2, face: NavigableFace, navMeshFace: Face[NavMeshDcelData]) extends  PathNode
+
+  case class NavMeshEdge(edge: HalfEdge[NavMeshDcelData]) extends PathNode {
+    override def point: V2 = edge.asSegment.center
+    override def face: NavigableFace = ???
+  }
 
   case class BorderNode(border: NavigableHalfEdge, startFraction: Scalar, endFraction: Scalar) extends PathNode {
     override def point: V2 = border.hierarchicalEdge.asSegment.sampleAt((startFraction + endFraction) / 2d)
-    override def area: NavigableFace = border.hierarchicalEdge.face.data.ownData //area
+    override def face: NavigableFace = border.hierarchicalEdge.face.data.ownData //area
 
 
     def nodeLength: Scalar = startPoint.distance(endPoint)

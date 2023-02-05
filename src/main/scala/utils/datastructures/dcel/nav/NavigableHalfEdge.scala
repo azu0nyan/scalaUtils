@@ -33,7 +33,8 @@ trait NavigableHalfEdge {
         //if(p1 < p2) (p1, p2) else (p2, p1) //check not needed as parents and childs goes at the same direction
         (p1, p2)
       }
-      //todo split where blocking wall going ortogonal to edge
+      //todo fake edges impassable or smth
+      // todo split where blocking wall going ortogonal to edge
        IntervalOps.cutFrom((0d, 1d), blocked).map { case (l, r) => BorderNode(this, l, r) }
     } else Seq()
 
