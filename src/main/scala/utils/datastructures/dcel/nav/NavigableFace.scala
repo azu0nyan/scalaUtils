@@ -7,7 +7,7 @@ import utils.datastructures.dcel.nav.NavMesh.{NavMesh, NavMeshGraph}
 import utils.datastructures.dcel.nav.NavigableDCEL._
 import utils.datastructures.dcel.nav.NavigableFace.FaceNavData
 import utils.datastructures.graph.Graph.Graph
-import utils.datastructures.graph.{ArrayBufferGraph, GraphOps}
+import utils.datastructures.graph.{ArrayBufferGraph, Graph, GraphOps}
 import utils.math.planar.V2
 import utils.math._
 
@@ -58,22 +58,41 @@ object NavigableFace {
 
     def findPathOnNavMeshBetweenBorders(from: BorderNode, to: BorderNode): Option[DCELPath] = {
       if (from == to) {
-
+        ???
       } else {
         (navMesh.boundMeshEdge(from), navMesh.boundMeshEdge(to)) match {
           case (None, _) => None
           case (_, None) => None
           case (Some(fEdge), Some(tEdge)) =>
-            if(fEdge.leftFace == tEdge.leftFace){
-
+            if (fEdge.leftFace == tEdge.leftFace) {
+              ???
             } else {
-
+              val starts = Seq((from, 0d))
+              val ends = Seq((to, 0d))
+              val path = GraphOps.shortestPath[PathNode, Scalar](navMeshGraph, starts, ends, (e: Scalar) => e, (n: PathNode) => n.point.distance(to.point), Some(params.maxPathLength))
+              path match {
+                case Some(foundPath) =>
+                  if (foundPath.nodes.length == 1) {
+                    ???
+                    //Some(DCELPath(Seq(GoBetweenPoints(from, to))))
+                  } else {
+                    toPath(foundPath)
+                  }
+                case None => None
+              }
             }
         }
       }
     }
 
+    private def toPath(foundPath: Graph.Path[PathNode, Scalar]): Option[DCELPath] = {
+      val pathEdges = foundPath.nodes.sliding(2).map { case Seq(a, b) => (a, b) }.map(nodesToEdge)
+      Some(DCELPath(pathEdges.toSeq))
+    }
+
     def findPathOnNavMeshBetweenPositions(from: NavMeshPosition, to: NavMeshPosition): Option[DCELPath] = {
+
+
       if (from.navMeshFace == to.navMeshFace) { //since polygons are convex
         Some(DCELPath(Seq(GoBetweenPoints(from, to))))
       } else {
@@ -85,8 +104,7 @@ object NavigableFace {
             if (foundPath.nodes.length == 1) {
               Some(DCELPath(Seq(GoBetweenPoints(from, to))))
             } else {
-              val pathEdges = foundPath.nodes.sliding(2).map { case Seq(a, b) => (a, b) }.map(nodesToEdge)
-              Some(DCELPath(pathEdges.toSeq))
+              toPath(foundPath)
             }
           case None => None
         }
