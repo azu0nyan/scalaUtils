@@ -3,6 +3,7 @@ package utils.datastructures.dcel.nav
 import utils.datastructures.dcel.DCEL.DCELData
 import utils.datastructures.dcel.HierarchicalDCEL._
 import utils.datastructures.dcel.nav.DCELPath._
+import utils.datastructures.dcel.nav.NavMesh.{NavMesh, NavMeshGraph}
 import utils.datastructures.dcel.nav.NavigableDCEL._
 import utils.datastructures.dcel.nav.NavigableFace.FaceNavData
 import utils.datastructures.graph.Graph.Graph
@@ -35,37 +36,56 @@ object NavigableFace {
     /** Ways to leave own area */
     val ownAreaExits: Seq[BorderNode] = borderOwnAreaWaysOut ++ innerDcelToOwnAreaWays
 
-    val navMesh: ArrayBufferGraph[PathNode, Scalar] = NavMesh.buildGraph(face)
+    val (navMesh, navMeshGraph): (NavMesh, NavMeshGraph) = NavMesh.buildNavMeshAndGraph(face)
 
-    def findPathOnNavMesh(from: NavMeshPosition, to: NavMeshPosition): Option[DCELPath] = {
+    def nodesToEdge(nodes: (PathNode, PathNode)): PathEdge[PathNode, PathNode] = nodes match {
+      case (f: NavMeshPosition, t: NavMeshPosition) => GoBetweenPoints(f, t)
+
+      case (f: BorderNode, t: BorderNode) if f.border.edgeNodeTwin == t.border => GoTroughBorder(f, t) //hanging edge
+      case (f: BorderNode, t: BorderNode) if f.border.edgeNodeTwin != t.border => GoTroughFaceOnNavMesh(f, t) //todo ??? shouldn't be possible or?
+
+      case (f: NavMeshEdge, t: NavMeshEdge) => GoBetweenNavEdges(f, t)
+
+      case (f: NavMeshPosition, t: NavMeshEdge) => GoFromPointToNavEdge(f, t)
+      case (f: NavMeshEdge, t: NavMeshPosition) => GoFromNavEdgeToPoint(f, t)
+
+      case (f: NavMeshPosition, t: BorderNode) => GoFromPointToBorder(f, t)
+      case (f: BorderNode, t: NavMeshPosition) => GoFromBorderToPoint(f, t)
+
+      case (f: BorderNode, t: NavMeshEdge) => GoFromBorderToNavEdge(f, t)
+      case (f: NavMeshEdge, t: BorderNode) => GoFromNavEdgeToBorder(f, t)
+    }
+
+    def findPathOnNavMeshBetweenBorders(from: BorderNode, to: BorderNode): Option[DCELPath] = {
+      if (from == to) {
+
+      } else {
+        (navMesh.boundMeshEdge(from), navMesh.boundMeshEdge(to)) match {
+          case (None, _) => None
+          case (_, None) => None
+          case (Some(fEdge), Some(tEdge)) =>
+            if(fEdge.leftFace == tEdge.leftFace){
+
+            } else {
+
+            }
+        }
+      }
+    }
+
+    def findPathOnNavMeshBetweenPositions(from: NavMeshPosition, to: NavMeshPosition): Option[DCELPath] = {
       if (from.navMeshFace == to.navMeshFace) { //since polygons are convex
         Some(DCELPath(Seq(GoBetweenPoints(from, to))))
       } else {
         val starts = from.distancesToBorders
         val ends = to.distancesToBorders
-        val path = GraphOps.shortestPath(navMesh, starts, ends, (e: Scalar) => e, (n: PathNode) => n.point.distance(to.point), Some(params.maxPathLength))
+        val path = GraphOps.shortestPath(navMeshGraph, starts, ends, (e: Scalar) => e, (n: PathNode) => n.point.distance(to.point), Some(params.maxPathLength))
         path match {
           case Some(foundPath) =>
             if (foundPath.nodes.length == 1) {
               Some(DCELPath(Seq(GoBetweenPoints(from, to))))
             } else {
-              val pathEdges = foundPath.nodes.sliding(2).map {
-                case Seq(f: NavMeshPosition, t: NavMeshPosition) => GoBetweenPoints(f, t)
-
-                case Seq(f: BorderNode, t: BorderNode) if f.border.edgeNodeTwin == t.border => GoTroughBorder(f, t) //hanging edge
-                case Seq(f: BorderNode, t: BorderNode) if f.border.edgeNodeTwin != t.border => GoTroughFaceOnNavMesh(f, t) //todo ??? shouldn't be possible or?
-
-                case Seq(f: NavMeshEdge, t: NavMeshEdge) => GoBetweenNavEdges(f, t)
-
-                case Seq(f: NavMeshPosition, t: NavMeshEdge) => GoFromPointToNavEdge(f, t)
-                case Seq(f: NavMeshEdge, t: NavMeshPosition) => GoFromNavEdgeToPoint(f, t)
-
-                case Seq(f: NavMeshPosition, t: BorderNode) => GoFromPointToBorder(f, t)
-                case Seq(f: BorderNode, t: NavMeshPosition) => GoFromBorderToPoint(f, t)
-
-                case Seq(f: BorderNode, t: NavMeshEdge) => GoFromBorderToNavEdge(f, t)
-                case Seq(f: NavMeshEdge, t: BorderNode) => GoFromNavEdgeToBorder(f, t)
-              }
+              val pathEdges = foundPath.nodes.sliding(2).map { case Seq(a, b) => (a, b) }.map(nodesToEdge)
               Some(DCELPath(pathEdges.toSeq))
             }
           case None => None
@@ -95,19 +115,18 @@ object NavigableFace {
       //add nodes from this dcel to innerDcel and vise versa
       for (e <- face.hierarchicalFace.fullBorder;
            bn <- e.data.ownData.borderNodes;
-            child <- bn.directChildTwinNodes(params.minBorderEdgeLength)
+           child <- bn.directChildTwinNodes(params.minBorderEdgeLength)
            ) {
         res.addOrUpdateEdge(bn, child, GoToChild(bn, child))
         res.addOrUpdateEdge(child, bn, GoToParent(child, bn))
       }
 
       //nodes for moving trough ownArea's nav mesh
-      for(Seq(f, t) <- ownAreaExits.combinations(2);
-          p <- findPathOnNavMesh()
-          ){
+      for (Seq(f, t) <- ownAreaExits.combinations(2);
+           p <- findPathOnNavMesh()
+           ) {
 
       }
-
 
 
       res

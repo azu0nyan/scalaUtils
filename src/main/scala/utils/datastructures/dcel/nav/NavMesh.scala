@@ -2,10 +2,11 @@ package utils.datastructures.dcel.nav
 
 
 import utils.datastructures.dcel.PlanarDCELCutPipeline._
-import utils.datastructures.dcel.DCEL.{DCELData, Face}
+import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge}
 import utils.datastructures.dcel.{DCEL, DCELDataProvider, PlanarDCEL, PlanarDcelCutPipelineInterpreter}
 import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutPoly, Labels, StepsSeq}
 import utils.datastructures.dcel.nav.DCELPath.{BorderNode, NavMeshEdge, PathNode}
+import utils.datastructures.dcel.nav.NavMesh.NavMeshFaceData
 import utils.datastructures.graph.{ArrayBufferGraph, GraphOps}
 import utils.math.Scalar
 import utils.math.planar.algo.PolygonToConvex
@@ -15,17 +16,29 @@ import utils.math.planar.{Polygon, V2}
 object NavMesh {
 
 
-  class NavMeshHalfEdge(var boundTo: Option[NavigableHalfEdge] = None)
-  class NavMeshFace(var isHole: Boolean)
+  class NavMeshHalfEdgeData(var boundTo: Option[NavigableHalfEdge] = None)
+  class NavMeshFaceData(var isHole: Boolean)
 
   type NavMeshDcelData = DCELData {
     type VertexData = V2
-    type HalfEdgeData = NavMeshHalfEdge
-    type FaceData = NavMeshFace
+    type HalfEdgeData = NavMeshHalfEdgeData
+    type FaceData = NavMeshFaceData
   }
 
-  def buildDcelFromNavigableFace(face: NavigableFace): PlanarDCEL[NavMeshDcelData] = {
-    val res = new PlanarDCEL[NavMeshDcelData](new NavMeshFace(true), x => x)
+//  type NavMesh = PlanarDCEL[NavMeshDcelData]
+  type NavMeshGraph =  ArrayBufferGraph[PathNode, Scalar]
+
+  class NavMesh extends PlanarDCEL[NavMeshDcelData](new NavMeshFaceData(true), x => x) {
+    def boundMeshEdge(bn: BorderNode): Option[HalfEdge[NavMeshDcelData]] = halfEdges.find(_.data.boundTo.contains(bn.border))
+    def boundMeshFace(bn: BorderNode): Option[Face[NavMeshDcelData]] = halfEdges.find(_.data.boundTo.contains(bn.border)).map(_.leftFace)
+
+  }
+
+
+
+
+  def buildNavMeshFromNavigableFace(face: NavigableFace): NavMesh = {
+    val res = new NavMesh
     //todo more efficient
     type CutLabels = Labels {
       type VertexLabel = Unit
@@ -35,9 +48,9 @@ object NavMesh {
 
     val provider = new DCELDataProvider[NavMeshDcelData] {
       override def newVertexData(v: V2): V2 = v
-      override def newEdgeData(v1: DCEL.Vertex[NavMeshDcelData], v2: DCEL.Vertex[NavMeshDcelData]): (NavMeshHalfEdge, NavMeshHalfEdge) = (new NavMeshHalfEdge(), new NavMeshHalfEdge)
-      override def newFaceData(edge: DCEL.HalfEdge[NavMeshDcelData]): NavMeshFace = new NavMeshFace(false)
-      override def splitEdgeData(edge: DCEL.HalfEdge[NavMeshDcelData], data: V2): (NavMeshHalfEdge, NavMeshHalfEdge) = (new NavMeshHalfEdge(), new NavMeshHalfEdge)
+      override def newEdgeData(v1: DCEL.Vertex[NavMeshDcelData], v2: DCEL.Vertex[NavMeshDcelData]): (NavMeshHalfEdgeData, NavMeshHalfEdgeData) = (new NavMeshHalfEdgeData(), new NavMeshHalfEdgeData)
+      override def newFaceData(edge: DCEL.HalfEdge[NavMeshDcelData]): NavMeshFaceData = new NavMeshFaceData(false)
+      override def splitEdgeData(edge: DCEL.HalfEdge[NavMeshDcelData], data: V2): (NavMeshHalfEdgeData, NavMeshHalfEdgeData) = (new NavMeshHalfEdgeData(), new NavMeshHalfEdgeData)
     }
 
 
@@ -78,8 +91,8 @@ object NavMesh {
     res
   }
 
-  def buildGraphFromDcel(from: PlanarDCEL[NavMeshDcelData]): ArrayBufferGraph[PathNode, Scalar] = {
-    val res = new ArrayBufferGraph[PathNode, Scalar]
+  def buildGraphFromDcel(from: PlanarDCEL[NavMeshDcelData]): NavMeshGraph = {
+    val res = new NavMeshGraph
 
     for(e <- from.halfEdges) {
       e.data.boundTo match {
@@ -106,10 +119,10 @@ object NavMesh {
     res
   }
 
-  def buildGraph(face: NavigableFace): ArrayBufferGraph[PathNode, Scalar] = {
-    val dcel = buildDcelFromNavigableFace(face)
-    val graph = buildGraphFromDcel(dcel)
-    graph
+  def buildNavMeshAndGraph(face: NavigableFace): (NavMesh, NavMeshGraph) = {
+    val navMesh = buildNavMeshFromNavigableFace(face)
+    val graph = buildGraphFromDcel(navMesh)
+    (navMesh, graph)
   }
 
 
