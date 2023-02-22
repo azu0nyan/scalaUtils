@@ -131,9 +131,8 @@ object DCELPath {
     override val length: Scalar = from.point.distance(to.point)
   }
 
-  case class GoTroughFaceOnNavMesh(from: BorderNode, to: BorderNode) extends PathEdge[BorderNode, BorderNode] {
-    override def reverse: GoTroughFaceOnNavMesh = GoTroughFaceOnNavMesh(to, from)
-    override val length: Scalar = from.point.distance(to.point)
+  case class GoTroughFaceOnNavMesh(from: BorderNode, to: BorderNode, length: Scalar, calculatedPath: Option[DCELPath]) extends PathEdge[BorderNode, BorderNode] {
+    override def reverse: GoTroughFaceOnNavMesh = GoTroughFaceOnNavMesh(to, from, length, calculatedPath.map(_.reverse))
   }
 
   case class GoTroughFace(from: BorderNode, to: BorderNode, a: NavigableFace, length: Scalar, calculatedPath: Option[DCELPath]) extends PathEdge[BorderNode, BorderNode] {
@@ -157,7 +156,7 @@ object DCELPath {
 
 
   case class DCELPath(
-                       edges: Seq[PathEdge[PathNode, PathNode]]
+                       edges: Seq[PathEdge[_, _]]
                      ) {
     def replaceHead(points: Seq[PathEdge[PathNode, PathNode]]): DCELPath = DCELPath(points ++ edges.tail)
 
@@ -184,8 +183,7 @@ object DCELPath {
   }
 
 
-  //todo mb remove
-  def fromPath(path: Path[PathNode, PathEdge[PathNode, PathNode]]): DCELPath =
+  def fromPath(path: Path[PathNode, PathEdge[_, _]]): DCELPath =
     DCELPath(path.fromByTo.map(_._2))
   //todo mb remove
   def checkConnectionCorrectness(edges: Seq[PathEdge[_, _]]): Boolean =
