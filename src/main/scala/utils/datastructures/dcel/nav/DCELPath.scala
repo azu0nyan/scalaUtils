@@ -156,7 +156,7 @@ object DCELPath {
 
 
   case class DCELPath(
-                       edges: Seq[PathEdge[_, _]]
+                       edges: Seq[PathEdge[PathNode, PathNode]]
                      ) {
     def replaceHead(points: Seq[PathEdge[PathNode, PathNode]]): DCELPath = DCELPath(points ++ edges.tail)
 
@@ -183,7 +183,7 @@ object DCELPath {
   }
 
 
-  def fromPath(path: Path[PathNode, PathEdge[_, _]]): DCELPath =
+  def fromPath(path: Path[PathNode, PathEdge[PathNode, PathNode]]): DCELPath =
     DCELPath(path.fromByTo.map(_._2))
   //todo mb remove
   def checkConnectionCorrectness(edges: Seq[PathEdge[_, _]]): Boolean =

@@ -72,10 +72,10 @@ object NavMesh {
         e => e.data.boundTo = Some(edge.data.ownData))): _*
     )
 
-    val markFaces = ForEachFace[NavMeshDcelData, CutLabels](SelectFacesByLabel("HOLE"), f => f.data.isHole = true)
+    val markFaces = ForEachFace[NavMeshDcelData, CutLabels](SelectFacesByLabel[NavMeshDcelData, CutLabels]("HOLE"), f => f.data.isHole = true)
 
     val toConvex = ForEachFace[NavMeshDcelData, CutLabels](
-      SelectFacesByLabel("NO_HOLE"),
+      SelectFacesByLabel[NavMeshDcelData, CutLabels]("NO_HOLE"),
       f => PolygonToConvex.toConvexPolygonsDCEL(res, f, provider)
     )
 

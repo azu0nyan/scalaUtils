@@ -130,7 +130,7 @@ object NavigableFace {
     /** Graph for finding patches on face level, contains inner DCEL edges and border edges
       * should be calculated and updated recursively for all childs first
       * */
-    val edgeGraph: Graph[BorderNode, PathEdge[_, _]] = {
+    def edgeGraph: Graph[BorderNode, PathEdge[_, _]] = {
       val res = new ArrayBufferGraph[BorderNode, PathEdge[_, _]]()
 
       val edges = face.hierarchicalFace.fullBorder ++ face.hierarchicalFace.innerDCEL.halfEdges
@@ -176,17 +176,19 @@ object NavigableFace {
       res
     }
 
-    def findPathOnEdgeGraph(from: BorderNode, to: BorderNode): Option[DCELPath] =
-      if (edgeGraph.nodes.contains(from) && edgeGraph.nodes.contains(to)) {
-        GraphOps
-          .shortestPath(edgeGraph, Seq((from, 0d)), Seq((to, 0d)), (x: PathEdge[_, _]) => x.length, (n: PathNode) => n.point.distance(to.point), Some(params.maxPathLength))
-          .map(p => fromPath(p))
-      } else {
-        println(s"No nodes in edge graph $edgeGraph $from $to") //todo remove
-        None
-      }
+    def findPathOnEdgeGraph(from: BorderNode, to: BorderNode): Option[DCELPath] = {
+//      if (edgeGraph.nodes.contains(from) && edgeGraph.nodes.contains(to)) {
+//        GraphOps
+//          .shortestPath(edgeGraph, Seq((from, 0d)), Seq((to, 0d)), (x: PathEdge[_, _]) => x.length, (n: PathNode) => n.point.distance(to.point), Some(params.maxPathLength))
+//          .map(p => fromPath(p))
+//      } else {
+//        println(s"No nodes in edge graph $edgeGraph $from $to") //todo remove
+//        None
+//      }
+      ???
+    }
 
-    val borderGraph: Graph[BorderNode, DCELPath] = {
+    def borderGraph: Graph[BorderNode, DCELPath] = {
       //todo use O(n^3) Floyd Warshall for border graphs, and path cache for biggest if needed
       val res = new ArrayBufferGraph[BorderNode, DCELPath]()
 
@@ -209,7 +211,14 @@ object NavigableFace {
     //  borderWaysOut.flatMap(e => findPathOnNavMeshBetweenPositionAndBorder(from, e))
 
     /** Assumes that from inside outer border and some level deeper in hierarchy */
-    def reachableDeepWaysOut(from: NavMeshPosition): Seq[DCELPath] = ???
+//    def reachableDeepWaysOut(from: NavMeshPosition): Seq[DCELPath] = ???
+
+    def findPath(from: NavMeshPosition, to: NavMeshPosition): Option[DCELPath] = {
+//      val lca =
+      ???
+    }
+
+//    def findPathInside(from: NavMeshPosition, to: NavMeshPosition) = ???
 
   }
 }
