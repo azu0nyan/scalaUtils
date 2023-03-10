@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 object Triangle {
 
 
-  def apply(t: utils.math.space.Triangle, uvParams: UVGenParams = UVGenParams()): MutableMeshSection = {
+  def apply(t: utils.math.space.Triangle/*, uvParams: UVGenParams = UVGenParams()*/): MutableMeshSection = {
     val normal = ((t.v2 - t.v1) ^ (t.v3 - t.v1)).normalize
     new MutableMeshSection(
       ArrayBuffer(t.v1, t.v2, t.v3),
