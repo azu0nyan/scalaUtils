@@ -20,4 +20,14 @@ object Polygon {
       p.vertices.map(m => uvParams.transform(m)).to(ArrayBuffer)
     )
   }
+
+  def apply(p: PolygonRegion, plane: Plane, uvs: Seq[V2]): MutableMeshSection = {
+    val normal = plane.normal
+    new MutableMeshSection(
+      p.vertices.map(v => plane.toWorldCords(v)).to(ArrayBuffer),
+      p.triangulationIndices.to(ArrayBuffer),
+      (0 until p.verticesCount).map(_ => normal).to(ArrayBuffer),
+      uvs.to(ArrayBuffer)
+    )
+  }
 }

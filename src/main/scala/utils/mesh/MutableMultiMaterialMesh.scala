@@ -2,14 +2,14 @@ package utils.mesh
 
 import scala.collection.mutable
 
-class MultiMaterialMesh[MATERIAL_ID](
-                         val sections: mutable.HashMap[MATERIAL_ID, MutableMeshSection]
+class MutableMultiMaterialMesh[M](
+                         val sections: mutable.HashMap[M, MutableMeshSection]
                        )  {
   def this()= {
-    this(new mutable.HashMap[MATERIAL_ID, MutableMeshSection]())
+    this(new mutable.HashMap[M, MutableMeshSection]())
   }
 
-  def +=(materialAndMesh: (MATERIAL_ID, MeshSection)): this.type = {
+  def +=(materialAndMesh: (M, MeshSection)): this.type = {
     if (sections.contains(materialAndMesh._1)) {
       sections(materialAndMesh._1) ++= materialAndMesh._2
     } else {
@@ -18,14 +18,12 @@ class MultiMaterialMesh[MATERIAL_ID](
     this
   }
 
-  def ++=(ot: MultiMaterialMesh[MATERIAL_ID]): this.type = {
+  def ++=(ot: MutableMultiMaterialMesh[M]): this.type = {
     ot.sections.foreach(this.+=)
     this
-  }
-
-
-
-  def toSingleSection:MeshSection = {
+  }  
+  
+  def toSingleSection: MeshSection = {
     sections.values.reduce((a:MutableMeshSection , b:MutableMeshSection) => a ++= b)
   }
 

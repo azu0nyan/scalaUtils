@@ -76,8 +76,8 @@ trait MeshSection {
     }
   }
 
-  def toMultiMaterialMesh[MATERIAL](material: MATERIAL): MultiMaterialMesh[MATERIAL] = {
-    val mmm = new MultiMaterialMesh[MATERIAL]()
+  def toMultiMaterialMesh[MATERIAL](material: MATERIAL): MutableMultiMaterialMesh[MATERIAL] = {
+    val mmm = new MutableMultiMaterialMesh[MATERIAL]()
     mmm += (material, this)
     mmm
   }
