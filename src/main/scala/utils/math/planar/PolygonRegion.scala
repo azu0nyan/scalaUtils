@@ -151,14 +151,17 @@ object PolygonRegion {
     /** side to side intersections counts */
     def intersects(ot: PolygonRegion): Boolean = ot.vertices.exists(contains) || ot.sides.exists(contains)
 
+
     /** worst case O(n^3) */
     def triangulation: Seq[TrianglePlanar] = {
-      if (vertices.length < 3) return Seq()
-      if (vertices.length == 3) return Seq(TrianglePlanar(vertices(0), vertices(1), vertices(2)))
-
-      sideTriangles.find(tr => tr.nonDegenerate && tr.cw && contains(SegmentPlanar(tr.v3, tr.v1))) match {
-        case Some(t) => t +: removeVertex(t.indices._2).triangulation
-        case _ => Seq()
+      if (vertices.length < 3) Seq()
+      else if (vertices.length == 3) Seq(TrianglePlanar(vertices(0), vertices(1), vertices(2)))
+      else if(isConvex) vertices.drop(0).sliding(2, 1).map{case Seq(v1,v2) => TrianglePlanar(vertices(0), v1, v2)}.toSeq
+      else { //todo use faster triangulation
+        sideTriangles.find(tr => tr.nonDegenerate && tr.ccw && contains(SegmentPlanar(tr.v3, tr.v1))) match {
+          case Some(t) => t +: removeVertex(t.indices._2).triangulation
+          case _ => Seq()
+        }
       }
     }
 
@@ -179,7 +182,7 @@ object PolygonRegion {
     /** -1 for ccw with Y-up, 1 for cw */
     def matchSign(sign: Int): MYTYPE = if (sign == areaSign) replacePoints(vertices) else this.reverse
 
-    // IN CW order
+    // IN CCW order todo optimize
     def triangulationIndices: Seq[(Int, Int, Int)] = triangulation.map(t => (indexOf(t.v1), indexOf(t.v2), indexOf(t.v3)))
 
     def toTriangle: TrianglePlanar = TrianglePlanar(vertices(0), vertices(1), vertices(2))
