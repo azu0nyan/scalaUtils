@@ -9,7 +9,8 @@ object Triangulation {
   trait Triangulation {
     val vertices: Seq[V2]
 
-    val triangulationIndices: Iterable[(Int, Int, Int)]
+    val triangulationIndices: Seq[(Int, Int, Int)]
+//    val triangulationIndicesFlat: Seq[Int] = triangulationIndices.flatMap{case (a,b,c) => Seq(a,b,c)}
 
     def triangulationIndexedTriangles: Iterable[IndexedTriangle2] = triangulationIndices.map(ti => IndexedTriangle2(ti, vertices.apply))
 
@@ -20,7 +21,7 @@ object Triangulation {
 
       private def sizeOff: Int = Triangulation.this.vertices.size
 
-      override val triangulationIndices: Iterable[(Int, Int, Int)] = Triangulation.this.triangulationIndices ++ ot.triangulationIndices
+      override val triangulationIndices: Seq[(Int, Int, Int)] = Triangulation.this.triangulationIndices ++ ot.triangulationIndices
         .map(tri => (tri._1 + sizeOff, tri._2 + sizeOff, tri._3 + sizeOff))
     }
   }
@@ -29,7 +30,7 @@ object Triangulation {
     val polyAndHoles = Polygon.toRegionsAndHoles(p.regions)
     polyAndHoles.map(ph => triangulate(ph._1.vertices, ph._2.map(_.vertices))).reduceOption((t1, t2)=>t1.combineWith(t2)).getOrElse(new Triangulation {
       override val vertices: Seq[V2] = Seq()
-      override val triangulationIndices: Iterable[(Int, Int, Int)] = Seq()
+      override val triangulationIndices: Seq[(Int, Int, Int)] = Seq()
     })
   }
 
@@ -60,9 +61,10 @@ object Triangulation {
 
     import scala.jdk.CollectionConverters._
     val tris:Seq[(Int,Int,Int)] = Earcut.earcut(data.toArray, holeIndices.toArray, dim).asScala.grouped(3).map(t =>(t(0).toInt, t(1).toInt, t(2).toInt)).toSeq
+   // println(tris)
     new Triangulation {
       override val vertices: Seq[V2] = data.grouped(2).map(v => V2(v(0), v(1))).toSeq
-      override val triangulationIndices: Iterable[(Int, Int, Int)] = tris
+      override val triangulationIndices: Seq[(Int, Int, Int)] = tris
     }
 
   }
