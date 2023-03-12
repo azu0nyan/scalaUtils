@@ -42,7 +42,7 @@ object Plane {
 }
 
 
-case class Plane(origin: V3, x: V3, y: V3) extends NormalAndClosest {
+case class Plane(origin: V3, x: V3, y: V3, isLeft: Boolean = true) extends NormalAndClosest {
 
   def offset(offset: V3): Plane = Plane(origin + offset, x, y)
 
@@ -50,7 +50,7 @@ case class Plane(origin: V3, x: V3, y: V3) extends NormalAndClosest {
 
   def fromOrigin(point: V3): V3 = point - origin
 
-  def normal: UnitV3 = x ^ y
+  def normal: UnitV3 = if(isLeft) x ^ y else - (x ^ y)
 
   def dot: Scalar = normal ** origin
 
