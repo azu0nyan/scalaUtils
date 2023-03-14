@@ -27,6 +27,9 @@ object PolygonRegion {
       }.toSeq
     )
 
+    
+    def apply(i: Int): V2 = vertices(i)
+    
     final override def closed: Boolean = true
 
     def areaSign: Int = math.signum(areaSigned).toInt

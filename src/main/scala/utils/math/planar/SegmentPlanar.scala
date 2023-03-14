@@ -102,6 +102,16 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
   def normal: UnitV2 = body.rotate(HALF_PI)
 
+  def normalizedSegment: SegmentPlanar = SegmentPlanar(start, start + body.normalize)
+  /**uses left normal*/
+  def inSegmentCoordinates(v:V2) :V2 = start + body * v.x + toLeftNormal * v.y
+
+  def toSegmentCoordinates(v:V2) :V2 = {
+    val x = projectionUnit(v)
+    val y = v.distance(sampleAt(x))
+    V2(x, y)
+  }
+
   def toLeftNormal: V2 = body.normalize.rotate90CCW
 
   def toRightNormal: V2 = body.normalize.rotate90CW
