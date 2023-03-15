@@ -27,9 +27,15 @@ object PolygonRegion {
       }.toSeq
     )
 
-    
+    def offsetFromSide(value: Scalar): PolygonRegion = PolygonRegion(
+      (vertices.last +: vertices :+ vertices.head).sliding(3).map {
+        case Seq(p, c, n) => AngleCCWPlanar(p, c, n).offsetFromSide(value)
+      }.toSeq
+    )
+
+
     def apply(i: Int): V2 = vertices(i)
-    
+
     final override def closed: Boolean = true
 
     def areaSign: Int = math.signum(areaSigned).toInt
@@ -37,16 +43,16 @@ object PolygonRegion {
     def areaSigned: Scalar = sides.map(fs => (fs.v1.x + fs.v2.x) * (fs.v1.y - fs.v2.y)).sum / 2.0
 
     /**
-      * todo tmp func
-      *
-      * @return
-      */
+     * todo tmp func
+     *
+     * @return
+     */
     def isCw: Boolean = areaSigned > 0
     def isCcw: Boolean = areaSigned < 0
 
     def area: Scalar = Math.abs(areaSigned)
 
-    def isConvex: Boolean = sideAngles.forall { case AngleCCWPlanar(l, c, r) => AngleOps.turnAngleCCW02PI(l, c, r) ~<= PI}
+    def isConvex: Boolean = sideAngles.forall { case AngleCCWPlanar(l, c, r) => AngleOps.turnAngleCCW02PI(l, c, r) ~<= PI }
 
     def distanceTo(point: V2): Scalar = if (contains(point)) 0 else distanceToFromSides(point)
 
@@ -59,13 +65,13 @@ object PolygonRegion {
     def contains(p: V2): Boolean = classify(p) >= 0
 
     /**
-      *
-      * @param p
-      * BORDER = 0
-      * OUTSIDE = -1
-      * INSIDE = 1
-      * @return
-      */
+     *
+     * @param p
+     * BORDER = 0
+     * OUTSIDE = -1
+     * INSIDE = 1
+     * @return
+     */
     def classify(p: V2): Int = if (vertices.isEmpty) OUTSIDE
     else if (vertices.length == 1) if (vertices.head ~= p) BORDER else OUTSIDE
     else if (vertices.length == 2) if (SegmentPlanar(vertices.head, vertices.last).contains(p)) BORDER else OUTSIDE
@@ -159,7 +165,7 @@ object PolygonRegion {
     def triangulation: Seq[TrianglePlanar] = {
       if (vertices.length < 3) Seq()
       else if (vertices.length == 3) Seq(TrianglePlanar(vertices(0), vertices(1), vertices(2)))
-      else if(isConvex) vertices.drop(0).sliding(2, 1).map{case Seq(v1,v2) => TrianglePlanar(vertices(0), v1, v2)}.toSeq
+      else if (isConvex) vertices.drop(0).sliding(2, 1).map { case Seq(v1, v2) => TrianglePlanar(vertices(0), v1, v2) }.toSeq
       else { //todo use faster triangulation
         sideTriangles.find(tr => tr.nonDegenerate && tr.ccw && contains(SegmentPlanar(tr.v3, tr.v1))) match {
           case Some(t) => t +: removeVertex(t.indices._2).triangulation
