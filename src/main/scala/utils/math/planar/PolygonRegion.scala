@@ -231,6 +231,7 @@ case class PolygonRegionWithCache(vertices: Seq[V2]) extends PolygonRegionOps[Po
 
 case class PolygonRegion(vertices: Seq[V2]) extends PolygonRegionOps[PolygonRegion] {
 
+  def toPolygon: Polygon = Polygon(Seq(this))
   def asPolygon: Polygon = Polygon(Seq(this))
 
   override def replacePoints(vertices: Seq[V2]): PolygonRegion = PolygonRegion(vertices)
