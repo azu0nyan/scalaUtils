@@ -47,6 +47,8 @@ case class Plane(origin: V3, x: V3, y: V3, isLeft: Boolean = true) extends Norma
   def offset(offset: V3): Plane = Plane(origin + offset, x, y)
 
   def offset(planeCords: IntV2): Plane = Plane(toWorldCords(planeCords.toV2), x, y)
+  
+  def offsetUp(offset: Scalar): Plane = Plane(origin + normal * offset, x, y)
 
   def fromOrigin(point: V3): V3 = point - origin
 
