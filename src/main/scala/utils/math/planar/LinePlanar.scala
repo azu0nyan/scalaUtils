@@ -8,7 +8,7 @@ case class LinePlanar(origin: V2, direction: UnitV2) {
   def intersection(s: LinePlanar): Option[V2] = {
     SegmentPlanar(origin - direction * KINDA_BIG_NUMBER, origin + direction * KINDA_BIG_NUMBER).intersection(
       SegmentPlanar(s.origin - s.direction * KINDA_BIG_NUMBER, s.origin + s.direction * KINDA_BIG_NUMBER)
-    ).flatMap{
+    ).flatMap {
       case PointIntersection(p) => Some(p)
       case _ => None
     }
@@ -20,26 +20,33 @@ case class LinePlanar(origin: V2, direction: UnitV2) {
     }*/
   }
 
-  def parallel(other:LinePlanar):Boolean = direction.collinear(other.direction)
+  def parallel(other: LinePlanar): Boolean = direction.collinear(other.direction)
 
-  def inLineCoordinates(f:Scalar): V2 = origin + f * direction
+  def inLineCoordinates(f: Scalar): V2 = origin + f * direction
 
-  def normal:UnitV2 = direction.rotate(HALF_PI)
+  def normal: UnitV2 = direction.rotate(HALF_PI)
 
-  def distanceTo(point:V2):Scalar = normal ** (point - origin)
+  def distanceTo(point: V2): Scalar = normal ** (point - origin)
 
-  def contains(v:V2):Boolean = distanceTo(v) ~= 0 //todo mb do through line equation
+  def contains(v: V2): Boolean = distanceTo(v) ~= 0 //todo mb do through line equation
 
-  def contains(s:SegmentPlanar):Boolean = contains(s.v1) && contains(s.v2)
+  def contains(s: SegmentPlanar): Boolean = contains(s.v1) && contains(s.v2)
 
-  def projectOnLine(point:V2):V2 = point - (distanceTo(point) * normal)
+  def projectOnLine(point: V2): V2 = point - (distanceTo(point) * normal)
 
-  def toSegment:SegmentPlanar = SegmentPlanar(origin, origin + direction)
+  def toLineProjectionCordinates(point: V2): Scalar = {
+    val projected = projectOnLine(point)
+    val dist = projected - origin
+    if (dist.sameDirection(direction)) dist.length
+    else -dist.length
+  }
 
-  def tan:Option[Scalar] = Option.when(direction.x != 0 )(direction.y / direction.x)
+  def toSegment: SegmentPlanar = SegmentPlanar(origin, origin + direction)
 
-  def freeCoeff:Option[Scalar] = tan.map(k => origin.y - k * origin.x)
+  def tan: Option[Scalar] = Option.when(direction.x != 0)(direction.y / direction.x)
 
-  def y(x:Scalar) :Option[Scalar] = tan.flatMap(k => freeCoeff.map(b => k * x + b))
+  def freeCoeff: Option[Scalar] = tan.map(k => origin.y - k * origin.x)
+
+  def y(x: Scalar): Option[Scalar] = tan.flatMap(k => freeCoeff.map(b => k * x + b))
 
 }
