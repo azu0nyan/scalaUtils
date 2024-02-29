@@ -134,6 +134,10 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
   @inline def addY(Y: Scalar):V3 = V3(x, Y, y)
 
   @inline def toSeq: Seq[Scalar] = Seq(x, y)
+  
+  @inline def negateX: V2 = V2(-x, y)
+  
+  @inline def negateY: V2 = V2(x, -y)
 
   @inline def planarToV3(upCord: Scalar): V3 = V3(x, upCord, -y)
 

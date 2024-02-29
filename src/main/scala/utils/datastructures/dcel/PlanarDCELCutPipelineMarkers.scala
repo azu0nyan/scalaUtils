@@ -24,4 +24,29 @@ trait PlanarDCELCutPipelineMarkers {
 
   def FindAndMarkEdges[D <: DCELData, L <: Labels](fillter: HalfEdge[D] => Boolean, label: L#HalfEdgeLabel): PlanarDCELCutPipeline[D, L] =
     MarkEdges(ctx => ctx.halfEdgesProduced.find(fillter).map(e => (label, e)).toSeq)
+
+
+  def ForEachHalfEdgeWithLabels[D <: DCELData, L <: Labels](
+                                                         func: (HalfEdge[D], Set[L#HalfEdgeLabel]) => Unit,
+                                                       ): PlanarDCELCutPipeline[D, L] =
+    TransformContext { context =>
+      context.halfEdgesProduced.foreach(he => func(he, context.halfEdgeToLabel(he)))
+      context
+    }
+
+  def ForEachFaceWithLabels[D <: DCELData, L <: Labels](
+                                                         func: (Face[D], Set[L#FaceLabel]) => Unit,
+                                                       ): PlanarDCELCutPipeline[D, L] =
+    TransformContext { context =>
+      context.faceProduced.foreach(face => func(face, context.faceToLabel(face)))
+      context
+    }
+
+  def ForEachVertexWithLabels[D <: DCELData, L <: Labels](
+                                                           func: (Vertex[D], Set[L#VertexLabel]) => Unit,
+                                                         ): PlanarDCELCutPipeline[D, L] =
+    TransformContext { context =>
+      context.vertexProduced.foreach(vertex => func(vertex, context.vertexToLabel(vertex)))
+      context
+    }
 }
