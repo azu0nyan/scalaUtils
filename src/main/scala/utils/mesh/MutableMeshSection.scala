@@ -41,6 +41,18 @@ class MutableMeshSection(
     this
   }
 
+  def addAndMap(ot: MeshSection,
+                posMap: V3 => V3 = v3 => v3,
+                uvMap: V2 => V2 = v2 => v2,
+                normalMap: V3 => V3 = v3 => v3): MutableMeshSection = {
+    val vCount = vertices.length
+    vertices ++= ot.vertices.map(posMap)
+    triangles ++= ot.triangles.map(v => (v._1 + vCount, v._2 + vCount, v._3 + vCount))
+    normals ++= ot.normals.map(normalMap)
+    uvs ++= ot.uvs.map(uvMap)
+    this
+  }
+
   def invertSidesInPlace: MutableMeshSection = {
     for (i <- triangles.indices) {
       val tri = triangles(i)
@@ -64,5 +76,5 @@ class MutableMeshSection(
     this
   }
 
-  }
+}
 
