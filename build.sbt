@@ -3,7 +3,7 @@ name := "utils"
 version := "0.3"
 
 //scalaVersion := "3.2.0"
-scalaVersion := "2.13.10"
+scalaVersion := "2.13.13"
 
 scalacOptions ++= Seq(
   "-encoding", "utf8", // Option and arguments on same line
