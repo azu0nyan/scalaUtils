@@ -193,7 +193,7 @@ case class SegmentPlanar(v1: V2, v2: V2) {
 
   }
 
-  def intersection(ot: RayPlanar): Option[SegmentToSegmentPlanarIntersection] = {
+  def intersectionWithRay(ot: RayPlanar): Option[SegmentToSegmentPlanarIntersection] = {
     val toS = start - ot.origin
     val toE = end - ot.origin
     val a1 = ot.direction.angleClampedToPi(toE)

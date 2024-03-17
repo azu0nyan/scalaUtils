@@ -50,3 +50,7 @@ case class LinePlanar(origin: V2, direction: UnitV2) {
   def y(x: Scalar): Option[Scalar] = tan.flatMap(k => freeCoeff.map(b => k * x + b))
 
 }
+
+object LinePlanar {
+  def fromTwoPoints(v1: V2, v2: V2): LinePlanar = LinePlanar(v1, v2 - v1)
+}
