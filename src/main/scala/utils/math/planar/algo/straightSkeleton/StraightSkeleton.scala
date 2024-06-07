@@ -14,8 +14,16 @@ object StraightSkeleton {
            var bisector: LinePlanar,
            var prev: V = null,
            var next: V = null,
+           val ea: E = null,
+           val eb: E = null,
            var isActive: Boolean = true,
            val eventType: EventType = NoEvent,
+         )
+
+  /** Edge */
+  class E(
+           val a: V,
+           val b: V,
          )
   /** Intersection */
   class I(
@@ -27,7 +35,7 @@ object StraightSkeleton {
 
   sealed trait EventType
   case object NoEvent extends EventType
-  case class EdgeEvent(a: V, b: V) extends EventType
+  case class EdgeEvent(e: E) extends EventType
   case object SplitEvent extends EventType
 
   def edgeBisectorDir(as: V, ae: V, bs: V, be: V): V2 = {
@@ -81,7 +89,6 @@ object StraightSkeleton {
     }
     result
   }
-
 
 
   def buildSkeleton(vs: Seq[V2]) = {
