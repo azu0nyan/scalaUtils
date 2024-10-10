@@ -21,6 +21,8 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
              var moveDOWN: Int = KeyEvent.VK_S,
              var moveLEFT: Int = KeyEvent.VK_A,
              var moveRIGHT: Int = KeyEvent.VK_D,
+             var rotateCCW: Int = KeyEvent.VK_Z,
+             var rotateCW: Int = KeyEvent.VK_C,
              var invertY: Boolean = false) {
 
   private[this] var _rotation = initialRotation
@@ -39,6 +41,8 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
   private[this] var _zoom: Scalar = calcZoom
 
   def getZoom: Scalar = _zoom
+
+  def getLookAt: V2 = _lookAt
 
   private def cameraCenterInWorld: V2 = _lookAt
 
@@ -114,6 +118,8 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
       lookAt(cameraCenterInWorld + V2(0, if (invertY) -1 else 1) * screenToWorld(screenResolution.length * screenPartPerScroll)))
     window.addKeyBinding(moveLEFT, if (controlsEnabled) lookAt(cameraCenterInWorld + V2(-1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
     window.addKeyBinding(moveRIGHT, if (controlsEnabled) lookAt(cameraCenterInWorld + V2(1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
+    window.addKeyBinding(rotateCCW, if (controlsEnabled) _rotation += (if (invertY) 0.1f else -0.1))
+    window.addKeyBinding(rotateCW, if (controlsEnabled) _rotation -= (if (invertY) 0.1f else -0.1))
 
     window.addMouseMotionListener(new MouseMotionListener {
       override def mouseDragged(e: MouseEvent): Unit = {
