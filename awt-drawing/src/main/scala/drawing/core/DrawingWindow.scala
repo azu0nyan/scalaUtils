@@ -1,7 +1,7 @@
 package drawing.core
 
 import java.awt.event._
-import java.awt.{Graphics2D, Toolkit}
+import java.awt.{Color, Graphics2D, Toolkit}
 import java.util.concurrent.{ConcurrentSkipListMap, CopyOnWriteArrayList, Semaphore}
 import java.util.logging.{Level, Logger}
 import drawing.library.DrawingUtils
@@ -25,6 +25,8 @@ class DrawingWindow() extends JFrame {
   setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
 
   var camera: Camera = _
+
+  var bgColor: Color = new Color(0, 0, 0, 0)
 
   var shiftControlAlt = new ShiftControlAltListener
 
@@ -103,6 +105,7 @@ class DrawingWindow() extends JFrame {
   private def updateAndDraw(dt: Scalar): Unit = {
     val bs = getBufferStrategy
     val g2d = bs.getDrawGraphics.asInstanceOf[Graphics2D]
+    g2d.setBackground(bgColor )
     g2d.clearRect(0, 0, getWidth, getHeight)
     ConcurrentOps.withLock(drawUpdateLock) {
       updateAndDrawObjects(g2d, dt)
