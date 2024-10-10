@@ -10,6 +10,17 @@ object AARectangle {
 
   def fromCenterSize(center: V2, size: V2): AARectangle = AARectangle(center - size / 2d, center + size / 2d)
   def fromHalfExtend(center: V2, halfExtent: V2): AARectangle = AARectangle(center - halfExtent, center + halfExtent)
+
+  def fromPoints(iterable: Iterable[V2]): AARectangle = AARectangle(
+    V2(
+      iterable.map(_.x).min,
+      iterable.map(_.y).min
+    ),
+    V2(
+      iterable.map(_.x).max,
+      iterable.map(_.y).max
+    )
+  )
 }
 
 case class AARectangle(min: V2, max: V2) {
