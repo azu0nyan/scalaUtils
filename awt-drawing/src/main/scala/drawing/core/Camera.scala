@@ -59,6 +59,9 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
     _lookAt = value
   }
 
+  def setRotation(value: Scalar): Unit = {
+    _rotation = value
+  }
   var mouseInWorld: V2 = new V2(0.0D, 0.0D)
 
   var mouseOnScreen: V2 = new V2(0.0D, 0.0D)
