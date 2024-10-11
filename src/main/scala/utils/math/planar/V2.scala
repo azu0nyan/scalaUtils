@@ -30,8 +30,6 @@ object V2 {
     override def combine(x: V2, y: V2): V2 = x + y
   }
 
-
-
 }
 
 case class V2(x: Scalar, y: Scalar) extends WithMap{
@@ -77,8 +75,17 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   @inline def det(v: V2): Scalar = x * v.y - y * v.x
 
+  @inline def cross(v: V2): Scalar = x * v.y - y * v.x
+
   @inline def ~=(v: V2): Boolean = (x ~= v.x) && (y ~= v.y)
 
+  
+  @inline def nonZero: Boolean = x != 0 || y != 0
+  
+  @inline def nearZero: Boolean = this ~= V2.ZERO
+  
+  @inline def nonNearZero: Boolean = !nearZero
+  
   @inline def normalize: V2 = if (length == 0) {
     V2(0, 0)
   } else {
