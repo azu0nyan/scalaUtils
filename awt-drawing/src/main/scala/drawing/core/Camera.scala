@@ -34,6 +34,8 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
     _cameraZoom = value
     _zoom = calcZoom
   }
+  
+  def modZoom(diff: Int) = cameraZoom = (cameraZoom + diff)
 
   private def calcZoom: Scalar = zooms(if (cameraZoom >= 0) cameraZoom % zooms.length
   else cameraZoom % zooms.length + zooms.length)
