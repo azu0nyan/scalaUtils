@@ -66,6 +66,8 @@ package object math
     def cubed: Scalar = s * s * s
 
     def tesseracted: Scalar = s * s * s * s
+    
+    def sqrt: Scalar = math.sqrt(s)
   }
 
 
@@ -84,6 +86,7 @@ package object math
     def cubed: Long = s * s * s
 
     def tesseracted: Long = s * s * s * s
+    
   }
 
 
