@@ -68,6 +68,8 @@ package object math
     def tesseracted: Scalar = s * s * s * s
     
     def sqrt: Scalar = math.sqrt(s)
+    
+    def cbrt: Scalar = math.pow(s, 1.0 / 3.0)
   }
 
 
