@@ -70,7 +70,7 @@ object DrawingUtils {
     }
   }
 
-  def drawPoint(where: V2, radius: Float, g: Graphics2D, color: Color = Color.BLACK, fill: Boolean = false, pointWidth: Int = 5): Unit = {
+  def drawPoint(where: V2, g: Graphics2D, color: Color = Color.BLACK, fill: Boolean = false, pointWidth: Int = 5): Unit = {
     val rad = pointWidth / 2
     val wh = camera.worldToScreen(where)
     g.setColor(color)
