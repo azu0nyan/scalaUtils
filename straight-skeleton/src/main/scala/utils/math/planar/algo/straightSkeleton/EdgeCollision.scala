@@ -1,10 +1,8 @@
 package utils.math.planar.algo.straightSkeleton
 
 
+import utils.math.planar.algo.straightSkeleton.math.LinearForm3D
 import utils.math.space.V3
-import javax.vecmath.Vector3d
-import org.twak.utils.geom.LinearForm3D
-
 
 /**
  *
@@ -48,24 +46,21 @@ object EdgeCollision {
     var next = first.nextC.nextL.linearForm
     var pDist = prev.pointDistance(collision)
     var nDist = next.pointDistance(collision)
-    val prevDot = prev.normal.dot(first.nextL.direction)
-    val nextDot = next.normal.dot(first.nextL.direction)
+    val prevDot = prev.normal ** first.nextL.direction
+    val nextDot = next.normal ** first.nextL.direction
     // depending on if the angle is obtuse or reflex, we'll need to flip the normals
     // to the convention that a point with a positive plane distance is on the correct side of both bisecting planes
     if (prevDot < 0) pDist = -pDist // should only be 0 if two edges are parallel!
 
     if (nextDot > 0) nDist = -nDist
     if (first.nextC.nextL.uphill == first.nextL.uphill) {
-      val dir = first.nextL.direction
-      dir.normalize()
-      dir.negate()
-      next = new LinearForm3D(dir, first.nextC)
+      val dir = - first.nextL.direction.normalize
+      next = new LinearForm3D(dir, first.nextC.asV3)
       nDist = next.pointDistance(collision)
     }
     if (first.prevL.uphill == first.nextL.uphill) {
-      val dir = first.prevL.direction
-      dir.normalize()
-      prev = new LinearForm3D(dir, first)
+      val dir = first.prevL.direction.normalize
+      prev = new LinearForm3D(dir, first.asV3)
       pDist = prev.pointDistance(collision)
     }
     // important constant - must prefer to accept rather than "leak" a collision
@@ -73,6 +68,7 @@ object EdgeCollision {
     pDist >= c && nDist >= c // a bit of slack!
 
   }
+  
   def findCorner(in: Edge, collision: V3, skel: Skeleton): Corner = {
 
     for (lc <- in.currentCorners) {
@@ -83,8 +79,8 @@ object EdgeCollision {
         val next = lc.nextC.nextL.linearForm.clone
         var pDist = prev.pointDistance(collision)
         var nDist = next.pointDistance(collision)
-        val prevDot = prev.normal.dot(in.direction)
-        val nextDot = next.normal.dot(in.direction)
+        val prevDot = prev.normal ** in.direction
+        val nextDot = next.normal ** in.direction
         // depending on if the angle is obtuse or reflex, we'll need to flip the normals
         // to the convention that a point with a positive plane distance is on the correct side of both bisecting planes
         if (prevDot < 0) pDist = -pDist // should only be 0 if two edges are parallel!
