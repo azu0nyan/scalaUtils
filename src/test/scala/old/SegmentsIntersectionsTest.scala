@@ -41,7 +41,7 @@ object SegmentsIntersectionsTest {
       )
 
   def naiveWay(s: Seq[SegmentPlanar]): Set[SegmentToSegmentPlanarIntersection] = if (s.size > 1)
-    s.flatMap(seg => s.filter(s2 => s2 != seg).map(s2 => s2.intersection(seg).toSeq).reduce(_ ++ _)).toSet
+    s.flatMap(seg => s.filter(s2 => s2 != seg).flatMap(s2 => s2.intersection(seg))).toSet
   else
     Set()
 

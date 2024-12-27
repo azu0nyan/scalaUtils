@@ -2,8 +2,7 @@ name := "utils"
 
 version := "0.3"
 
-//scalaVersion := "3.2.0"
-scalaVersion := "2.13.15"
+scalaVersion := "3.6.2"
 
 scalacOptions ++= Seq(
   "-encoding", "utf8", // Option and arguments on same line
@@ -20,5 +19,4 @@ scalacOptions ++= Seq(
  // "--explain-types"
 )
 
-//libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.2"
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.14" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"

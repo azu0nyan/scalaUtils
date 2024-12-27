@@ -192,7 +192,7 @@ case class Polygon(override val regions: Seq[PolygonRegion]) extends PolygonOps[
 
   def asSeq:Seq[Seq[V2]] = regions.map(_.vertices)
   
-  def average: V2 = vertices.reduce(_ + _) / vertices.size
+  def average: V2 = vertices.reduce(_ + _) / V2(vertices.size)
 
 }
 
