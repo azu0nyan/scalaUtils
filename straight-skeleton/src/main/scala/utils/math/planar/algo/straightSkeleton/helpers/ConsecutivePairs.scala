@@ -3,21 +3,25 @@ package utils.math.planar.algo.straightSkeleton.helpers
 
 import java.util
 
-class ConsecutivePairs[E](var input: List[E], var loop: Boolean) extends Iterator[Pair[E, E]] with Iterable[Pair[E, E]] {
+class ConsecutivePairs[E](var input: collection.Seq[E], var loop: Boolean) extends Iterator[(E, E)] with Iterable[(E, E)] {
   var a = 0
   var size = input.size
   override def hasNext =
-    if (this.size != 0 && (this.size != 1 || this.loop))
-      this.a >= 0
+    if (size != 0 && (size != 1 || loop))
+      a >= 0
     else
       false
+
   override def next =
-    if (this.size == 0) null
+    if (size == 0) null
     else {
-      val out = new Pair[E, E](this.input(this.a % this.size), this.input((this.a + 1) % this.size))
-      this.a += 1
-      if (!this.loop && this.a == this.size - 1) this.a = -1
-      else if (this.loop && this.a == this.size) this.a = -1
+      val out = (
+        input(a % size),
+        input((a + 1) % size)
+      )
+      a += 1
+      if (!loop && a == size - 1) a = -1
+      else if (loop && a == size) a = -1
       out
     }
   override def iterator = this

@@ -87,7 +87,7 @@ object Edge {
    * This is a robust collision of a's adjacent edges with a horizontal plane at the given height
    * When Two parallel edges are given, we can assume that the
    */
-  def collide(a: Corner, height: Double) = {
+  def collide(a: Corner, height: Double): V3 = {
     val ceiling = new LinearForm3D(0, 0, 1, -height)
     // this can cause Jama not to return...
     if (a.prevL.linearForm.hasNaN || a.nextL.linearForm.hasNaN) throw new Error

@@ -1,9 +1,7 @@
 package utils.math.planar.algo.straightSkeleton
 
+import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
-import java.{util => j}
-import java.util.ArrayList
-import java.util.{List, Set}
 
 
 /**
@@ -13,32 +11,32 @@ import java.util.{List, Set}
  * @author twak
  */
 object Chain { // marker for having degraided from a loop to a list
-  private val DELOOP = new Chain(new j.ArrayList[Corner], false)
+  private val DELOOP = new Chain(mutable.Buffer[Corner](), false)
   trait Condition[E] {
     def isTrue: Boolean
   }
 }
-class Chain(var chain: j.List[Corner], var loop: Boolean) {
+class Chain(var chain: mutable.Buffer[Corner], var loop: Boolean) {
 
-  def this(chain: j.List[Corner]) = {
-    this(chain, chain.get(chain.size - 1).nextC eq chain.get(0))
+  def this(chain: mutable.Buffer[Corner]) = {
+    this(chain, chain.last.nextC eq chain.head)
   }
   /**
    * @param index first element of the split
    */
   private def split(index: Int): Chain = // decompose a loop a the given index
     if (loop) {
-      val nc = new j.ArrayList[Corner]
-      nc.addAll(chain.subList(index, chain.size))
-      nc.addAll(chain.subList(0, index))
+      val nc = mutable.Buffer[Corner]()
+      nc.addAll(chain.slice(index, chain.size))
+      nc.addAll(chain.slice(0, index))
       loop = false
       chain = nc
       Chain.DELOOP
     } else if (index == 0) null // first element already split
     else {
-      val nc = new j.ArrayList[Corner]
-      nc.addAll(chain.subList(0, index))
-      chain = chain.subList(index, chain.size)
+      val nc = mutable.Buffer[Corner]()
+      nc.addAll(chain.slice(0, index))
+      chain = chain.slice(index, chain.size)
       new Chain(nc)
     }
   /**
@@ -47,14 +45,14 @@ class Chain(var chain: j.List[Corner], var loop: Boolean) {
    * @return list of new chains, in order, that should be appended to the
    *         master list before this chain.
    */
-  def removeCornersWithoutEdges(liveEdges: j.Set[Edge]): j.List[Chain] = {
-    val newChains = new j.ArrayList[Chain]
+  def removeCornersWithoutEdges(liveEdges: collection.Set[Edge]): mutable.Buffer[Chain] = {
+    val newChains = mutable.Buffer[Chain]()
 
     breakable {
       while (true) {
         var i = 0
         while (i < chain.size) {
-          val c = chain.get(i)
+          val c = chain(i)
           if (!liveEdges.contains(c.nextL)) {
             val n = split(i)
             chain.remove(0) // removed the specified element
@@ -64,7 +62,7 @@ class Chain(var chain: j.List[Corner], var loop: Boolean) {
               newChains.addAll(removeCornersWithoutEdges(liveEdges))
               return newChains
             }
-            if (n != null) newChains.add(n)
+            if (n != null) newChains += n
             i = -1 // process element 0 next time
 
           }
@@ -80,14 +78,14 @@ class Chain(var chain: j.List[Corner], var loop: Boolean) {
   /**
    * @return a list of additional chains after split has been performed
    */
-  def splitChainsIfHorizontal(horizontals: j.Set[Corner]): j.List[Chain] = {
-    val newChains = new j.ArrayList[Chain]
+  def splitChainsIfHorizontal(horizontals: Set[Corner]): mutable.Buffer[Chain] = {
+    val newChains = mutable.Buffer[Chain]()
 
     breakable {
       while (true) {
         var i = 0
         while (i < chain.size) {
-          val c = chain.get(i)
+          val c = chain(i)
           if (horizontals.contains(c)) {
             val n = split(i)
             if (n eq Chain.DELOOP) {
@@ -95,7 +93,7 @@ class Chain(var chain: j.List[Corner], var loop: Boolean) {
               newChains.addAll(splitChainsIfHorizontal(horizontals))
               return newChains
             }
-            if (n != null) newChains.add(n)
+            if (n != null) newChains += n
             i = 0 // process element 1 next time
 
           }

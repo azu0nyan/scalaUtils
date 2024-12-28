@@ -1,25 +1,22 @@
 package utils.math.planar.algo.straightSkeleton
 
-import java.util.{List, Set}
-
-
-
-import java.util
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 
 object EdgeCreator {
   class DefaultEdgeCreator extends EdgeCreator {
     override def getEdges(old: Edge, startH: Corner, endH: Corner) = {
-      val out = new ArrayList[_]
+      val out = new ArrayBuffer[Corner]
       startH.nextL = old
       endH.prevL = old
       //            e.angle = Math.PI / 4;
       //            e.machine = old.machine; //?
-      out.add(startH)
-      out.add(endH)
+      out += startH
+      out += endH
       out
     }
-    override def getFeaturesFor(edgeH: Edge) = new HashSet[_]
+    override def getFeaturesFor(edgeH: Edge) = new mutable.HashSet[Tag]
   }
 }
 trait EdgeCreator {
@@ -32,8 +29,8 @@ trait EdgeCreator {
    *
    * the first corner in the ordered chain must be startH, the last endH
    */
-  def getEdges(old: Edge, startH: Corner, endH: Corner): util.List[Corner]
-  def getFeaturesFor(edgeH: Edge): util.Set[Tag]
+  def getEdges(old: Edge, startH: Corner, endH: Corner): mutable.Seq[Corner]
+  def getFeaturesFor(edgeH: Edge): mutable.Set[Tag]
 }
 
 

@@ -1,113 +1,99 @@
 package utils.math.planar.algo.straightSkeleton
 
 
-import java.util
-import java.util.Collections
-import java.util.Comparator
+import utils.math.planar.algo.polygonClipping.PolyBool.CombineResult
+import utils.math.planar.algo.straightSkeleton.helpers.ConsecutivePairs
+import utils.math.planar.algo.straightSkeleton.math.{LinearForm3D, Ray3d}
 import utils.math.space.V3
-import utils.math.space.V3
-import org.twak.utils.Pair
-import org.twak.utils.Triple
-import org.twak.utils.collections.ConsecutivePairs
-import org.twak.utils.collections.ConsecutiveTriples
-import org.twak.utils.geom.Ray3d
-import org.twak.utils.geom.LinearForm3D
 
+import java.util.{Collections, Comparator}
+import scala.collection.mutable
+import scala.jdk.CollectionConverters.BufferHasAsJava
 
 /**
  * A bunch of faces that collide at one point
  *
  * @author twak
  */
-object CoSitedCollision {
-  def buildChain2(start: Corner, input: Set[Corner]) = {
-    val chain = new util.ArrayList[_]
-    // check backwards
-    var a = start
-    while (input.contains(a)) {
-      chain.add(0, a)
-      input.remove(a)
-      a = a.prevC
-    }
-    // check forwards
-    a = start.nextC
-    while (input.contains(a)) {
-      chain.add(a)
-      input.remove(a)
-      a = a.nextC
-    }
-    new Chain(chain)
-  } // start.nextL  start.prevL
 
-  /**
-   * Defines order by the angle the first corner in a chain makes with the second
-   * against a fixed axis at a specified height.
-   */
-   val Y_UP = new Vector3d(0, 1, 0)
-}
 class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: HeightCollision) {
   add(ec)
-  var edges = new util.LinkedHashSet[_]
+  var edges = new mutable.LinkedHashSet[EdgeCollision]
   var debugHoriz = false
-  var chains = new util.ArrayList[_]
+  var chains = mutable.Buffer[Chain]()
+
   def add(ec: EdgeCollision): Unit = {
     edges.add(ec)
   }
+
   /**
    * New routine
    *
    * @return true if valid chains found at this site
    */
   def findChains(skel: Skeleton): Boolean = {
-    chains = new util.ArrayList[_]
+    chains = mutable.Buffer[Chain]()
     // remove duplicate edges
-    val allEdges = new util.LinkedHashSet[_]
+    val allEdges = new mutable.LinkedHashSet[Edge]
 
     for (ec <- edges) {
       allEdges.add(ec.a)
       allEdges.add(ec.b)
       allEdges.add(ec.c)
     }
+
     val eit = allEdges.iterator
-    while (eit.hasNext) if (!skel.liveEdges.contains(eit.next)) eit.remove()
-    if (allEdges.size < 3) return false
-    val edgeStarts = new util.LinkedHashSet[Corner]
 
-    for (e <- allEdges) {
+    while (eit.hasNext) {
+      val cur = eit.next
+      if (!skel.liveEdges.contains(cur))
+        allEdges -= cur
+    }
 
-      for (c <- e.currentCorners) {
-        if (c.nextL eq e) if (!skel.preserveParallel || EdgeCollision.bisectorsBound(c, loc, skel)) edgeStarts.add(c)
-      }
-    }
-    while (!edgeStarts.isEmpty) {
-      val start = edgeStarts.iterator.next
-      val chain = CoSitedCollision.buildChain2(start, edgeStarts)
-      if (chain != null) chains.add(chain)
-    }
-    edgeStarts.clear()
+    if (allEdges.size < 3)
+      false
+    else {
+      val edgeStarts = new mutable.LinkedHashSet[Corner]
 
-    for (c <- chains) {
-      if (c.chain.size > 1) edgeStarts.addAll(c.chain)
-    }
-    val chit = chains.iterator
-    while (chit.hasNext) {
-      val chain = chit.next
-      if (chain.chain.size == 1) {
-        // first corner of edge is not necessarily the corner of the edge segment bounding the collision
-        val s = chain.chain.get(0)
-        val found = EdgeCollision.findCorner(s.nextL, loc, skel)
-        //                if (found != null && !edgeStarts.contains( found ))
-        // fixme: because we (strangely) add all the chain starts above, we can just check if it's unchanged...
-        if ((found eq s) && !edgeStarts.contains(found)) {
+      for (e <- allEdges) {
+        for (c <- e.currentCorners) {
+          if (c.nextL eq e)
+            if (!skel.preserveParallel || EdgeCollision.bisectorsBound(c, loc, skel))
+              edgeStarts.add(c)
         }
-        else chit.remove()
       }
-    }
-    // while still no-horizontals in chains (there may be when dealing with multiple
-    // sites at one height), process chains to a counter clockwise order
-    if (chains.size > 1) Collections.sort(chains, new CoSitedCollision#ChainComparator(loc.z)) // size == 1 may have parallels in it (run away!)
+      while (edgeStarts.nonEmpty) {
+        val start = edgeStarts.iterator.next
+        //!!!!drains from edgeStarts
+        val chain = CoSitedCollision.buildChain2(start, edgeStarts)
+        chains += chain
+      }
+      edgeStarts.clear()
 
-    true
+      for (c <- chains) {
+        if (c.chain.size > 1) edgeStarts.addAll(c.chain)
+      }
+      val chit = chains.iterator
+      while (chit.hasNext) {
+        val chain = chit.next
+        if (chain.chain.size == 1) {
+          // first corner of edge is not necessarily the corner of the edge segment bounding the collision
+          val s = chain.chain.head
+          val found = EdgeCollision.findCorner(s.nextL, loc, skel)
+          //                if (found != null && !edgeStarts.contains( found ))
+          // fixme: because we (strangely) add all the chain starts above, we can just check if it's unchanged...
+          if ((found eq s) && !edgeStarts.contains(found)) {
+          }
+          else chains -= chain
+        }
+      }
+      // while still no-horizontals in chains (there may be when dealing with multiple
+      // sites at one height), process chains to a counter clockwise order
+      if (chains.size > 1)
+        // size == 1 may have parallels in it (run away!)
+        chains.asJava.sort(new CoSitedCollision#ChainComparator(loc.z))
+      true
+    }
   }
   /**
    * If another collision has been evaluated at teh same height, this method
@@ -130,66 +116,68 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
 
     for (c <- chains) {
       if (c.loop) {
-        continue //todo: continue is not supported
+        // continue
         // nothing to do here
-      }
-      if (c.chain.size > 1) // previous
-      {
-        c.chain.remove(0)
-        c.chain.add(0, c.chain.get(0).prevC)
-      }
-      else {
-        /**
-         * This covers the "corner situation" where a concave angle creates creates
-         * another loop with it's point closer to the target, than the original loop.
-         *
-         * It may well break down with lots of adjacent sides.
-         */
-        val s = c.chain.get(0)
-        val e = s.nextL
-        val projectionLine = new Ray3d(loc, e.direction)
-        val ceiling = new LinearForm3D(0, 0, 1, -loc.z)
-        // project start onto line of collisions above smash edge
-        try {
-          var start: V3 = null
-          if (e.uphill == s.prevL.uphill) start = ceiling.collide(e.start, e.uphill)
-          else start = e.linearForm.collide(s.prevL.linearForm, ceiling)
-          // line defined using collision point, so we're finding the line before 0
-          val targetParam = 0
-          // we should only end with start if it hasn't been elevated yet
-          var bestPrev = s
-          // ignore points before start (but allow the first point to override start!)
-          var bestParam = projectionLine.projectParam(start) - 0.001
-          // parameterize each corner in e's currentCorners by the line
-
-          for (r <- e.currentCorners) {
-            if (r.nextL eq e) {
-              // parameterize
-              val rOnHigh = if (Math.abs(r.z - loc.z) < 0.001) r
-              else ceiling.collide(r.prevL.linearForm, r.nextL.linearForm)
-              val param = projectionLine.projectParam(rOnHigh)
-              // if this was the previous (todo: does this want a tolerance on < targetParam? why not?)
-              if (param > bestParam && param <= targetParam) {
-                bestPrev = r
-                bestParam = param
-              }
-            }
-          }
+      } else {
+        if (c.chain.size > 1) // previous
+        {
           c.chain.remove(0)
-          c.chain.add(0, bestPrev)
-          // might have formed a loop
-          c.loop = c.chain.get(c.chain.size - 1).nextC eq c.chain.get(0)
-        } catch {
-          case t: Throwable =>
-            t.printStackTrace()
-            //                    System.err.println( "didn't like colliding " + e + "and " + s.prevL );
-            continue //todo: continue is not supported
-
+          c.chain.insert(0, c.chain.head.prevC)
         }
-      } // smash edge, search for correct corner (edges not in liveEdges removed next)
+        else {
+          /**
+           * This covers the "corner situation" where a concave angle creates creates
+           * another loop with it's point closer to the target, than the original loop.
+           *
+           * It may well break down with lots of adjacent sides.
+           */
+          val s = c.chain.head
+          val e = s.nextL
+          val projectionLine = new Ray3d(loc, e.direction)
+          val ceiling = new LinearForm3D(0, 0, 1, -loc.z)
+          // project start onto line of collisions above smash edge
+          try {
+            val start =
+              if (e.uphill == s.prevL.uphill) ceiling.collide(e.start.asV3, e.uphill)
+              else e.linearForm.collide(s.prevL.linearForm, ceiling)
 
+            start match
+              case Some(start) => // line defined using collision point, so we're finding the line before 0
+                val targetParam = 0
+                // we should only end with start if it hasn't been elevated yet
+                var bestPrev = s
+                // ignore points before start (but allow the first point to override start!)
+                var bestParam = projectionLine.projectParam(start) - 0.001
+                // parameterize each corner in e's currentCorners by the line
+
+                for (r <- e.currentCorners) {
+                  if (r.nextL eq e) {
+                    // parameterize
+                    val rOnHigh = if (Math.abs(r.z - loc.z) < 0.001) Some(r.asV3)
+                    else ceiling.collide(r.prevL.linearForm, r.nextL.linearForm)
+                    val param = projectionLine.projectParam(rOnHigh.get) // todo refactor out logic on throwables
+                    // if this was the previous (todo: does this want a tolerance on < targetParam? why not?)
+                    if (param > bestParam && param <= targetParam) {
+                      bestPrev = r
+                      bestParam = param
+                    }
+                  }
+                }
+                c.chain.remove(0)
+                c.chain.insert(0, bestPrev)
+                // might have formed a loop
+                c.loop = c.chain.last.nextC eq c.chain.head
+              case None =>
+
+          } catch {
+            case t: Throwable =>
+              t.printStackTrace()
+            //                    System.err.println( "didn't like colliding " + e + "and " + s.prevL );
+          }
+        } // smash edge, search for correct corner (edges not in liveEdges removed next)
+      }
     }
-    val edgeToCorner = new util.LinkedHashMap[Edge, Corner]
+    val edgeToCorner = new mutable.LinkedHashMap[Edge, Corner]
 
     for (cc <- chains) {
 
@@ -199,88 +187,96 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     }
     // Find valid triples ~ now topology is as it will be before evaluation, we
     // can check that the input edge triplets still have two consecutive edges.
-    val validEdges = new util.LinkedHashSet[Edge]
+    val validEdges = new mutable.LinkedHashSet[Edge]
 
     for (ec <- edges) {
       // todo: adjacent pairs may not be parallel!
-      if (hasAdjacent(edgeToCorner.get(ec.a), edgeToCorner.get(ec.b), edgeToCorner.get(ec.c))) if (skel.liveEdges.contains(ec.a) && skel.liveEdges.contains(ec.b) && skel.liveEdges.contains(ec.c)) {
-        validEdges.add(ec.a)
-        validEdges.add(ec.b)
-        validEdges.add(ec.c)
-      }
+      if (hasAdjacent(edgeToCorner(ec.a), edgeToCorner(ec.b), edgeToCorner(ec.c)))
+        if (skel.liveEdges.contains(ec.a) && skel.liveEdges.contains(ec.b) && skel.liveEdges.contains(ec.c)) {
+          validEdges.add(ec.a)
+          validEdges.add(ec.b)
+          validEdges.add(ec.c)
+        }
     }
-    val chainOrder = new util.ArrayList[Chain](chains)
+    val chainOrder = mutable.Buffer[Chain](chains.toSeq *)
     // remove parts of chains that aren't a valid triple.
 
     for (cc <- chainOrder) {
       // remove and split
-      chains.addAll(chains.indexOf(cc), cc.removeCornersWithoutEdges(validEdges))
+      chains.insertAll(chains.indexOf(cc), cc.removeCornersWithoutEdges(validEdges).iterator)
     }
     // kill 0-length chains
     val ccit = chains.iterator
-    while (ccit.hasNext) if (ccit.next.chain.size == 0) ccit.remove()
+    while (ccit.hasNext) {
+      val cur = ccit.next
+      if (cur.chain.isEmpty)
+        chains -= cur
+    }
   }
-  private def hasAdjacent(a: Corner, b: Corner, c: Corner): Boolean = {
-    if (a == null || b == null || c == null) return false
-    if ((a.nextC eq b) || (a.nextC eq c)) return true // todo: speedup by puting consec in a,b always?
 
-    if ((b.nextC eq c) || (b.nextC eq a)) return true
-    if ((c.nextC eq a) || (c.nextC eq b)) return true
-    false
-  }
+  private def hasAdjacent(a: Corner, b: Corner, c: Corner): Boolean =
+    if (a == null || b == null || c == null) false
+    else if ((a.nextC eq b) || (a.nextC eq c)) true // todo: speedup by puting consec in a,b always?
+    else if ((b.nextC eq c) || (b.nextC eq a)) true
+    else if ((c.nextC eq a) || (c.nextC eq b)) true
+    else false
+
+
   def processChains(skel: Skeleton): Boolean = {
-    if (moreOneSmashEdge) return false // no test example case showing this is required?
+    if (moreOneSmashEdge) false // no test example case showing this is required?
+    else {
+      val allCorners = new mutable.LinkedHashSet[Corner]
 
-    val allCorners = new util.LinkedHashSet[_]
+      for (cc <- chains) {
+        allCorners.addAll(cc.chain) //cc.chain.get(0).nextL.currentCorners
 
-    for (cc <- chains) {
-      allCorners.addAll(cc.chain) //cc.chain.get(0).nextL.currentCorners
-
-    }
-    // after all the checks, if there are less than three faces involved, it's not a collision any more
-    if (allCorners.size < 3) return false
-    skel.debugCollisionOrder.add(this)
-    val cit = chains.iterator
-    while (cit.hasNext) {
-      val chain = cit.next // chain.chain.get(2).nextL
-
-
-      for (p <- new ConsecutivePairs[Corner](chain.chain, chain.loop)) {
-        //                System.out.println( "proc consec " + p.first() + " and " + p.second() );
-        EdgeCollision.processConsecutive(loc, p.first, p.second, skel)
       }
-      // remove the middle faces in the loop from the list of live corners, liveEdges if
-      // there are no more live corners, and the liveCorners list
-      if (chain.chain.size >= 3) {
-        val tit = new ConsecutiveTriples[Corner](chain.chain, chain.loop)
-        while (tit.hasNext) {
-          val middle = tit.next.second.nextL
-          // face no longer referenced, remove from list of live edges
-          if (middle.currentCorners.isEmpty) skel.liveEdges.remove(middle)
+      // after all the checks, if there are less than three faces involved, it's not a collision any more
+      if (allCorners.size < 3) return false
+      skel.debugCollisionOrder.add(this)
+      val cit = chains.iterator
+      while (cit.hasNext) {
+        val chain = cit.next // chain.chain.get(2).nextL
+
+
+        for (p <- new ConsecutivePairs[Corner](chain.chain, chain.loop)) {
+          //                System.out.println( "proc consec " + p.first() + " and " + p.second() );
+          EdgeCollision.processConsecutive(loc, p._1, p._2, skel)
         }
+        // remove the middle faces in the loop from the list of live corners, liveEdges if
+        // there are no more live corners, and the liveCorners list
+        if (chain.chain.size >= 3) {
+          val tit = new ConsecutiveTriples[Corner](chain.chain, chain.loop)
+          while (tit.hasNext) {
+            val middle = tit.next._2.nextL
+            // face no longer referenced, remove from list of live edges
+            if (middle.currentCorners.isEmpty) skel.liveEdges.remove(middle)
+          }
+        }
+        if (chain.loop)
+          chains -= chain
       }
-      if (chain.loop) cit.remove()
-    }
-    // was entirely closed loops
-    if (chains.isEmpty) return true
-    // connect end of previous chain, to start of next
-    // in case we are colliding against a smash (no-corner/split event)-edge, we cache the next-corner before
-    // any alterations
-    val aNext = new util.LinkedHashMap[_, _]
+      // was entirely closed loops
+      if (chains.isEmpty) return true
+      // connect end of previous chain, to start of next
+      // in case we are colliding against a smash (no-corner/split event)-edge, we cache the next-corner before
+      // any alterations
+      val aNext = new mutable.LinkedHashMap[Corner, Corner]
 
-    for (chain <- chains) {
-      val c = chain.chain.get(chain.chain.size - 1)
-      aNext.put(c, c.nextC)
-    }
-    // process intra-chain collisions (non-consecutive edges)
+      for (chain <- chains) {
+        val c = chain.chain.last
+        aNext.put(c, c.nextC)
+      }
+      // process intra-chain collisions (non-consecutive edges)
 
-    for (adjacentChains <- new ConsecutivePairs[Chain](chains, true)) {
-      val first = adjacentChains.first.chain
-      val a = first.get(first.size - 1)
-      val b = adjacentChains.second.chain.get(0)
-      EdgeCollision.processJump(loc, a, aNext.get(a), b, skel, parent)
+      for (adjacentChains <- new ConsecutivePairs[Chain](chains, true)) {
+        val first = adjacentChains._1.chain
+        val a = first.last
+        val b = adjacentChains._2.chain.head
+        EdgeCollision.processJump(loc, a, aNext(a), b, skel, parent)
+      }
+      true
     }
-    true
   }
   /**
    * Is this actually needed in any of the examples?
@@ -295,12 +291,12 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     if (oneCount > 1) return false
     oneCount > 1
   }
-  class ChainComparator( var height: Double) //        LinearForm3D ceiling;
+  class ChainComparator(var height: Double) //        LinearForm3D ceiling;
     extends Comparator[Chain] {
     //            this.ceiling = new LinearForm3D( 0, 0, 1, -height );
     override def compare(o1: Chain, o2: Chain) = {
-      val c1 = o1.chain.get(0)
-      val c2 = o2.chain.get(0)
+      val c1 = o1.chain.head
+      val c2 = o2.chain.head
       // except for the first and and last point
       // chain's non-start/end points are always at the position of the collision - so to
       // find the angle of the first edge at the specified height, we project the edge before start
@@ -308,14 +304,12 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
       // !could speed up with a chain-class that caches this info!
       //            try
       //            {
-      val p1 = Edge.collide(c1, height) //ceiling.collide( c1.prevL.linearForm, c1.nextL.linearForm );
+      val p1 = Edge.collide(c1, height) - loc //ceiling.collide( c1.prevL.linearForm, c1.nextL.linearForm );
 
-      val p2 = Edge.collide(c2, height) //ceiling.collide( c2.prevL.linearForm, c2.nextL.linearForm );
+      val p2 = Edge.collide(c2, height) - loc //ceiling.collide( c2.prevL.linearForm, c2.nextL.linearForm );
 
-      p1.sub(loc)
-      p2.sub(loc)
       // start/end line is (+-)Pi
-      Double.compare(Math.atan2(p1.y, p1.x), Math.atan2(p2.y, p2.x))
+      Math.atan2(p1.y, p1.x).compare(Math.atan2(p2.y, p2.x))
       //            }
       //            catch (RuntimeException e)
       //            {
@@ -328,14 +322,34 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     }
   }
   def getHeight = loc.z
-  override def toString = {
-    val sb = new StringBuilder("{")
-
-    for (e <- edges) {
-      sb.append(e + ",")
-    }
-    sb.append("}")
-    sb.toString
-  }
+  override def toString = edges.mkString("{", ",", "}")
 }
 
+
+object CoSitedCollision {
+  /** removes elements from Set */
+  def buildChain2(start: Corner, input: mutable.Set[Corner]) = {
+    val chain = mutable.Buffer[Corner]()
+    // check backwards
+    var a = start
+    while (input.contains(a)) {
+      chain.insert(0, a)
+      input.remove(a)
+      a = a.prevC
+    }
+    // check forwards
+    a = start.nextC
+    while (input.contains(a)) {
+      chain += a
+      input.remove(a)
+      a = a.nextC
+    }
+    new Chain(chain)
+  } // start.nextL  start.prevL
+
+  /**
+   * Defines order by the angle the first corner in a chain makes with the second
+   * against a fixed axis at a specified height.
+   */
+  val Y_UP = new V3(0, 1, 0)
+}
