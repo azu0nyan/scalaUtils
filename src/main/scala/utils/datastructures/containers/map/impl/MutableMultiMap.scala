@@ -47,7 +47,14 @@ class MutableMultiMap[A, B, C[_]](
   override def remove(a: A)(b: B): Unit =
     innerMap
       .get(a)
-      .foreach(_.remove(b))
+      .foreach(
+        map =>
+          val res = map.remove(b)
+          if (res.isEmpty)
+            innerMap.remove(a)
+          else
+            innerMap.put(a, res)
+      )
 
   override def removeA(a: A): C[B] =
     innerMap
@@ -63,6 +70,8 @@ object MutableMultiMap {
 
     def empty: C[B]
 
+    def isEmptyC: C[B] => Boolean
+
     def containsC: C[B] => B => Boolean
 
     def combine(first: C[B], second: C[B]): C[B]
@@ -72,6 +81,9 @@ object MutableMultiMap {
     def removeC: C[B] => B => C[B]
 
     extension (c: C[B]) {
+
+      def isEmpty: Boolean = isEmptyC(c)
+
       def contains(b: B): Boolean = containsC(c)(b)
 
       def ++(other: C[B]): C[B] = combine(c, other)
@@ -84,6 +96,7 @@ object MutableMultiMap {
 
   given linkedHashSetOps[B]: InMapContainerOps[B, mutable.LinkedHashSet] with {
     override def empty: mutable.LinkedHashSet[B] = mutable.LinkedHashSet.empty
+    override def isEmptyC: mutable.LinkedHashSet[B] => Boolean = _.isEmpty
     override def containsC: mutable.LinkedHashSet[B] => B => Boolean = _.contains
     override def combine(first: mutable.LinkedHashSet[B], second: mutable.LinkedHashSet[B]): mutable.LinkedHashSet[B] = first ++ second
     override def putC: mutable.LinkedHashSet[B] => B => mutable.LinkedHashSet[B] = _.put
@@ -92,5 +105,39 @@ object MutableMultiMap {
       c
     }
   }
+
+  given hashSetOps[B]: InMapContainerOps[B, mutable.HashSet] with {
+    override def empty: mutable.HashSet[B] = mutable.HashSet.empty
+    override def isEmptyC: mutable.HashSet[B] => Boolean = _.isEmpty
+    override def containsC: mutable.HashSet[B] => B => Boolean = _.contains
+    override def combine(first: mutable.HashSet[B], second: mutable.HashSet[B]): mutable.HashSet[B] = first ++ second
+    override def putC: mutable.HashSet[B] => B => mutable.HashSet[B] = _.put
+    override def removeC: mutable.HashSet[B] => B => mutable.HashSet[B] = (c: mutable.HashSet[B]) => (b: B) => {
+      c.remove(b)
+      c
+    }
+  }
+
+  given arrayBufferOps[B]: InMapContainerOps[B, mutable.ArrayBuffer] with {
+    override def empty: mutable.ArrayBuffer[B] = mutable.ArrayBuffer.empty
+    override def isEmptyC: mutable.ArrayBuffer[B] => Boolean = _.isEmpty
+    override def containsC: mutable.ArrayBuffer[B] => B => Boolean = _.contains
+    override def combine(first: mutable.ArrayBuffer[B], second: mutable.ArrayBuffer[B]): mutable.ArrayBuffer[B] = first ++ second
+    override def putC: mutable.ArrayBuffer[B] => B => mutable.ArrayBuffer[B] = _.put
+    override def removeC: mutable.ArrayBuffer[B] => B => mutable.ArrayBuffer[B] = (c: mutable.ArrayBuffer[B]) => (b: B) => {
+      c.remove(b)
+      c
+    }
+  }
+
+  given seqOps[B]: InMapContainerOps[B, Seq] with {
+    override def empty: Seq[B] = Seq.empty
+    override def isEmptyC: Seq[B] => Boolean = _.isEmpty
+    override def containsC: Seq[B] => B => Boolean = _.contains
+    override def combine(first: Seq[B], second: Seq[B]): Seq[B] = first ++ second
+    override def putC: Seq[B] => B => Seq[B] = _.put
+    override def removeC: Seq[B] => B => Seq[B] = _.remove
+  }
+
 
 }
