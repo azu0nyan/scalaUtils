@@ -63,6 +63,13 @@ class MutableMultiMap[A, B, C[_]](
 
   override def clear(): Unit =
     innerMap.clear()
+    
+  override def addEntriesFrom[C2[_]](m: MultiMap[A, B, C2])(using iterateElements: MultiMap.IterateElements[B, C2]): Unit =
+    for{
+      key <- m.keySet;
+      value <- m.get(key).iterator
+    }  put(key, value)
+    
 }
 
 object MutableMultiMap {
