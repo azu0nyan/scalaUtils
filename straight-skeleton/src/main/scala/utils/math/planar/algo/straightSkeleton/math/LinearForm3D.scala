@@ -8,7 +8,7 @@ object LinearForm3D {
     new LinearForm3D((e - s).normalize, e)
 }
 
-class LinearForm3D extends Cloneable {
+class LinearForm3D {
   var A = .0
   var B = .0
   var C = .0
@@ -97,8 +97,8 @@ class LinearForm3D extends Cloneable {
   def createNormalVector = V3(A, B, C).normalize
 
   override def toString = A + "," + B + "," + C + "," + D
-
-  override def equals(obj: AnyRef) =
+  
+  override def equals(obj: Any) =
     if (!obj.isInstanceOf[LinearForm3D]) false
     else {
       val other = obj.asInstanceOf[LinearForm3D]

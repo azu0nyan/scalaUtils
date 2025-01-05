@@ -18,8 +18,8 @@ class ItIt[E](var list: Iterable[Iterable[E]]) extends Iterator[E] {
   }
   override def hasNext = nextE.nonEmpty
 
-  override def next = {
-    val out = nextE
+  override def next: E = {
+    val out = nextE.get
     findNext()
     out
   }

@@ -1,14 +1,11 @@
 package utils.math.planar.algo.straightSkeleton
 
 
+import utils.math.planar.algo.straightSkeleton.helpers.{CloneConfirmIterator, ConsecutivePairs}
 import utils.math.space.V3
-import org.twak.camp.debug.DebugDevice
-import org.twak.utils.Pair
-import org.twak.utils.collections.CloneConfirmIterator
-import org.twak.utils.collections.ConsecutivePairs
-import org.twak.utils.geom.LinearForm3D
 
 import scala.collection.mutable
+import scala.jdk.CollectionConverters.BufferHasAsJava
 import scala.util.control.Breaks.{break, breakable}
 
 
@@ -98,64 +95,70 @@ class HeightCollision(
       chains.add(CoSitedCollision.buildChain2(newHoriz.iterator.next, newHoriz))
     if (chains.nonEmpty) {
       // if there are two lines of events at the same hight (but different lines), we need them to share their end points.
-      val intraface = new mutable.LinkedHashSet[Chain]
+      val intraface = new mutable.LinkedHashSet[Corner]
 
       for (chain <- chains) {
         //            if (chain.chain.isEmpty())
         //                continue;
-        val priority = mutable.Buffer[Edge]
+        val priority = mutable.Buffer[Edge]()
 
         for (c <- chain.chain) {
           // both edges are parallel - these are the only corners added to newHoriz...
-          priority.add(c.nextL)
-          priority.add(c.prevL)
+          priority += c.nextL
+          priority += c.prevL
         }
         // find a set of coplanar edges that survive this transition in winners (equal highest priority)
         val hComp = skel.getHorizontalComparator
-        Collections.sort(priority, hComp)
-        val winners = new LinkedHashSet[_]
+        priority.asJava.sort(hComp)
+
+        val winners = new mutable.LinkedHashSet[Edge]
         val winner = priority.remove(0)
+
         winners.add(winner)
-        while (!priority.isEmpty && hComp.compare(winner, priority.get(0)) == 0) winners.add(priority.remove(0))
+
+        while (priority.nonEmpty && hComp.compare(winner, priority.head) == 0)
+          winners.add(priority.remove(0))
+
         // if first edge needs an additional corner - "if we're adding a cap at the start" and "first isn't already an interface"
-        var first = chain.chain.get(0)
+        var first = chain.chain.head
         if (!winners.contains(first.prevL)) //skel.liveCorners.contains(first)
           if (!intraface.contains(first.prevC)) // hasn't already been raised up by a previous chain
           {
             //                    V3 res =//new LinearForm3D( 0, 0, 1, -first.z ).collide( first.prevL.linearForm, first.prevC.prevL.linearForm );
             val newFirst = new Corner(Edge.collide(first.prevC, first.z))
-            skel.output.addOutputSideTo(first.prevC, newFirst, first.prevL, first.prevC.prevL)
+            skel.output.addOutputSideTo(first.prevC.asV3, newFirst.asV3, first.prevL, first.prevC.prevL)
             Corner.replace(first.prevC, newFirst, skel)
-            chain.chain.add(0, newFirst)
+            chain.chain.insert(0, newFirst)
             intraface.add(newFirst)
             first = newFirst
           }
-          else chain.chain.add(0, first.prevC)
+          else chain.chain.insert(0, first.prevC)
         else {
           // the edge before the first point is a winner, add it
-          chain.chain.add(0, first = first.prevC)
+          first = first.prevC
+          chain.chain.insert(0, first)
         }
-        var last = chain.chain.get(chain.chain.size - 1)
+        var last = chain.chain.last
         // if last edge needs an additional corner
-        if (!winners.contains(last.nextL)) if (!intraface.contains(last.nextC)) // hasn't already been raised up by a previous chain
-        {
-          //                    V3 res = new LinearForm3D( 0, 0, 1, -last.z ).collide( last.nextL.linearForm, last.nextC.nextL.linearForm );
-          val newLast = new Corner(Edge.collide(last.nextC, last.z))
-          skel.output.addOutputSideTo(last.nextC, newLast, last.nextL, last.nextC.nextL)
-          Corner.replace(last.nextC, newLast, skel)
-          chain.chain.add(newLast)
-          intraface.add(newLast)
-          last = newLast
-        }
-        else chain.chain.add(last.nextC)
+        if (!winners.contains(last.nextL))
+          if (!intraface.contains(last.nextC)) // hasn't already been raised up by a previous chain
+          {
+            //                    V3 res = new LinearForm3D( 0, 0, 1, -last.z ).collide( last.nextL.linearForm, last.nextC.nextL.linearForm );
+            val newLast = new Corner(Edge.collide(last.nextC, last.z))
+            skel.output.addOutputSideTo(last.nextC.asV3, newLast.asV3, last.nextL, last.nextC.nextL)
+            Corner.replace(last.nextC, newLast, skel)
+            chain.chain += newLast
+            intraface.add(newLast)
+            last = newLast
+          }
+          else chain.chain += last.nextC
         else {
           // the edge after the last point is a winner, add it
-          chain.chain.add(last = last.nextC)
+          last = last.nextC
+          chain.chain += last
         }
 
-        for (pair <- new ConsecutivePairs[Corner](chain.chain, false)) {
-          val s = pair.first
-          val e = pair.second
+        for ((s,e) <- new ConsecutivePairs[Corner](chain.chain, false)) {
           assert(s.nextL eq e.prevL)
           // if this is the edge that spreads out over all others
           if (winners.contains(s.nextL)) {
@@ -167,7 +170,7 @@ class HeightCollision(
             // this (section of this ) edge ends at this height
             s.nextL.currentCorners.remove(s)
             s.nextL.currentCorners.remove(e)
-            skel.output.addOutputSideTo(true, s, e, s.nextL, winner)
+            skel.output.addOutputSideTo_(true, s.asV3, e.asV3, s.nextL, winner)
           }
           skel.liveCorners.remove(s) // add in first and last below
 
@@ -183,7 +186,7 @@ class HeightCollision(
         last.prevL = winner
 
         for (c <- chain.chain) {
-          if (c.nextL.currentCorners.size == 0) skel.liveEdges.remove(c.nextL)
+          if (c.nextL.currentCorners.isEmpty) skel.liveEdges.remove(c.nextL)
         }
       }
       // no need to recalculate events - no faces added. wrong!- any new connectivity needs to be flagged as loop-of-two etc...

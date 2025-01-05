@@ -2,6 +2,7 @@ package utils.math.planar.algo.straightSkeleton.helpers
 
 import utils.datastructures.containers.map.impl.MutableMultiMap
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -28,8 +29,7 @@ class ManyManyMap[A, B] {
    *
    * @param < C> the replacement for A
    */
-  class ConvertInputCollection[C](var converter: Cache[A, ArrayBuffer[C]]) {
-    def get: ManyManyMap[C, B] = {
+  def ConvertInputCollection[C, COL <: collection.Iterable[C]](converter: Cache[A, COL]) : ManyManyMap[C, B] =  {
       val out = new ManyManyMap[C, B]
       for {
         key <- forwards.keySet
@@ -48,7 +48,6 @@ class ManyManyMap[A, B] {
       }
 
       out
-    }
   }
 
   class ConvertOutputCollection[C](var converter: Cache[B, ArrayBuffer[C]]) {

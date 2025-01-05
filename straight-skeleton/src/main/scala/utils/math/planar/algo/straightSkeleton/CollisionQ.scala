@@ -64,7 +64,7 @@ class CollisionQ(var skel: Skeleton) {
   }
 
   var currentCoHeighted: Option[HeightCollision] = None
-  def poll = {
+  def poll: Option[HeightEvent] = {
     currentCoHeighted = None // now working at a new height
 
     val next = nextEvent()
@@ -91,13 +91,10 @@ class CollisionQ(var skel: Skeleton) {
               }
               else break
 
-
-
-          //todo: break is not supported
         }
       }
       currentCoHeighted = Some(new HeightCollision(coHeighted))
-
+      currentCoHeighted
     }
     else next
   }
@@ -115,15 +112,14 @@ class CollisionQ(var skel: Skeleton) {
   def addCorner(toAdd: Corner, postProcess: HeightCollision): Unit = {
     addCorner(toAdd, postProcess, false)
   }
+  
   def addCorner(toAdd: Corner, postProcess: HeightCollision, useCache: Boolean): Unit = {
     // check these two edges don't share the same face
     if (!skel.preserveParallel && toAdd.prevL.sameDirectedLine(toAdd.nextL)) {
       removeCorner(toAdd)
-      return
-    }
-    // loop of two - dissolves to a ridge
-    if (toAdd.prevL eq toAdd.nextC.nextL) {
-      skel.output.addOutputSideTo(toAdd, toAdd.nextC, toAdd.prevL, toAdd.nextL)
+
+    } else if (toAdd.prevL eq toAdd.nextC.nextL) { // loop of two - dissolves to a ridge
+      skel.output.addOutputSideTo(toAdd.asV3, toAdd.nextC.asV3, toAdd.prevL, toAdd.nextL)
       toAdd.nextL.currentCorners.remove(toAdd) // we really should automate this
 
       toAdd.nextL.currentCorners.remove(toAdd.nextC)
@@ -133,17 +129,12 @@ class CollisionQ(var skel: Skeleton) {
       if (toAdd.prevL.currentCorners.isEmpty) skel.liveEdges.remove(toAdd.prevL)
       skel.liveCorners.remove(toAdd)
       skel.liveCorners.remove(toAdd.nextC)
-      return
-    }
-    // Horizontal bisectors are rounded up and evaluated before leaving the current height event
-    if (toAdd.prevL.isCollisionNearHoriz(toAdd.nextL)) {
+    } else if (toAdd.prevL.isCollisionNearHoriz(toAdd.nextL)) { // Horizontal bisectors are rounded up and evaluated before leaving the current height event
       // if not a peak, add as a unsolved horizontal bisector
-      if (toAdd.nextL.direction.angle(toAdd.prevL.direction) < 0.01) postProcess.newHoriz(toAdd)
+      if (toAdd.nextL.direction.angle(toAdd.prevL.direction) < 0.01)
+        postProcess.newHoriz += toAdd
       // if just a peak, assume the loops-of-two-rule will finish it awf
-      return
-    }
-
-    for (e <- skel.liveEdges) {
+    } else for (e <- skel.liveEdges) {
       val ex = new EdgeCollision(null, toAdd.prevL, toAdd.nextL, e)
       if ((!useCache) || !seen.contains(ex)) {
         seen.add(ex)
@@ -151,6 +142,7 @@ class CollisionQ(var skel: Skeleton) {
       }
     }
   }
+
   private def cornerEdgeCollision(corner: Corner, edge: Edge): Unit = {
     // check for the uphill vector of both edges being too similar (parallel edges)
     // also rejects e == corner.nextL or corner.prevL updated to take into account vertical edges - will always have same uphill! - (so we check edge direction too)
@@ -256,7 +248,7 @@ class CollisionQ(var skel: Skeleton) {
       //        assert ( toAdd.prevL.machine == toAdd.nextL.machine );
     }
   }
-  
+
   def dump(): Unit = {
     var i = 0
 

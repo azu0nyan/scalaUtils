@@ -19,8 +19,8 @@ class Pair[A, B](
     this.element2 = element2
   }
 
-  override def equals(obj: AnyRef) = try {
-    val other = obj.asInstanceOf[Pair[_, _]]
+  override def equals(obj: Any) = try {
+    val other = obj.asInstanceOf[Pair[?, ?]]
     other.element1 == this.element1 && other.element2 == this.element2
   } catch {
     case var3: ClassCastException =>

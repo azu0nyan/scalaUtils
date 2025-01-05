@@ -4,10 +4,11 @@ package utils.math.planar.algo.straightSkeleton
 class ConsecutiveTriples[E](
                              var input: collection.Seq[E],
                              var loop: Boolean,
-                           ) extends Iterator[(E, E, E)] with Iterable[(E, E, E)] {
+                           ) extends Iterator[(E, E, E)] {
 
   var a = 0
-  var size = input.size
+  override def size = input.size
+  
   if (input.size < 3) a = -1
 
   override def hasNext = a >= 0
@@ -22,6 +23,5 @@ class ConsecutiveTriples[E](
     else if (loop && a == size) a = -1
     out
   }
-  override def iterator = this
 }
 

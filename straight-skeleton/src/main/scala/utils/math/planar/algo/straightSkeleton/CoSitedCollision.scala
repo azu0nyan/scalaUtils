@@ -47,7 +47,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     while (eit.hasNext) {
       val cur = eit.next
       if (!skel.liveEdges.contains(cur))
-        allEdges -= cur
+        allEdges -= cur // fix concurrent mod ex
     }
 
     if (allEdges.size < 3)
@@ -84,14 +84,14 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
           // fixme: because we (strangely) add all the chain starts above, we can just check if it's unchanged...
           if ((found eq s) && !edgeStarts.contains(found)) {
           }
-          else chains -= chain
+          else chains -= chain //todo fix concurrent mod ex
         }
       }
       // while still no-horizontals in chains (there may be when dealing with multiple
       // sites at one height), process chains to a counter clockwise order
       if (chains.size > 1)
         // size == 1 may have parallels in it (run away!)
-        chains.asJava.sort(new CoSitedCollision#ChainComparator(loc.z))
+        chains.asJava.sort(new ChainComparator(loc.z))
       true
     }
   }
@@ -210,7 +210,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     while (ccit.hasNext) {
       val cur = ccit.next
       if (cur.chain.isEmpty)
-        chains -= cur
+        chains -= cur //todo fix concurrent mod ex
     }
   }
 
@@ -232,50 +232,54 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
 
       }
       // after all the checks, if there are less than three faces involved, it's not a collision any more
-      if (allCorners.size < 3) return false
-      skel.debugCollisionOrder.add(this)
-      val cit = chains.iterator
-      while (cit.hasNext) {
-        val chain = cit.next // chain.chain.get(2).nextL
+      if (allCorners.size < 3) {
+        false
+      }
+      else {
+        skel.debugCollisionOrder += this
+        val cit = chains.iterator
+        while (cit.hasNext) {
+          val chain = cit.next // chain.chain.get(2).nextL
 
 
-        for (p <- new ConsecutivePairs[Corner](chain.chain, chain.loop)) {
-          //                System.out.println( "proc consec " + p.first() + " and " + p.second() );
-          EdgeCollision.processConsecutive(loc, p._1, p._2, skel)
-        }
-        // remove the middle faces in the loop from the list of live corners, liveEdges if
-        // there are no more live corners, and the liveCorners list
-        if (chain.chain.size >= 3) {
-          val tit = new ConsecutiveTriples[Corner](chain.chain, chain.loop)
-          while (tit.hasNext) {
-            val middle = tit.next._2.nextL
-            // face no longer referenced, remove from list of live edges
-            if (middle.currentCorners.isEmpty) skel.liveEdges.remove(middle)
+          for (p <- new ConsecutivePairs[Corner](chain.chain, chain.loop)) {
+            //                System.out.println( "proc consec " + p.first() + " and " + p.second() );
+            EdgeCollision.processConsecutive(loc, p._1, p._2, skel)
           }
+          // remove the middle faces in the loop from the list of live corners, liveEdges if
+          // there are no more live corners, and the liveCorners list
+          if (chain.chain.size >= 3) {
+            val tit = new ConsecutiveTriples[Corner](chain.chain, chain.loop)
+            while (tit.hasNext) {
+              val middle = tit.next._2.nextL
+              // face no longer referenced, remove from list of live edges
+              if (middle.currentCorners.isEmpty) skel.liveEdges.remove(middle)
+            }
+          }
+          if (chain.loop)
+            chains -= chain //todo fix concurrent mod ex
         }
-        if (chain.loop)
-          chains -= chain
-      }
-      // was entirely closed loops
-      if (chains.isEmpty) return true
-      // connect end of previous chain, to start of next
-      // in case we are colliding against a smash (no-corner/split event)-edge, we cache the next-corner before
-      // any alterations
-      val aNext = new mutable.LinkedHashMap[Corner, Corner]
+        // was entirely closed loops
+        if (chains.isEmpty) return true
+        // connect end of previous chain, to start of next
+        // in case we are colliding against a smash (no-corner/split event)-edge, we cache the next-corner before
+        // any alterations
+        val aNext = new mutable.LinkedHashMap[Corner, Corner]
 
-      for (chain <- chains) {
-        val c = chain.chain.last
-        aNext.put(c, c.nextC)
-      }
-      // process intra-chain collisions (non-consecutive edges)
+        for (chain <- chains) {
+          val c = chain.chain.last
+          aNext.put(c, c.nextC)
+        }
+        // process intra-chain collisions (non-consecutive edges)
 
-      for (adjacentChains <- new ConsecutivePairs[Chain](chains, true)) {
-        val first = adjacentChains._1.chain
-        val a = first.last
-        val b = adjacentChains._2.chain.head
-        EdgeCollision.processJump(loc, a, aNext(a), b, skel, parent)
+        for (adjacentChains <- new ConsecutivePairs[Chain](chains, true)) {
+          val first = adjacentChains._1.chain
+          val a = first.last
+          val b = adjacentChains._2.chain.head
+          EdgeCollision.processJump(loc, a, aNext(a), b, skel, parent)
+        }
+        true
       }
-      true
     }
   }
   /**

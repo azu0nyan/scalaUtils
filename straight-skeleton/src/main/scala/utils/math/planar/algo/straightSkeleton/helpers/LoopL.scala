@@ -78,7 +78,7 @@ class LoopL[E](
 
   def getLoopableIterator = new LoopableLIterator
   def getLoopableIterable = new Iterable[Loopable[E]]() {
-    override def iterator: Iterator[Loopable[E]] = new LoopL[E]#LoopableLIterator
+    override def iterator: Iterator[Loopable[E]] = new LoopableLIterator
   }
 
   class LoopableLIterator extends Iterator[Loopable[E]] {
@@ -150,7 +150,7 @@ class LoopL[E](
     out
   }
 
-  override def isEmpty: Boolean =
+  def isEmpty: Boolean =
     iterator.exists(_.nonEmpty)
 }
 

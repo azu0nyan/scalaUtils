@@ -11,7 +11,7 @@ import utils.math.space.V3
 object EdgeCollision {
   def processConsecutive(loc: V3, a: Corner, b: Corner, skel: Skeleton): Unit = {
     // add line b -> loc
-    skel.output.addOutputSideTo(b, loc, b.prevL, b.nextL)
+    skel.output.addOutputSideTo(b.asV3, loc, b.prevL, b.nextL)
     // remove b from edge's map
     a.nextL.currentCorners.remove(b)
     b.nextL.currentCorners.remove(b)
@@ -68,7 +68,7 @@ object EdgeCollision {
     pDist >= c && nDist >= c // a bit of slack!
 
   }
-  
+
   def findCorner(in: Edge, collision: V3, skel: Skeleton): Corner = {
 
     for (lc <- in.currentCorners) {
@@ -111,9 +111,10 @@ object EdgeCollision {
 
   }
 }
+
 class EdgeCollision(var loc: V3, var a: Edge, var b: Edge, var c: Edge) extends HeightEvent {
   var debugInfinite = false
-  override def equals(obj: AnyRef): Boolean = {
+  override def equals(obj: Any): Boolean = {
     if (obj.isInstanceOf[EdgeCollision]) {
       val other = obj.asInstanceOf[EdgeCollision]
       return (a == other.a && ((b == other.b && c == other.c) || (b == other.c && c == other.b))) || (a == other.b && ((b == other.a && c == other.c) || (b == other.c && c == other.a))) || (a == other.c && ((b == other.a && c == other.b) || (b == other.b && c == other.a)))
@@ -140,6 +141,7 @@ class EdgeCollision(var loc: V3, var a: Edge, var b: Edge, var c: Edge) extends 
    * Three way collisions are delt with in CoSitedCollision
    */
   override def process(skel: Skeleton): Boolean = throw new Error
-  override def toString = loc + ":" + a + "," + b + "," + c
+  
+  override def toString = loc.toShortString + ":" + a + "," + b + "," + c
 }
 

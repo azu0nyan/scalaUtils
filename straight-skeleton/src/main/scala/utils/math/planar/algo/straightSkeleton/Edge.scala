@@ -46,7 +46,7 @@ object Edge {
     }
 
     for (pair <- new ConsecutivePairs[V2](ribbon, true)) {
-      loop.append(new Edge(cache.get(pair.first), cache.get(pair.second)))
+      loop.append(new Edge(cache.get(pair._1), cache.get(pair._2)))
     }
     loop
   }
@@ -91,7 +91,7 @@ object Edge {
     val ceiling = new LinearForm3D(0, 0, 1, -height)
     // this can cause Jama not to return...
     if (a.prevL.linearForm.hasNaN || a.nextL.linearForm.hasNaN) throw new Error
-    try ceiling.collide(a.prevL.linearForm, a.nextL.linearForm)
+    try ceiling.collide(a.prevL.linearForm, a.nextL.linearForm).get
     catch {
       case e: RuntimeException =>
         assert(a.prevL.sameDirectedLine(a.nextL))
