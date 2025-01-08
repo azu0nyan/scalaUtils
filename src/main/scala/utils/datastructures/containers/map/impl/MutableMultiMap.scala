@@ -63,13 +63,13 @@ class MutableMultiMap[A, B, C[_]](
 
   override def clear(): Unit =
     innerMap.clear()
-    
+
   override def addEntriesFrom[C2[_]](m: MultiMap[A, B, C2])(using iterateElements: MultiMap.IterateElements[B, C2]): Unit =
     for{
       key <- m.keySet;
       value <- m.get(key).iterator
     }  put(key, value)
-    
+
 }
 
 object MutableMultiMap {
@@ -106,7 +106,7 @@ object MutableMultiMap {
     override def isEmptyC: mutable.LinkedHashSet[B] => Boolean = _.isEmpty
     override def containsC: mutable.LinkedHashSet[B] => B => Boolean = _.contains
     override def combine(first: mutable.LinkedHashSet[B], second: mutable.LinkedHashSet[B]): mutable.LinkedHashSet[B] = first ++ second
-    override def putC: mutable.LinkedHashSet[B] => B => mutable.LinkedHashSet[B] = _.put
+    override def putC: mutable.LinkedHashSet[B] => B => mutable.LinkedHashSet[B] = _.+=
     override def removeC: mutable.LinkedHashSet[B] => B => mutable.LinkedHashSet[B] = (c: mutable.LinkedHashSet[B]) => (b: B) => {
       c.remove(b)
       c
@@ -118,7 +118,7 @@ object MutableMultiMap {
     override def isEmptyC: mutable.HashSet[B] => Boolean = _.isEmpty
     override def containsC: mutable.HashSet[B] => B => Boolean = _.contains
     override def combine(first: mutable.HashSet[B], second: mutable.HashSet[B]): mutable.HashSet[B] = first ++ second
-    override def putC: mutable.HashSet[B] => B => mutable.HashSet[B] = _.put
+    override def putC: mutable.HashSet[B] => B => mutable.HashSet[B] = _.+=
     override def removeC: mutable.HashSet[B] => B => mutable.HashSet[B] = (c: mutable.HashSet[B]) => (b: B) => {
       c.remove(b)
       c
@@ -130,7 +130,7 @@ object MutableMultiMap {
     override def isEmptyC: mutable.ArrayBuffer[B] => Boolean = _.isEmpty
     override def containsC: mutable.ArrayBuffer[B] => B => Boolean = _.contains
     override def combine(first: mutable.ArrayBuffer[B], second: mutable.ArrayBuffer[B]): mutable.ArrayBuffer[B] = first ++ second
-    override def putC: mutable.ArrayBuffer[B] => B => mutable.ArrayBuffer[B] = _.put
+    override def putC: mutable.ArrayBuffer[B] => B => mutable.ArrayBuffer[B] = _.+=
     override def removeC: mutable.ArrayBuffer[B] => B => mutable.ArrayBuffer[B] = (c: mutable.ArrayBuffer[B]) => (b: B) => {
       c.remove(b)
       c
