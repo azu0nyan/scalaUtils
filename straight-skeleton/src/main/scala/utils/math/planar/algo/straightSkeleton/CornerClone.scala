@@ -11,7 +11,10 @@ import utils.math.planar.algo.straightSkeleton.helpers.{Cache, Loop, LoopL, SetC
  * @param input the input to be cloned. Result dumped into variables.
  */
 class CornerClone(input: LoopL[Corner]){
-
+  var output = new LoopL[Corner]
+  var nOSegments = new SetCorrespondence[Corner, Corner]
+  var nOCorner = new MutableBiMap[Corner, Corner]
+  
   val cornerCache = new Cache[Corner, Corner]() {
     override def create(i: Corner) = new Corner(i.asV3)
   }
@@ -53,9 +56,7 @@ class CornerClone(input: LoopL[Corner]){
       e.prevL = edge
     }
   }
-  var output = new LoopL[Corner]
-  var nOSegments = new SetCorrespondence[Corner, Corner]
-  var nOCorner = new MutableBiMap[Corner, Corner]
+  
   def addSegment = true
   def addCorner = true
 }

@@ -135,7 +135,7 @@ class Output(var skeleton: Skeleton) {
     } // an originator - an edge in the plan
 
     // we assume that start locations for edges are unique!
-    assert(faces.get(e.start) == null)
+    assert(!faces.contains(e.start))
     e.start.nextL = e // these are always true?! - we rely on them for indexing, below
 
     e.end.prevL = e
@@ -287,7 +287,7 @@ class Output(var skeleton: Skeleton) {
           if (poly.count >= 3) faceWithHoles.add(poly)
         }
       } catch {
-        case e: Throwable =>
+        case e: Throwable if !e.isInstanceOf[edge.type ] =>
           e.printStackTrace()
         //continue
       }

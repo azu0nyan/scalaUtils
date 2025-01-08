@@ -17,7 +17,7 @@ import scala.util.control.Breaks.{break, breakable}
 class HeightCollision(
                        val coHeighted: mutable.Buffer[EdgeCollision]
                      ) extends HeightEvent {
-  var height = coHeighted(0).getHeight
+  var height = coHeighted.headOption.map(_.getHeight).getOrElse(0d)
   val newHoriz = new mutable.LinkedHashSet[Corner]
 
   override def getHeight = height

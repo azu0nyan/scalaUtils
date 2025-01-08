@@ -34,13 +34,12 @@ class Machine(initial: Double = Math.PI / 4) {
 
   var color = Machine.rainbow(Machine.rainbowIndex % Machine.rainbowStrings.length)
   var description = Machine.rainbowStrings(Machine.rainbowIndex % Machine.rainbowStrings.length)
-  Machine.rainbowIndex += 1
-  addHeightEvent(new DirectionHeightEvent(this, initial))
-  var currentAngle = initial // // when a edge is added this is the angle it is given
-
   // a machine will only ever have one pending event in the skeleton.qu, others are stored here
   var events = mutable.Buffer[HeightEvent]()
+  var currentAngle = initial // // when a edge is added this is the angle it is given
 
+  Machine.rainbowIndex += 1
+  addHeightEvent(new DirectionHeightEvent(this, initial))
 
   override def toString = description
   /**
