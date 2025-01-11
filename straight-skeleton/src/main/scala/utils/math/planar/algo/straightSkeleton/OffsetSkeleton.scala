@@ -53,7 +53,7 @@ class OffsetSkeleton(cornersIn: LoopL[Corner], var interval: Double) { // clone 
       lastStep = step
   }
 
-  def getResults = {
+  def getResults() = {
     output = mutable.Buffer[Offset]()
     val unspecifiedNewMachineOld = new mutable.HashMap[Machine, Machine]
     // assign the new machines we've created
@@ -80,7 +80,7 @@ class OffsetSkeleton(cornersIn: LoopL[Corner], var interval: Double) { // clone 
     if (last != null)
       last.endHere = true
     //        DebugWindow.showIfNotShown( edges );
-    outputSkeleton.skeleton()
+     outputSkeleton.skeleton()
     // restore original machines for calling routine
 
     for (offset <- output) {
@@ -117,9 +117,7 @@ class OffsetSkeleton(cornersIn: LoopL[Corner], var interval: Double) { // clone 
   }
 
   class InstanceHeightEvent(var step: Int) extends HeightEvent {
-    height = Math.nextAfter((step + 1) * interval, -1) // just before we change direction for the next set of edges
-
-    var height = .0
+    var height = Math.nextAfter((step + 1) * interval, -1) // just before we change direction for the next set of edges
     var endHere = false
     override def getHeight = height
     override def process(skel: Skeleton) = {
@@ -178,7 +176,7 @@ object OffsetSkeleton {
     for (m <- allMachines) {
       os.registerProfile(m, Math.atan(dist / 100), 0)
     }
-    val res = os.getResults
+    val res = os.getResults()
     if (res.isEmpty) new LoopL[Offset]
     else res(0).shape
   }

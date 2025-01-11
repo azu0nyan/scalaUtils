@@ -40,16 +40,18 @@ class CollisionQ(var skel: Skeleton) {
     breakable {
       while (true) {
         ec = Try(faceEvents.dequeue()).toOption
-        if (ec.isEmpty) break
+        if (ec.isEmpty)
+          break
         // valid if we haven't seen it, and it's height is "greater" than the current skeleton height
-        if (!skel.seen.contains(ec.get) && ec.get.loc.z - skel.height > -0.001) break
+        if (!skel.seen.contains(ec.get) && ec.get.loc.z - skel.height > -0.001)
+          break
       }
     }
-    val he = Try(miscEvents.dequeue()).toOption
     ec match
-      case None => Try(miscEvents.dequeue()).toOption // might be null!
+      case None =>
+        Try(miscEvents.dequeue()).toOption
       case Some(ec) =>
-        he match
+        miscEvents.headOption match
           case None =>
             skel.seen.add(ec)
             Some(ec)
@@ -62,6 +64,7 @@ class CollisionQ(var skel: Skeleton) {
               Some(ec) // return ec
             }
   }
+
 
   var currentCoHeighted: Option[HeightCollision] = None
   def poll: Option[HeightEvent] = {
@@ -112,7 +115,7 @@ class CollisionQ(var skel: Skeleton) {
   def addCorner(toAdd: Corner, postProcess: HeightCollision): Unit = {
     addCorner(toAdd, postProcess, false)
   }
-  
+
   def addCorner(toAdd: Corner, postProcess: HeightCollision, useCache: Boolean): Unit = {
     // check these two edges don't share the same face
     if (!skel.preserveParallel && toAdd.prevL.sameDirectedLine(toAdd.nextL)) {
@@ -160,7 +163,12 @@ class CollisionQ(var skel: Skeleton) {
     var res: Option[V3] = None
     try {
       // sometimes locks up here if edge.linear form has NaN components.
-      if (corner.prevL.linearForm.hasNaN || corner.nextL.linearForm.hasNaN || edge.linearForm.hasNaN) throw new Error
+      if (
+        corner.prevL.linearForm.hasNaN ||
+          corner.nextL.linearForm.hasNaN ||
+          edge.linearForm.hasNaN
+      ) throw new Error
+
       res = edge.linearForm.collide(corner.prevL.linearForm, corner.nextL.linearForm)
     } catch {
       case f: Throwable =>
@@ -270,4 +278,11 @@ class CollisionQ(var skel: Skeleton) {
 
 object CollisionQ {
   private def isParallel(a: Edge, b: Edge) = a.uphill.angle(b.uphill) < 0.0001 && a.direction.angle(b.direction) < 0.0001
+
+//  def angle(v0:V3, v1: V3) = {
+//    var vDot = this.dot(v1) / (this.length * v1.length)
+//    if (vDot < -1.0F.toDouble) vDot = -1.0F.toDouble
+//    if (vDot > 1.0F.toDouble) vDot = 1.0F.toDouble
+//    Math.acos(vDot)
+//  }
 }

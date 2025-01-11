@@ -87,17 +87,18 @@ class LinearForm3D {
     }
   }
 
-  def collide(b: LinearForm3D, c: LinearForm3D) = if (!this.hasNaN && !b.hasNaN && !c.hasNaN) {
-    val three = Matrix3d.make(this.A, this.B, this.C, b.A, b.B, b.C, c.A, c.B, c.C)
-    val offset = new V3(-this.D, -b.D, -c.D)
-    Jama.solve(three, offset)
-  }
-  else throw new Error
+  def collide(b: LinearForm3D, c: LinearForm3D) =
+    if (!this.hasNaN && !b.hasNaN && !c.hasNaN) {
+      val three = Matrix3d.make(this.A, this.B, this.C, b.A, b.B, b.C, c.A, c.B, c.C)
+      val offset = new V3(-this.D, -b.D, -c.D)
+       Jama.solve(three, offset)
+    }
+    else throw new Error
 
   def createNormalVector = V3(A, B, C).normalize
 
   override def toString = A + "," + B + "," + C + "," + D
-  
+
   override def equals(obj: Any) =
     if (!obj.isInstanceOf[LinearForm3D]) false
     else {

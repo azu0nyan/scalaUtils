@@ -298,7 +298,7 @@ class Skeleton {
   } // parent is below (older than) child...
 
   def capAt(cap: Double): Unit = {
-    capAt(cap, null)
+    capAt(cap, None)
   }
 
   def capAt(cap: Double, hta: Option[Skeleton.HeresTheArea]): Unit = {

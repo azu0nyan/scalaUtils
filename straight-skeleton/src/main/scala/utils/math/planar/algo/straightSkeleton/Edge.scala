@@ -154,7 +154,9 @@ class Edge(var start: Corner, var end: Corner) {
     calculateUphill()
     // find normal from uphill and edge
     val norm = getPlaneNormal
-    linearForm = new LinearForm3D(norm, new V3(start.x, start.y, start.z))
+    linearForm = new LinearForm3D(norm,
+      new V3(start.x, start.y, start.z)
+    )
   }
   /**
    * The normal the edge

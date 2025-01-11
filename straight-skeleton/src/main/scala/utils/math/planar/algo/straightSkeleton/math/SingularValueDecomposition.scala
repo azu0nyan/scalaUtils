@@ -358,27 +358,27 @@ class SingularValueDecomposition(Arg: Matrix) {
           }
         }
         // Order the singular values.
-        while (k < pp) {
-          if (s(k) >= s(k + 1)) break //todo: break is not supported
-          var t = s(k)
-          s(k) = s(k + 1)
-          s(k + 1) = t
-          if (wantv && (k < n - 1)) for (i <- 0 until n) {
-            t = V(i)(k + 1)
-            V(i)(k + 1) = V(i)(k)
-            V(i)(k) = t
+        breakable {
+          while (k < pp) {
+            if (s(k) >= s(k + 1)) break //todo: break is not supported
+            var t = s(k)
+            s(k) = s(k + 1)
+            s(k + 1) = t
+            if (wantv && (k < n - 1)) for (i <- 0 until n) {
+              t = V(i)(k + 1)
+              V(i)(k + 1) = V(i)(k)
+              V(i)(k) = t
+            }
+            if (wantu && (k < m - 1)) for (i <- 0 until m) {
+              t = U(i)(k + 1)
+              U(i)(k + 1) = U(i)(k)
+              U(i)(k) = t
+            }
+            k += 1
           }
-          if (wantu && (k < m - 1)) for (i <- 0 until m) {
-            t = U(i)(k + 1)
-            U(i)(k + 1) = U(i)(k)
-            U(i)(k) = t
-          }
-          k += 1
         }
         iter = 0
         p -= 1
-
-
     }
   }
 
