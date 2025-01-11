@@ -2,10 +2,10 @@ package drawing.core
 
 import java.awt.event.{KeyEvent, KeyListener}
 
-class ShiftControlAltListener extends KeyListener{
-  var shiftPressed:Boolean = false
-  var altPressed:Boolean = false
-  var controlPressed:Boolean = false
+class ShiftControlAltListener extends KeyListener {
+  var shiftPressed: Boolean = false
+  var altPressed: Boolean = false
+  var controlPressed: Boolean = false
 
   override def keyTyped(e: KeyEvent): Unit = {
 
@@ -26,4 +26,8 @@ class ShiftControlAltListener extends KeyListener{
       case _ =>
     }
   }
+
+  def anyModsPressed: Boolean = shiftPressed || altPressed || controlPressed
+
+  def noModsPressed: Boolean = !anyModsPressed
 }
