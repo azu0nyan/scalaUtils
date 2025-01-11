@@ -123,8 +123,8 @@ class Camera(initialLookAt: V2 = new V2(0.0f, 0.0f),
       lookAt(cameraCenterInWorld + V2(0, if (invertY) -1 else 1) * screenToWorld(screenResolution.length * screenPartPerScroll)))
     window.addKeyBinding(moveLEFT, if (controlsEnabled) lookAt(cameraCenterInWorld + V2(-1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
     window.addKeyBinding(moveRIGHT, if (controlsEnabled) lookAt(cameraCenterInWorld + V2(1, 0) * screenToWorld(screenResolution.length * screenPartPerScroll)))
-    window.addKeyBinding(rotateCCW, if (controlsEnabled) _rotation += (if (invertY) 0.1f else -0.1))
-    window.addKeyBinding(rotateCW, if (controlsEnabled) _rotation -= (if (invertY) 0.1f else -0.1))
+    window.addKeyBinding(rotateCCW, if (controlsEnabled) _rotation += (if (invertY) 0.1 else -0.1))
+    window.addKeyBinding(rotateCW, if (controlsEnabled) _rotation -= (if (invertY) 0.1 else -0.1))
 
     window.addMouseMotionListener(new MouseMotionListener {
       override def mouseDragged(e: MouseEvent): Unit = {

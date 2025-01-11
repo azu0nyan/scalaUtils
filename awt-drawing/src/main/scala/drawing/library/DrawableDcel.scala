@@ -1,5 +1,5 @@
 package drawing.library
-
+/* todo
 import drawing.core.SimpleDrawable
 import drawing.library.ColorOps._
 import drawing.library.ColorOps
@@ -176,3 +176,4 @@ class DrawableDcel[D <: DCELData](
     }
   }
 }
+*/

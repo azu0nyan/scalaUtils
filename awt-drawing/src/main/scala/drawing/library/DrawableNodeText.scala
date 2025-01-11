@@ -58,12 +58,12 @@ object DrawableNodeText {
 
 class DrawableNodeText[T](
                           val value: T,
-                          var valueText: T => String = {v:T => v.toString},
+                          var valueText: T => String = {(v:T) => v.toString},
                           var valueTextColor: Color = Color.BLACK,
                           var smallTextColor: Color = Color.BLACK,
-                          var leftText: T => String = {v:T => ""},
-                          var rightText: T => String = {v:T => ""},
-                          var botText: T => String = {v:T => ""},
+                          var leftText: T => String = {(v:T) => ""},
+                          var rightText: T => String = {(v:T) => ""},
+                          var botText: T => String = {(v:T) => ""},
                           var size: V2 = V2(5, 3),
                           borderWidth: Int = 2,
                           var borderColor: Color = Color.BLACK,

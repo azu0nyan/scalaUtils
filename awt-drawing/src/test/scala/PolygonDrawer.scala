@@ -103,8 +103,8 @@ object PolygonDrawer {
 
     }
 
-    Drawing.addKeyBinding(KeyEvent.VK_ENTER, addPolyClick)
-    Drawing.addKeyBinding(KeyEvent.VK_SPACE, addPolyClick)
+    Drawing.addKeyBinding(KeyEvent.VK_ENTER, addPolyClick())
+    Drawing.addKeyBinding(KeyEvent.VK_SPACE, addPolyClick())
     Drawing.addKeyBinding(KeyEvent.VK_Z,
       if (Drawing.shiftControlAlt.controlPressed && !Drawing.shiftControlAlt.shiftPressed) {
         curPoly = curPoly.dropRight(1)
