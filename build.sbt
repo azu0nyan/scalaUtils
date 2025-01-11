@@ -17,6 +17,7 @@ scalacOptions ++= Seq(
 //  "-rewrite",
  // "-explain",
  // "--explain-types"
+//  "-Ytasty-reader",
 )
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"
