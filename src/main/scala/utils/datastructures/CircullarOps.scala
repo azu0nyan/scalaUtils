@@ -23,6 +23,11 @@ object CircullarOps {
     def getCircullar(id: Int): A = a(circullarIndex(id, a.length))
     def setCircullar(el:A, id: Int): Unit = a(circullarIndex(id, a.length)) = el
   }
+  
+  
+  extension [A](a: Seq[A]) {
+    def asCyclicPairs: Iterator[(A, A)] = toCyclicPairs(a)
+  }
 
 }
 
