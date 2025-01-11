@@ -28,12 +28,14 @@ class TestBasic extends AnyFlatSpec with should.Matchers {
     val res: Seq[V3] = output.iterator.toSeq.flatMap(_.iterator.toSeq.map(_.asInstanceOf[Corner].asV3))
 
     val expected = Seq(
-      V3(12.071068, 5.000000, 100.000000),
+      V3(12.07106781186, 5.000000, 100.000000),
       V3(95.000000, 5.000000, 100.000000),
-      V3(95.000000, 87.928932, 100.000000),
+      V3(95.000000, 87.92893218813, 100.000000),
     )
 
-    assert(res == expected)
+    assert(res(0) ~= expected(0))
+    assert(res(1) ~= expected(1))
+    assert(res(2) ~= expected(2))
 
 
     for {

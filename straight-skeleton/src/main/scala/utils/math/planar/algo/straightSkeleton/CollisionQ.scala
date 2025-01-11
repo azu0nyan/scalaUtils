@@ -6,6 +6,7 @@ package utils.math.planar.algo.straightSkeleton
  * and open the template in the editor.
  */
 
+import utils.math.Scalar
 import utils.math.space.V3
 import utils.math.space.V3
 
@@ -20,18 +21,15 @@ import scala.util.control.Breaks.{break, breakable}
  *                  in the live corner list. Caller has to update this set :)
  */
 class CollisionQ(var skel: Skeleton) {
-  private val edgeCollisionOrderingMapper = new Ordering[EdgeCollision] {
-    override def compare(x: EdgeCollision, y: EdgeCollision): Int = HeightEvent.heightEventOrdering.compare(x, y)
-  }
   /**
    * Collisions between edges
    */
   var faceEvents: mutable.PriorityQueue[EdgeCollision] =
-    new mutable.PriorityQueue[EdgeCollision]()(edgeCollisionOrderingMapper)
+    new mutable.PriorityQueue[EdgeCollision]()(Ordering.by[EdgeCollision, Scalar](- _.getHeight))
   /**
    * Other control events (gradient changes...)
    */
-  private var miscEvents: mutable.PriorityQueue[HeightEvent] = new mutable.PriorityQueue[HeightEvent]()(HeightEvent.heightEventOrdering)
+  private var miscEvents: mutable.PriorityQueue[HeightEvent] = new mutable.PriorityQueue[HeightEvent]()(Ordering.by[HeightEvent, Scalar](- _.getHeight))
   // this is an acceleration structure - we don't process seen triples of edges twice. A similar structure occurs in Skeleton ~ they need merging...
   private val seen = new mutable.HashSet[EdgeCollision]
   private def nextEvent(): Option[HeightEvent] = {
@@ -279,10 +277,10 @@ class CollisionQ(var skel: Skeleton) {
 object CollisionQ {
   private def isParallel(a: Edge, b: Edge) = a.uphill.angle(b.uphill) < 0.0001 && a.direction.angle(b.direction) < 0.0001
 
-//  def angle(v0:V3, v1: V3) = {
-//    var vDot = this.dot(v1) / (this.length * v1.length)
-//    if (vDot < -1.0F.toDouble) vDot = -1.0F.toDouble
-//    if (vDot > 1.0F.toDouble) vDot = 1.0F.toDouble
-//    Math.acos(vDot)
-//  }
+  //  def angle(v0:V3, v1: V3) = {
+  //    var vDot = this.dot(v1) / (this.length * v1.length)
+  //    if (vDot < -1.0F.toDouble) vDot = -1.0F.toDouble
+  //    if (vDot > 1.0F.toDouble) vDot = 1.0F.toDouble
+  //    Math.acos(vDot)
+  //  }
 }
