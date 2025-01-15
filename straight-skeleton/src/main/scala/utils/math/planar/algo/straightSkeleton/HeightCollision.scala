@@ -30,26 +30,25 @@ class HeightCollision(
    *
    * @return true if topology has changed, false (we ignored all events)
    */
-  override def process(skel: Skeleton) = {
+  override def process(skel: Skeleton): Boolean = {
     var changed = false
     var coSited = mutable.Buffer[CoSitedCollision]()
 
+
+    object cont extends Throwable("continue")
     // I love the smell of O(n^2) in the morning
-    for (ec <- coHeighted) {
-
-      var shouldAdd = false
-
-      breakable {
-        for (csc <- coSited) {
-          if (ec.loc.distance(csc.loc) < 0.01) {
-            csc.add(ec)
-            shouldAdd = true
-            break
-          }
+    for (ec <- coHeighted) try {
+      for (csc <- coSited) {
+        if (ec.loc.distance(csc.loc) < 0.01) {
+          csc.add(ec)
+          throw cont
         }
       }
-      if (shouldAdd) coSited += new CoSitedCollision(ec.loc, ec, this)
-    }
+      val collision = new CoSitedCollision(ec.loc, ec, this)
+      coSited += collision
+    } catch
+      case cont => ()
+
 
     /**
      * todo: This is a two-step process, for (I suspect) historical
@@ -61,7 +60,7 @@ class HeightCollision(
     //      val css = cit.next
     //      if (!css.findChains(skel)) cit.remove()
     //    }
-
+    print("")
     coSited = coSited.filter(_.findChains(skel)) //TODO do it in place
 
     /**
@@ -158,7 +157,7 @@ class HeightCollision(
           chain.chain += last
         }
 
-        for ((s,e) <- new ConsecutivePairs[Corner](chain.chain, false)) {
+        for ((s, e) <- new ConsecutivePairs[Corner](chain.chain, false)) {
           assert(s.nextL eq e.prevL)
           // if this is the edge that spreads out over all others
           if (winners.contains(s.nextL)) {

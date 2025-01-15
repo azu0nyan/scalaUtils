@@ -6,7 +6,7 @@ import matchers.*
 import utils.math.planar.algo.straightSkeleton.helpers.{Loop, LoopL}
 import utils.math.space.V3
 
-class Test extends AnyFlatSpec with should.Matchers {
+class TestShrink extends AnyFlatSpec with should.Matchers {
   "StraightSkeleton" should "work for triangle" in {
     val loop1 = new Loop[Edge]()
     val c1 = new Corner(0, 0)

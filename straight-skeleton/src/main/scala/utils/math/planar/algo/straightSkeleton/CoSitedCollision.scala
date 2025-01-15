@@ -17,10 +17,11 @@ import scala.jdk.CollectionConverters.BufferHasAsJava
  */
 
 class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: HeightCollision) {
-  add(ec)
   var edges = new mutable.LinkedHashSet[EdgeCollision]
   var debugHoriz = false
   var chains = mutable.Buffer[Chain]()
+
+  add(ec)
 
   def add(ec: EdgeCollision): Unit = {
     edges.add(ec)
@@ -223,7 +224,8 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
 
 
   def processChains(skel: Skeleton): Boolean = {
-    if (moreOneSmashEdge) false // no test example case showing this is required?
+    if (moreOneSmashEdge)
+      false // no test example case showing this is required?
     else {
       val allCorners = new mutable.LinkedHashSet[Corner]
 
@@ -237,51 +239,56 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
       }
       else {
         skel.debugCollisionOrder += this
-        val cit = chains.iterator
-        while (cit.hasNext) {
-          val chain = cit.next // chain.chain.get(2).nextL
 
 
-          for (p <- new ConsecutivePairs[Corner](chain.chain, chain.loop)) {
-            //                System.out.println( "proc consec " + p.first() + " and " + p.second() );
-            EdgeCollision.processConsecutive(loc, p._1, p._2, skel)
-          }
-          // remove the middle faces in the loop from the list of live corners, liveEdges if
-          // there are no more live corners, and the liveCorners list
-          if (chain.chain.size >= 3) {
-            val tit = new ConsecutiveTriples[Corner](chain.chain, chain.loop)
-            while (tit.hasNext) {
-              val middle = tit.next._2.nextL
-              // face no longer referenced, remove from list of live edges
-              if (middle.currentCorners.isEmpty) skel.liveEdges.remove(middle)
-            }
-          }
-          if (chain.loop)
-            chains -= chain //todo fix concurrent mod ex
-        }
+        chains.foreach(processChain(_, skel))
+
+        chains = chains.filterNot(_.loop)
+
         // was entirely closed loops
-        if (chains.isEmpty) return true
-        // connect end of previous chain, to start of next
-        // in case we are colliding against a smash (no-corner/split event)-edge, we cache the next-corner before
-        // any alterations
-        val aNext = new mutable.LinkedHashMap[Corner, Corner]
+        if (chains.isEmpty)  true
+        else {
+          // connect end of previous chain, to start of next
+          // in case we are colliding against a smash (no-corner/split event)-edge, we cache the next-corner before
+          // any alterations
+          val aNext = new mutable.LinkedHashMap[Corner, Corner]
 
-        for (chain <- chains) {
-          val c = chain.chain.last
-          aNext.put(c, c.nextC)
-        }
-        // process intra-chain collisions (non-consecutive edges)
+          for (chain <- chains) {
+            val c = chain.chain.last
+            aNext.put(c, c.nextC)
+          }
+          // process intra-chain collisions (non-consecutive edges)
 
-        for (adjacentChains <- new ConsecutivePairs[Chain](chains, true)) {
-          val first = adjacentChains._1.chain
-          val a = first.last
-          val b = adjacentChains._2.chain.head
-          EdgeCollision.processJump(loc, a, aNext(a), b, skel, parent)
+          for (adjacentChains <- new ConsecutivePairs[Chain](chains, true)) {
+            val first = adjacentChains._1.chain
+            val a = first.last
+            val b = adjacentChains._2.chain.head
+            EdgeCollision.processJump(loc, a, aNext(a), b, skel, parent)
+          }
+          true
         }
-        true
       }
     }
   }
+
+  def processChain(chain: Chain, skel: Skeleton) = {
+    for (p <- new ConsecutivePairs[Corner](chain.chain, chain.loop)) {
+      //                System.out.println( "proc consec " + p.first() + " and " + p.second() );
+      EdgeCollision.processConsecutive(loc, p._1, p._2, skel)
+    }
+    // remove the middle faces in the loop from the list of live corners, liveEdges if
+    // there are no more live corners, and the liveCorners list
+    if (chain.chain.size >= 3) {
+      val tit = new ConsecutiveTriples[Corner](chain.chain, chain.loop)
+      while (tit.hasNext) {
+        val middle = tit.next._2.nextL
+        // face no longer referenced, remove from list of live edges
+        if (middle.currentCorners.isEmpty)
+          skel.liveEdges.remove(middle)
+      }
+    }
+  }
+
   /**
    * Is this actually needed in any of the examples?
    */

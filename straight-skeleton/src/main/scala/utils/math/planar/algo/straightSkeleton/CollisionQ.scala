@@ -201,7 +201,8 @@ class CollisionQ(var skel: Skeleton) {
     _holdRemoves = false
 
     for (c <- removes) {
-      if (skel.liveCorners.contains(c)) removeCorner(c) // if hasn't been removed by horiz decomp
+      if (skel.liveCorners.contains(c)) 
+        removeCorner(c) // if hasn't been removed by horiz decomp
     }
     removes.clear()
   }
