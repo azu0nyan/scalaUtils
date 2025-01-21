@@ -2,10 +2,14 @@ package utils.math.planar.algo.straightSkeleton
 
 
 import utils.datastructures.containers.map.impl.MutableMultiMap
-import utils.math.planar.algo.straightSkeleton.helpers.{AngleAccumulator, Cache, Loop, LoopL, Loopable}
+import utils.math.planar.algo.straightSkeleton.helpers.{AngleAccumulator, Cache, GraphMap, Loop, LoopL, Loopable}
 import utils.math.space.V3
 
 import scala.collection.mutable
+import scala.util.boundary
+import boundary.break
+import scala.concurrent.Future
+
 
 /**
  * @author twak
@@ -149,7 +153,7 @@ class Output(var skeleton: Skeleton) {
     val se = createEdge(leadingCorner.asV3, leadingCorner.nextC.asV3)
     face.definingSE.add(se)
     se.setLeft(leadingCorner.asV3, None, face)
-    face.results.put(se.start, se.end)
+    face.results.add(se.start, se.end)
     se.features.add(Output.isCreatedHorizontal)
     face.definingCorners.add(leadingCorner)
   }
@@ -164,7 +168,7 @@ class Output(var skeleton: Skeleton) {
       if (isTop)
         f.topSE.add(createEdge(a, b))
       // just check those tuple's aren't corners....
-      f.results.put(a, b)
+      f.results.add(a, b)
     }
   } // a.y == b.yequals(b)
 
@@ -219,14 +223,102 @@ class Output(var skeleton: Skeleton) {
     nF.parent = Some(oF)
   }
 
-  def calculate(skel: Skeleton): Unit = {
+  def calculate(skel: Skeleton): Unit =
+    for (face <- faces.values) try {
+      calculateForFace(face)
+    } catch
+      case t: Throwable =>
+        t.printStackTrace()
+
+
+  private def calculateForFace(face: Output#Face): Unit =
+    boundary:
+      {
+        enum Continue {
+          case Edge, No
+        }
+
+        val notVisited = new mutable.LinkedHashSet[V3]()
+        notVisited ++= face.results.map.keySet
+        val faceWithHoles = new LoopL[V3] // first entry here is outer boundary
+
+        face.points = faceWithHoles
+
+        val edgeStart = face.definingSE.iterator.next.getStart(face).get //todo safe
+        while (!notVisited.isEmpty) {
+          // associated face input polygon
+          val poly = new Loop[V3]
+          //                faceWithHoles.add( poly );
+          val isOuter = notVisited.contains(edgeStart)
+          val start = if (isOuter) edgeStart
+          else notVisited.iterator.next
+          var pos = start
+          var last = face.results.map.get(start)(0) // arb. direction
+
+          whileBody() match
+            case Continue.Edge => break()
+            case Continue.No => ()
+
+          def whileBody(): Continue = boundary:
+            var first: V3 = null
+            var lastAdded: V3 = null
+            val ac = new AngleAccumulator(isOuter, face.edge.getPlaneNormal)
+            var count = 0
+            //pointsInLoop
+            var firstIter = true
+            while (firstIter || (pos ne start)) {
+              firstIter = false
+              val choice = face.results.map.get(pos)
+              assert(choice != null)
+
+
+              var breaked = false
+              for (c <- choice if !breaked) {
+                if ( {
+                  count += 1;
+                  count - 1
+                } > 1000) break(Continue.Edge) // continue edge// handbrake turn!
+
+                if (!(last == c) && !(pos == c)) {
+                  if (first == null) first = c
+                  notVisited.remove(c)
+                  // remove short edges between the previous corners, and between the current corner and the startstart (bad hack)
+                  if ((lastAdded == null || lastAdded.distance(c) > 0.01) && ((first eq c) || first.distance(c) > 0.01)) {
+                    poly.append(c)
+                    ac.add(c)
+                    lastAdded = c
+                  }
+                  last = pos
+                  pos = c
+                  breaked = true //continue pointsInLoop
+
+                }
+
+              }
+              break(Continue.Edge) // continue edge
+
+            }
+            // inner loops go counter clockwise
+            if (!ac.correctAngle())
+              poly.reverse
+            removeStraights(poly)
+            // as we remove degenerately small polygons *
+            if (poly.count >= 3)
+              faceWithHoles.add(poly)
+
+            Continue.No
+        }
+      }
+
+
+  def calculate_(skel: Skeleton): Unit = {
     object edge extends Exception("edge")
     object pointsInLoop extends Exception("pointsInLoop")
 
     // collect identical edges in different polygons
     for (face <- faces.values) try {
       val notVisited = new mutable.LinkedHashSet[V3]()
-      notVisited ++= face.results.keySet
+      notVisited ++= face.results.map.keySet
       val faceWithHoles = new LoopL[V3] // first entry here is outer boundary
 
       face.points = faceWithHoles
@@ -240,7 +332,7 @@ class Output(var skeleton: Skeleton) {
           val start = if (isOuter) edgeStart
           else notVisited.iterator.next
           var pos = start
-          var last = face.results.get(start)(0) // arb. direction
+          var last = face.results.map.get(start)(0) // arb. direction
 
           var first: V3 = null
           var lastAdded: V3 = null
@@ -250,7 +342,7 @@ class Output(var skeleton: Skeleton) {
           var firstIter = true
           while (firstIter || (pos ne start)) try {
             firstIter = false
-            val choice = face.results.get(pos)
+            val choice = face.results.map.get(pos)
             assert(choice != null)
 
             for (c <- choice) {
@@ -278,6 +370,7 @@ class Output(var skeleton: Skeleton) {
 
           } catch {
             case e: pointsInLoop.type =>
+              print("")
           }
           // inner loops go counter clockwise
           if (!ac.correctAngle())
@@ -287,7 +380,7 @@ class Output(var skeleton: Skeleton) {
           if (poly.count >= 3) faceWithHoles.add(poly)
         }
       } catch {
-        case e: Throwable if !e.isInstanceOf[edge.type ] =>
+        case e: Throwable if e != edge =>
           e.printStackTrace()
         //continue
       }
@@ -322,7 +415,7 @@ class Output(var skeleton: Skeleton) {
     } else {
       toKeepFace.get.definingSE ++= toGoFace.get.definingSE
       if (toKeepFace.get.results != toGoFace.get.results) { //todo check needed????
-        toKeepFace.get.results.addEntriesFrom(toGoFace.get.results)
+        toKeepFace.get.results.map ++= toGoFace.get.results.map
       }
       toKeepFace.get.definingCorners ++= toGoFace.get.definingCorners
       // forward any further face requests to the new one
@@ -391,7 +484,7 @@ class Output(var skeleton: Skeleton) {
     // defining edges of child (top) edges
     var topSE = new mutable.LinkedHashSet[Output.SharedEdge]
 
-    var results = new MutableMultiMap[V3, V3, mutable.ArrayBuffer]()
+    var results = new GraphMap()
 
     // subset of results who are horizontal edges and whose nextL are edge, or similar.
     var definingCorners = new mutable.LinkedHashSet[Corner]
@@ -446,8 +539,8 @@ class Output(var skeleton: Skeleton) {
           points = new LoopL[V3],
           edge = new Edge(old.edge.start, old.edge.end)
         )
-        val outGM = new MutableMultiMap[V3, V3, mutable.ArrayBuffer]
-        outGM.addEntriesFrom(old.results)
+        val outGM = new GraphMap()
+        outGM.map ++= old.results.map
         face.results = outGM
         face.definingSE = new mutable.LinkedHashSet[Output.SharedEdge]
 
