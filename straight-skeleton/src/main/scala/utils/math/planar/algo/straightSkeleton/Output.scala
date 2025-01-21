@@ -245,7 +245,7 @@ class Output(var skeleton: Skeleton) {
         face.points = faceWithHoles
 
         val edgeStart = face.definingSE.iterator.next.getStart(face).get //todo safe
-        while (!notVisited.isEmpty) {
+        while (notVisited.nonEmpty) {
           // associated face input polygon
           val poly = new Loop[V3]
           //                faceWithHoles.add( poly );
