@@ -16,10 +16,16 @@ trait MultiMap[A, B, C[_]] {
 
 object MultiMap {
   trait Mutations[A, B, C[_]] {
+    final def +=(a: A, b: B): Unit = put(a, b)
     def put(a: A, b: B): Unit
+    final def -=(a: A, b: B): Unit = remove(a)(b)
     def remove(a: A)(b: B): Unit
+    final def -=(a: A): Unit = removeA(a)
     def removeA(a: A): C[B]
     def clear(): Unit
+    def ++=[C2[_]](m: MultiMap[A, B, C2])(
+      using iterateElements: IterateElements[B, C2]
+    ): Unit = addEntriesFrom(m)
     def addEntriesFrom[C2[_]](
                                m: MultiMap[A, B, C2]
                              )(
