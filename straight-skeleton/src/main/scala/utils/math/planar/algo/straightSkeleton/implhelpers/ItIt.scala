@@ -1,4 +1,4 @@
-package utils.math.planar.algo.straightSkeleton.helpers
+package utils.math.planar.algo.straightSkeleton.implhelpers
 
 class ItIt[E](var list: Iterable[Iterable[E]]) extends Iterator[E] {
   var it: Iterator[Iterable[E]] = list.iterator

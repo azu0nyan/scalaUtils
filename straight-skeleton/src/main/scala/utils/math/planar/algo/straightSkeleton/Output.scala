@@ -2,7 +2,7 @@ package utils.math.planar.algo.straightSkeleton
 
 
 import utils.datastructures.containers.map.impl.MutableMultiMap
-import utils.math.planar.algo.straightSkeleton.helpers.{AngleAccumulator, Cache, GraphMap, Loop, LoopL, Loopable}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{AngleAccumulator, Cache, GraphMap, Loop, LoopL, Loopable}
 import utils.math.space.V3
 
 import scala.collection.mutable

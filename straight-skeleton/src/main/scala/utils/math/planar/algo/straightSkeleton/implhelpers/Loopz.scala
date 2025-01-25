@@ -1,4 +1,4 @@
-package utils.math.planar.algo.straightSkeleton.helpers
+package utils.math.planar.algo.straightSkeleton.implhelpers
 
 import utils.math.space.V3
 

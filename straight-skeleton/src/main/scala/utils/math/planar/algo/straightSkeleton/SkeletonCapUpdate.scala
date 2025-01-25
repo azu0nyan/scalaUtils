@@ -2,7 +2,7 @@ package utils.math.planar.algo.straightSkeleton
 
 import utils.datastructures.containers.map.impl.MutableBiMap
 import utils.math.planar.algo.straightSkeleton.SkeletonCapUpdate.EdgeInfo
-import utils.math.planar.algo.straightSkeleton.helpers.{LoopL, SetCorrespondence}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{LoopL, SetCorrespondence}
 import utils.math.planar.algo.straightSkeleton.math.Ray3d
 
 import java.util.{Iterator, List, Map, Set}

@@ -1,7 +1,7 @@
 package utils.math.planar.algo.straightSkeleton
 
 
-import utils.math.planar.algo.straightSkeleton.helpers.{CloneConfirmIterator, ConsecutivePairs}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{CloneConfirmIterator, ConsecutivePairs}
 import utils.math.space.V3
 
 import scala.collection.mutable

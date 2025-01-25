@@ -6,7 +6,7 @@ import java.util
 import utils.math.planar.V2
 import utils.math.space.V3
 import utils.math.space.V3
-import utils.math.planar.algo.straightSkeleton.helpers.{Cache, Loop, LoopL}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{Cache, Loop, LoopL}
 import utils.math.space.V3
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala

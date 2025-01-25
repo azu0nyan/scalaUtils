@@ -6,7 +6,7 @@ import utils.datastructures.CircullarOps
 import utils.datastructures.CircullarOps.asCyclicPairs
 import utils.math.Scalar
 import utils.math.planar.algo.straightSkeleton.{Corner, Edge, Machine, OffsetSkeleton}
-import utils.math.planar.algo.straightSkeleton.helpers.{Loop, LoopL}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{Loop, LoopL}
 import utils.math.planar.{PolygonRegion, V2}
 import utils.math.space.V3
 

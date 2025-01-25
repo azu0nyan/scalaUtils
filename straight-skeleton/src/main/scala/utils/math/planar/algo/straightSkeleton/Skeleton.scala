@@ -3,7 +3,7 @@ package utils.math.planar.algo.straightSkeleton
 
 import utils.datastructures.containers.map.MultiMap
 import utils.datastructures.containers.map.impl.{MutableBiMap, MutableMultiMap}
-import utils.math.planar.algo.straightSkeleton.helpers.{Cache, CloneConfirmIterator, Loop, LoopL, Loopable, Loopz, ManyManyMap, SetCorrespondence}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{Cache, CloneConfirmIterator, Loop, LoopL, Loopable, Loopz, ManyManyMap, SetCorrespondence}
 import utils.math.planar.algo.straightSkeleton.math.LinearForm3D
 import utils.math.space.V3
 

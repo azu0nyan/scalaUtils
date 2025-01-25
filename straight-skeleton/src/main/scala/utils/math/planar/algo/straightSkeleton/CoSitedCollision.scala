@@ -2,7 +2,7 @@ package utils.math.planar.algo.straightSkeleton
 
 
 import utils.math.planar.algo.polygonClipping.PolyBool.CombineResult
-import utils.math.planar.algo.straightSkeleton.helpers.ConsecutivePairs
+import utils.math.planar.algo.straightSkeleton.implhelpers.ConsecutivePairs
 import utils.math.planar.algo.straightSkeleton.math.{LinearForm3D, Ray3d}
 import utils.math.space.V3
 

@@ -2,7 +2,7 @@ package utils.math.planar.algo.straightSkeleton
 
 import utils.datastructures.containers.map.impl.MutableBiMap
 import utils.math.planar.algo.straightSkeleton.OffsetSkeleton.Offset
-import utils.math.planar.algo.straightSkeleton.helpers.{LoopL, ManyManyMap, SetCorrespondence}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{LoopL, ManyManyMap, SetCorrespondence}
 
 import scala.collection.mutable
 

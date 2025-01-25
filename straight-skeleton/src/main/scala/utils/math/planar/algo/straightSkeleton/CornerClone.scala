@@ -1,7 +1,7 @@
 package utils.math.planar.algo.straightSkeleton
 
 import utils.datastructures.containers.map.impl.MutableBiMap
-import utils.math.planar.algo.straightSkeleton.helpers.{Cache, Loop, LoopL, SetCorrespondence}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{Cache, Loop, LoopL, SetCorrespondence}
 
 /**
  * Clones a new set of corners, edges.

@@ -1,4 +1,4 @@
-package utils.math.planar.algo.straightSkeleton.helpers
+package utils.math.planar.algo.straightSkeleton.implhelpers
 
 class Pair[A, B](
                   private var element1: A,

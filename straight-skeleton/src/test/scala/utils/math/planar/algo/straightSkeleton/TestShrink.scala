@@ -3,7 +3,7 @@ package utils.math.planar.algo.straightSkeleton
 import org.scalatest.*
 import flatspec.*
 import matchers.*
-import utils.math.planar.algo.straightSkeleton.helpers.{Loop, LoopL}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{Loop, LoopL}
 import utils.math.space.V3
 
 class TestShrink extends AnyFlatSpec with should.Matchers {

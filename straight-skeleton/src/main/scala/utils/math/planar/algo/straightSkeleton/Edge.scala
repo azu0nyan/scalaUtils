@@ -1,7 +1,7 @@
 package utils.math.planar.algo.straightSkeleton
 
 import utils.math.planar.V2
-import utils.math.planar.algo.straightSkeleton.helpers.{Cache, ConsecutivePairs, Loop, LoopL}
+import utils.math.planar.algo.straightSkeleton.implhelpers.{Cache, ConsecutivePairs, Loop, LoopL}
 import utils.math.planar.algo.straightSkeleton.math.{LinearForm3D, Ray3d}
 import utils.math.space.V3
 import utils.math.space.V3
