@@ -268,7 +268,7 @@ class Output(var skeleton: Skeleton) {
             var firstIter = true
             while (firstIter || (pos ne start)) {
               firstIter = false
-              val choice = face.results.map.get(pos)
+              val choice = face.results.map.get(pos) //todo jump here
               assert(choice != null)
 
 
@@ -291,11 +291,13 @@ class Output(var skeleton: Skeleton) {
                   last = pos
                   pos = c
                   breaked = true //continue pointsInLoop
-
+                  //todo jump from here
                 }
 
               }
-              break(Continue.Edge) // continue edge
+              if(!breaked)
+                break(Continue.Edge) // continue edge
+              //skip this break for jump
 
             }
             // inner loops go counter clockwise

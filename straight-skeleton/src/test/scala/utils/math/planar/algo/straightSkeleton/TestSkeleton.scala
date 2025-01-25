@@ -36,7 +36,7 @@ class TestSkeleton extends AnyFlatSpec with should.Matchers {
     val skel = new Skeleton(loop1.singleton, true)
     skel.skeleton()
 
-    for (face <- skel.output.faces.values) {
+     for (face <- skel.output.faces.values) {
       System.out.println("face:")
       for {lp3 <- face.points.iterator;
            pt <- lp3.iterator} {
