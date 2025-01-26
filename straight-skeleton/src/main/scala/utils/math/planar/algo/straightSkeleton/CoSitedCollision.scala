@@ -1,15 +1,14 @@
 package utils.math.planar.algo.straightSkeleton
 
 
+import utils.math.Scalar
 import utils.math.planar.algo.polygonClipping.PolyBool.CombineResult
 import utils.math.planar.algo.straightSkeleton.implhelpers.ConsecutivePairs
 import utils.math.planar.algo.straightSkeleton.math.{LinearForm3D, Ray3d}
 import utils.math.space.V3
 
-import java.util.{Collections, Comparator}
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.jdk.CollectionConverters.BufferHasAsJava
 
 /**
  * A bunch of faces that collide at one point
@@ -90,7 +89,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
       // sites at one height), process chains to a counter clockwise order
       if (chains.size > 1)
         // size == 1 may have parallels in it (run away!)
-        chains.asJava.sort(new ChainComparator(loc.z))
+        chains.sortInPlace()(chainOrdering(loc.z))
       true
     }
   }
@@ -295,36 +294,39 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     if (oneCount > 1) return false
     oneCount > 1
   }
-  class ChainComparator(var height: Double) //        LinearForm3D ceiling;
-    extends Comparator[Chain] {
-    //            this.ceiling = new LinearForm3D( 0, 0, 1, -height );
-    override def compare(o1: Chain, o2: Chain) = {
-      val c1 = o1.chain.head
-      val c2 = o2.chain.head
-      // except for the first and and last point
-      // chain's non-start/end points are always at the position of the collision - so to
-      // find the angle of the first edge at the specified height, we project the edge before start
-      // coordinate the desired height and take the angle relative to the collision
-      // !could speed up with a chain-class that caches this info!
-      //            try
-      //            {
-      val p1 = Edge.collide(c1, height) - loc //ceiling.collide( c1.prevL.linearForm, c1.nextL.linearForm );
 
-      val p2 = Edge.collide(c2, height) - loc //ceiling.collide( c2.prevL.linearForm, c2.nextL.linearForm );
 
-      // start/end line is (+-)Pi
-      Math.atan2(p1.y, p1.x).compare(Math.atan2(p2.y, p2.x))
-      //            }
-      //            catch (RuntimeException e)
-      //            {
-      //                // we can probably fix these up (by assuming that they're horizontal?)
-      //                // todo: can we prove they are safe to ignore? eg: no parallel edges inbound, none outbound etc..
-      //                 System.err.println( "didn't like colliding 1" + c1.prevL + " and " + c1.nextL );
-      //                 System.err.println( "                      2" + c2.prevL + " and " + c2.nextL );
-      //                 return 0;
-      //            }
+  def chainOrdering(height: Scalar) =
+    new Ordering[Chain] {
+      override def compare(o1: Chain, o2: Chain) = {
+        val c1 = o1.chain.head
+        val c2 = o2.chain.head
+        // except for the first and and last point
+        // chain's non-start/end points are always at the position of the collision - so to
+        // find the angle of the first edge at the specified height, we project the edge before start
+        // coordinate the desired height and take the angle relative to the collision
+        // !could speed up with a chain-class that caches this info!
+        //            try
+        //            {
+        val p1 = Edge.collide(c1, height) - loc //ceiling.collide( c1.prevL.linearForm, c1.nextL.linearForm );
+
+        val p2 = Edge.collide(c2, height) - loc //ceiling.collide( c2.prevL.linearForm, c2.nextL.linearForm );
+
+        // start/end line is (+-)Pi
+        Math.atan2(p1.y, p1.x).compare(Math.atan2(p2.y, p2.x))
+        //            }
+        //            catch (RuntimeException e)
+        //            {
+        //                // we can probably fix these up (by assuming that they're horizontal?)
+        //                // todo: can we prove they are safe to ignore? eg: no parallel edges inbound, none outbound etc..
+        //                 System.err.println( "didn't like colliding 1" + c1.prevL + " and " + c1.nextL );
+        //                 System.err.println( "                      2" + c2.prevL + " and " + c2.nextL );
+        //                 return 0;
+        //            }
+      }
     }
-  }
+
+
   def getHeight = loc.z
   override def toString = edges.mkString("{", ",", "}")
 }

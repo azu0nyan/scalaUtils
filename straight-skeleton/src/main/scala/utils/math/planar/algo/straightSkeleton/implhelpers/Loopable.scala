@@ -1,7 +1,5 @@
 package utils.math.planar.algo.straightSkeleton.implhelpers
 
-import java.util
-
 class Loopable[E](var me: E) extends Iterable[Loopable[E]] {
   var next: Loopable[E] = null
   var prev: Loopable[E] = null

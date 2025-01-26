@@ -1,11 +1,11 @@
 package utils.math.planar.algo.straightSkeleton
 
 
-import java.awt.Color
-import java.util
-import java.util.{Collections, Comparator, List, Set}
+import utils.color.Color
+import utils.math.Scalar
+
 import scala.collection.mutable
-import scala.jdk.CollectionConverters.BufferHasAsJava
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -21,27 +21,17 @@ import scala.jdk.CollectionConverters.BufferHasAsJava
  *
  * @author twak
  */
-object Machine { // for pretty output
-  val rainbow = Array[Color](Color.red, Color.green, Color.blue, Color.magenta)
-  val rainbowStrings = Array[String]("red", "green", "blue", "magenta")
-  var rainbowIndex = 0
-}
 
 class Machine(initial: Double = Math.PI / 4) {
   var heightEvent: Option[HeightEvent] = None
   var currentDirection = -1
   var seenEdges = new mutable.LinkedHashSet[Edge]
 
-  var color = Machine.rainbow(Machine.rainbowIndex % Machine.rainbowStrings.length)
-  var description = Machine.rainbowStrings(Machine.rainbowIndex % Machine.rainbowStrings.length)
   // a machine will only ever have one pending event in the skeleton.qu, others are stored here
-  var events = mutable.Buffer[HeightEvent]()
+  var events = new ArrayBuffer[HeightEvent]()
   var currentAngle = initial // // when a edge is added this is the angle it is given
 
-  Machine.rainbowIndex += 1
   addHeightEvent(new DirectionHeightEvent(this, initial))
-
-  override def toString = description
   /**
    * Called once after the machine is assigned to it's first edge
    */
@@ -91,7 +81,7 @@ class Machine(initial: Double = Math.PI / 4) {
    */
   def getDirections = events
   def sortHeightEvents(): Unit =
-    events.asJava.sort(Comparator.comparingDouble(_.getHeight))
+    events.sortInPlace()(Ordering.by[HeightEvent, Scalar](_.getHeight))
 
   /**
    * @param directions the directions to set

@@ -5,7 +5,7 @@ import utils.math.planar.algo.straightSkeleton.implhelpers.{CloneConfirmIterator
 import utils.math.space.V3
 
 import scala.collection.mutable
-import scala.jdk.CollectionConverters.BufferHasAsJava
+import scala.collection.mutable.ArrayBuffer
 import scala.util.control.Breaks.{break, breakable}
 
 
@@ -98,7 +98,7 @@ class HeightCollision(
       for (chain <- chains) {
         //            if (chain.chain.isEmpty())
         //                continue;
-        val priority = mutable.Buffer[Edge]()
+        val priority = new ArrayBuffer[Edge]()
 
         for (c <- chain.chain) {
           // both edges are parallel - these are the only corners added to newHoriz...
@@ -106,15 +106,15 @@ class HeightCollision(
           priority += c.prevL
         }
         // find a set of coplanar edges that survive this transition in winners (equal highest priority)
-        val hComp = skel.getHorizontalComparator
-        priority.asJava.sort(hComp)
+        val horizontalOrdering = skel.getHorizontalOrdering
+        priority.sortInPlace()(horizontalOrdering)
 
         val winners = new mutable.LinkedHashSet[Edge]
         val winner = priority.remove(0)
 
         winners.add(winner)
 
-        while (priority.nonEmpty && hComp.compare(winner, priority.head) == 0)
+        while (priority.nonEmpty && horizontalOrdering.compare(winner, priority.head) == 0)
           winners.add(priority.remove(0))
 
         // if first edge needs an additional corner - "if we're adding a cap at the start" and "first isn't already an interface"

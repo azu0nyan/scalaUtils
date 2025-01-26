@@ -4,15 +4,10 @@ import utils.datastructures.containers.map.impl.MutableBiMap
 import utils.math.planar.algo.straightSkeleton.SkeletonCapUpdate.EdgeInfo
 import utils.math.planar.algo.straightSkeleton.implhelpers.{LoopL, SetCorrespondence}
 import utils.math.planar.algo.straightSkeleton.math.Ray3d
-
-import java.util.{Iterator, List, Map, Set}
-import java.util
-import java.util.Collections
-import java.util.Comparator
 import utils.math.space.V3
 
 import scala.collection.mutable
-import scala.jdk.CollectionConverters.BufferHasAsJava
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -26,7 +21,7 @@ object SkeletonCapUpdate {
     //        private Set<Corner>
     //                topSegs = new LinkedHashSet(),
     //                bottomSegs = new LinkedHashSet();
-    val segs = mutable.Buffer[Segment]()
+    val segs = ArrayBuffer[Segment]()
 
     def addTopSeg(c: Corner): Unit = {
       segs += new SkeletonCapUpdate.Segment(c, true, true)
@@ -38,7 +33,7 @@ object SkeletonCapUpdate {
     }
 
     def sort: collection.Seq[Segment] = {
-      segs.asJava.sort(new SkeletonCapUpdate.LineProjectionComparator(base.start.asV3, base.end.asV3))
+      segs.sortInPlace()(new SkeletonCapUpdate.LineProjectionComparator(base.start.asV3, base.end.asV3))
       segs
     }
 
@@ -51,7 +46,7 @@ object SkeletonCapUpdate {
                ) {
   }
 
-  class LineProjectionComparator(start: V3, end: V3) extends Comparator[SkeletonCapUpdate.Segment] {
+  class LineProjectionComparator(start: V3, end: V3) extends Ordering[SkeletonCapUpdate.Segment] {
     val dir = end - start
     val line = new Ray3d(start, dir)
     override def compare(o1: SkeletonCapUpdate.Segment, o2: SkeletonCapUpdate.Segment) =

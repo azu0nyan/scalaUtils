@@ -1,8 +1,5 @@
 package utils.math.planar.algo.straightSkeleton
 
-import java.util.Iterator
-import java.util.Comparator
-import java.util
 import utils.math.planar.V2
 import utils.math.space.V3
 import utils.math.space.V3
@@ -16,9 +13,7 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
  * @author twak
  */
 object Corner {
-  class CornerDistanceComparator(var start: V3) extends Comparator[V3] {
-    override def compare(o1: V3, o2: V3) = java.lang.Double.compare(start.distanceSquared(o1), start.distanceSquared(o2))
-  }
+
   def replace(old: Corner, neu: Corner, skel: Skeleton): Unit = {
     old.prevL.currentCorners.remove(old)
     old.nextL.currentCorners.remove(old)
@@ -58,10 +53,7 @@ object Corner {
           out
         }
       }
-      def getCorner(input: Corner) = {
-        val ner = get(input)
-        ner
-      } // wrapper for inner caches - stupid java
+      def getCorner(input: Corner) = get(input)
 
       override def create(i: Corner) = {
         val ner = new Corner(i.x, i.y)
@@ -204,11 +196,11 @@ class Corner(
    *
    * @return
    */
-  override def iterator = new CornerIterator(this).asScala
+  override def iterator = new CornerIterator(this)
   /**
    * Over all corners in the same loop as the one given
    */
-  class CornerIterator(start: Corner) extends util.Iterator[Corner] {
+  class CornerIterator(start: Corner) extends Iterator[Corner] {
     var n: Corner = null
     override def hasNext: Boolean = {
       if (start == null) false
@@ -220,9 +212,6 @@ class Corner(
       val out = n
       n = n.nextC
       out
-    }
-    override def remove(): Unit = {
-      throw new UnsupportedOperationException("Not supported yet.")
     }
   }
 }

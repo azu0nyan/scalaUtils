@@ -1,6 +1,5 @@
 package utils.math.planar.algo.straightSkeleton.implhelpers
 
-import java.util as j
 import scala.collection.mutable
 
 /**

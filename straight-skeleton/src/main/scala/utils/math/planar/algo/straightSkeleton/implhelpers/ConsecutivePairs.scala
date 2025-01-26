@@ -1,8 +1,6 @@
 package utils.math.planar.algo.straightSkeleton.implhelpers
 
 
-import java.util
-
 class ConsecutivePairs[E](var input: collection.Seq[E], var loop: Boolean) extends Iterator[(E, E)] {
 
   var a = 0

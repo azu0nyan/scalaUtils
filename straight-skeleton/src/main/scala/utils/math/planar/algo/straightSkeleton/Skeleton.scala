@@ -7,7 +7,6 @@ import utils.math.planar.algo.straightSkeleton.implhelpers.{Cache, CloneConfirmI
 import utils.math.planar.algo.straightSkeleton.math.LinearForm3D
 import utils.math.space.V3
 
-import java.util.Comparator
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -398,7 +397,7 @@ class Skeleton {
     planFeatures.put(edge, features)
   }
   def getPlanTags(originator: Edge) = planFeatures.get(originator)
-  def getHorizontalComparator: Comparator[Edge] = new Comparator[Edge]() {
+  def getHorizontalOrdering: Ordering[Edge] = new Ordering[Edge]() {
     /**
      * Volume maximizing resolution
      */
