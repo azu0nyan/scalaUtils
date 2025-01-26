@@ -59,7 +59,7 @@ class AngleAccumulator(targetPositive: Boolean, normal: V3) {
   def correctAngle(): Boolean = {
     if (firstVector.nonEmpty) {
       add(firstPoint.get)
-      add(firstVector.get)
+      addInner(firstVector.get)
       firstVector = None // allow method to be called 1+ time (can't add mroe points tho ;))
     }
 
