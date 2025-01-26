@@ -242,19 +242,20 @@ class SkeletonCapUpdate(var skel: Skeleton) {
 
 
     }
+
     /**
      * Pointers may have been removed by previous/next edges, or some edges may have been removed entirely
      */
     // this is broken - where do we remove other corners that might reference htis edge?
-    val eit = skel.liveEdges.iterator
-    while (eit.hasNext) {
-      val e = eit.next
-      if (e.currentCorners.size == 0) {
-        skel.liveEdges -= e //todo fix concurrent mod ex
+    skel.liveEdges.filterInPlace(e =>
+      if (e.currentCorners.nonEmpty) false
+      else {
+        skel.liveEdges -= e
         skel.liveCorners.remove(e.start)
         skel.liveCorners.remove(e.end)
       }
-    }
+    )
+
     skel.refindAllFaceEventsLater()
     skel.validate()
   }
@@ -269,7 +270,7 @@ class SkeletonCapUpdate(var skel: Skeleton) {
     val oldSegments = nOSegments.getSetA(neu)
     //        Edge oldEdge = null;
     val old = nOCorner.get(neu)
-    val base = oBCorner.get(old.get)// todo safe
+    val base = oBCorner.get(old.get) // todo safe
     val neuEdge = neu.nextL
     if (oldSegments.isEmpty) {
       //            Corner previous = base != null ? base.nextL.start
@@ -289,8 +290,8 @@ class SkeletonCapUpdate(var skel: Skeleton) {
         base.get.nextC = neu.nextC
         base.get.prevC = neu.prevC
         toDelete -= base.get // we'll use that, thanks //todo safe
-      } 
-        
+      }
+
       case None => {
         skel.liveCorners.add(neu)
         neuEdge.currentCorners.add(neu)

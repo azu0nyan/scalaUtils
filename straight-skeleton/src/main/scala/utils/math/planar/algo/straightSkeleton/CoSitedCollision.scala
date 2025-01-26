@@ -46,11 +46,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
 
     val eit = allEdges.iterator
 
-    while (eit.hasNext) {
-      val cur = eit.next
-      if (!skel.liveEdges.contains(cur))
-        allEdges -= cur // fix concurrent mod ex
-    }
+    allEdges.filterInPlace(skel.liveEdges.contains)
 
     if (allEdges.size < 3)
       false
