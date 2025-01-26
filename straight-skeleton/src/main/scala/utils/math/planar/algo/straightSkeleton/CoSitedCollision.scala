@@ -209,12 +209,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
       chains.insertAll(chains.indexOf(cc), cc.removeCornersWithoutEdges(validEdges).iterator)
     }
     // kill 0-length chains
-    val ccit = chains.iterator
-    while (ccit.hasNext) {
-      val cur = ccit.next
-      if (cur.chain.isEmpty)
-        chains -= cur //todo fix concurrent mod ex
-    }
+    chains.filterInPlace(_.chain.nonEmpty)
   }
 
   private def hasAdjacent(a: Corner, b: Corner, c: Corner): Boolean =

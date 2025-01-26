@@ -1,8 +1,8 @@
 package utils.math.planar.algo.straightSkeleton.debugDrawing
 
 import drawing.Drawing
-import drawing.library.DrawingUtils
-import utils.datastructures.CircullarOps
+import drawing.library.{DrawableGrid, DrawingUtils}
+import utils.datastructures.{CircullarOps, IntV2}
 import utils.datastructures.CircullarOps.asCyclicPairs
 import utils.math.Scalar
 import utils.math.planar.algo.straightSkeleton.{Corner, Edge, Machine, OffsetSkeleton}
@@ -12,16 +12,24 @@ import utils.math.space.V3
 
 import java.awt.event.KeyEvent
 import java.awt.{Color, Graphics2D}
+import java.io.{File, FileOutputStream, PrintWriter}
+import java.time.{Instant, LocalDateTime}
 
 
 @main
 def main(): Unit = {
   Drawing.startDrawingThread()
 
+  val debugOut = new PrintWriter(new FileOutputStream(new File("out.txt"), true), true)
+  debugOut.println(s"-" * 100)
+  debugOut.println(s"new run at: ${LocalDateTime.now().toString}")
+
 
   var points: Seq[V2] = Seq()
 
   var offset: Scalar = 10
+
+  val gridSize: Scalar = 100d
 
   Drawing.addKeyBinding(KeyEvent.VK_2, {
     offset += 5
@@ -31,14 +39,28 @@ def main(): Unit = {
     offset -= 5
   })
 
+  Drawing.addDrawable(new DrawableGrid(
+    min = IntV2(-1000, -1000),
+    max = IntV2(1000, 1000),
+    lineEvery = gridSize.toInt,
+    color = new Color(100, 100, 100, 100)
+  ))
+
   Drawing.addMouseLeftClickBinding(pos =>
     if (Drawing.shiftControlAlt.noModsPressed) {
       points = points :+ pos
+      debugOut.println(s"add point: $pos")
+    } else if (Drawing.shiftControlAlt.shiftPressed) {
+      val newPos = ((pos + V2(gridSize / 2, gridSize / 2)) / gridSize).floor * gridSize
+      points = points :+ newPos
+      println(s"$pos $newPos")
+      debugOut.println(s"add point: $newPos")
     }
   )
 
   Drawing.addMouseRightClickBinding(pos =>
     if (Drawing.shiftControlAlt.noModsPressed) {
+      debugOut.println(s"remove point: ${points.lastOption.getOrElse("None")}")
       points = points.dropRight(1)
     }
   )
