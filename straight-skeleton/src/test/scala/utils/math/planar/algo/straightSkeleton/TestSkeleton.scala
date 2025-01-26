@@ -4,6 +4,7 @@ package utils.math.planar.algo.straightSkeleton
 import org.scalatest.*
 import flatspec.*
 import matchers.*
+import utils.math.Scalar
 import utils.math.planar.algo.straightSkeleton.helpers.SSOps
 import utils.math.planar.algo.straightSkeleton.implhelpers.{Loop, LoopL}
 import utils.math.space.V3
@@ -66,8 +67,77 @@ class TestSkeleton extends AnyFlatSpec with should.Matchers {
       )
     )
 
+    //without order
     assert(SSOps.almostEqWithShifts(dumped, expected))
+    //with order
+    assert(expected.zip(dumped).forall((e, d) => e.zip(d).forall(_ ~= _)))
+
   }
+
+  test("work for square")(
+    (100, 100),
+    (-100, 100),
+    (-100, -100),
+    (100, -100)
+  )(
+    Seq(
+      V3(-0.0, 0.0, 100.00000000000001),
+      V3(100.0, 100.0, 0.0),
+      V3(-100.0, 100.0, 0.0)),
+    Seq(
+      V3(-0.0, 0.0, 100.00000000000001),
+      V3(-100.0, 100.0, 0.0),
+      V3(-100.0, -100.0, 0.0)),
+    Seq(
+      V3(-0.0, 0.0, 100.00000000000001),
+      V3(-100.0, -100.0, 0.0),
+      V3(100.0, -100.0, 0.0)),
+    Seq(
+      V3(-0.0, 0.0, 100.00000000000001),
+      V3(100.0, -100.0, 0.0),
+      V3(100.0, 100.0, 0.0)),
+  )
+
+  test("work for rectangle")(
+    (200, 100),
+    (-200, 100),
+    (-200, -100),
+    (200, -100)
+  )(
+    Seq(
+      V3(-100.0, 0.0, 100.00000000000001),
+      V3(100.0, -0.0, 100.00000000000001),
+      V3(200.0, 100.0, 0.0),
+      V3(-200.0, 100.0, 0.0),
+    ),
+    Seq(
+      V3(-100.0, 0.0, 100.00000000000001),
+      V3(-200.0, 100.0, 0.0),
+      V3(-200.0, -100.0, 0.0),
+    ),
+    Seq(
+      V3(100.0, -0.0, 100.00000000000001),
+      V3(-100.0, 0.0, 100.00000000000001),
+      V3(-200.0, -100.0, 0.0),
+      V3(200.0, -100.0, 0.0),
+    ),
+    Seq(
+      V3(100.0, -0.0, 100.00000000000001),
+      V3(200.0, -100.0, 0.0),
+      V3(200.0, 100.0, 0.0),
+    ),
+  )
+
+  def test(name: String)(vs: (Scalar, Scalar)*)(expected: Seq[V3]*): Unit =
+    "StraightSkeleton" should s"$name" in {
+      val s = SSOps.setupFor(vs: _*)
+      val dumped = SSOps.dumpFaces(s)
+
+      //without order
+      assert(SSOps.almostEqWithShifts(dumped, expected))
+      //with order
+      assert(expected.zip(dumped).forall((e, d) => e.zip(d).forall(_ ~= _)))
+    }
 
 }
 
