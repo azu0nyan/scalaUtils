@@ -7,9 +7,9 @@ import utils.math._
 import utils.system.WithMap
 
 object V2 {
-  def apply(s:Scalar): V2 = from(s, s)
+  def apply(s: Scalar): V2 = from(s, s)
 
-  def from(x:Scalar, y:Scalar) :V2 = V2(x, y)
+  def from(x: Scalar, y: Scalar): V2 = V2(x, y)
 
   implicit def pairToV2(p: (Scalar, Scalar)): V2 = V2(p._1, p._2)
 
@@ -22,9 +22,9 @@ object V2 {
 
   val oy: V2 = V2(0, 1)
 
-  val ZERO : V2= V2(0, 0)
+  val ZERO: V2 = V2(0, 0)
 
-  implicit  val V2additionMonoid: Monoid[V2] = new Monoid[V2] {
+  implicit val V2additionMonoid: Monoid[V2] = new Monoid[V2] {
     override def empty: V2 = ZERO
 
     override def combine(x: V2, y: V2): V2 = x + y
@@ -32,17 +32,13 @@ object V2 {
 
 }
 
-case class V2(x: Scalar, y: Scalar) extends WithMap{
-  
-  
-  
-
-  def toProduct:(Scalar, Scalar) = (x, y)
+case class V2(x: Scalar, y: Scalar) extends WithMap {
+  def toProduct: (Scalar, Scalar) = (x, y)
 
   @inline def reciporalSafe: V2 = V2(
     1 / (if (x == 0) SMALL_NUMBER else x),
     1 / (if (y == 0) SMALL_NUMBER else y),
- )
+  )
 
 
   @inline def apply(i: Int): Scalar = i match {
@@ -51,9 +47,9 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
     case _ => throw new IndexOutOfBoundsException(s"$i out of bounds of vector")
   }
 
-  @inline def xInt:Int = x.toInt
+  @inline def xInt: Int = x.toInt
 
-  @inline def yInt:Int = y.toInt
+  @inline def yInt: Int = y.toInt
 
   @inline def unary_- : V2 = opposite
 
@@ -65,7 +61,7 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   @inline def *(v: V2): V2 = V2(x * v.x, y * v.y)
 
-  @inline def *(s:Scalar): V2 = V2(x * s, y * s)
+  @inline def *(s: Scalar): V2 = V2(x * s, y * s)
 
   @inline def /(v: V2): V2 = V2(x / v.x, y / v.y)
 
@@ -79,54 +75,54 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   @inline def ~=(v: V2): Boolean = (x ~= v.x) && (y ~= v.y)
 
-  
+
   @inline def nonZero: Boolean = x != 0 || y != 0
-  
+
   @inline def nearZero: Boolean = this ~= V2.ZERO
-  
+
   @inline def nonNearZero: Boolean = !nearZero
-  
+
   @inline def normalize: V2 = if (length == 0) {
     V2(0, 0)
   } else {
     /(length)
   }
 
-  @inline def angleToOX: Scalar =  math.atan2(y, x)
+  @inline def angleToOX: Scalar = math.atan2(y, x)
 
   @inline def angle(v: V2): Scalar = (math.atan2(v.y, v.x) - math.atan2(y, x))
 
   @inline def angleClampedToPi(v: V2): Scalar = {
     var a = angle(v)
-    a =  a % TWO_PI
+    a = a % TWO_PI
     a = (a + TWO_PI) % TWO_PI;
     if (a > PI) a - TWO_PI
     else a
   }
 
-  /**Y - up, returns from - PI to PI*/
+  /** Y - up, returns from - PI to PI */
   def angleCCW(ot: V2): Scalar = atan2(det(ot), this ** ot)
 
   def angleCCW0to2PI(ot: V2): Scalar = {
     val angle = angleCCW(ot)
-    if(angle >= 0) angle
+    if (angle >= 0) angle
     else angle + TWO_PI
   }
 
 
   @inline def distance(v: V2): Scalar = (this - v).length
 
-  @inline def rotate90CCW:V2 = V2(-y, x)
+  @inline def rotate90CCW: V2 = V2(-y, x)
 
-  @inline def rotate90CW:V2 = V2(y, -x)
+  @inline def rotate90CW: V2 = V2(y, -x)
 
-  @inline def rotate(a: Scalar):V2 = V2(x * cos(a) - y * sin(a), x * sin(a) + y * cos(a))
+  @inline def rotate(a: Scalar): V2 = V2(x * cos(a) - y * sin(a), x * sin(a) + y * cos(a))
 
-  @inline   def rotateAroundPoint(rotation: Scalar, point: V2): V2 = (this - point).rotate(rotation) + point
+  @inline def rotateAroundPoint(rotation: Scalar, point: V2): V2 = (this - point).rotate(rotation) + point
 
   @inline def scaleAroundPoint(scale: Scalar, point: V2): V2 = (this - point) * scale + point
 
-  @inline def lengthSquared:Scalar = this ** this
+  @inline def lengthSquared: Scalar = this ** this
 
   @inline def length: Scalar = math.hypot(x, y)
 
@@ -134,16 +130,16 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 
   def toShortString: String = f"${toShortStr(x)}, ${toShortStr(y)}"
 
-  @inline def addZ(z: Scalar):V3 = V3(x, y, z)
+  @inline def addZ(z: Scalar): V3 = V3(x, y, z)
 
-  @inline def addX(X: Scalar):V3 = V3(X, x, y)
+  @inline def addX(X: Scalar): V3 = V3(X, x, y)
 
-  @inline def addY(Y: Scalar):V3 = V3(x, Y, y)
+  @inline def addY(Y: Scalar): V3 = V3(x, Y, y)
 
   @inline def toSeq: Seq[Scalar] = Seq(x, y)
-  
+
   @inline def negateX: V2 = V2(-x, y)
-  
+
   @inline def negateY: V2 = V2(x, -y)
 
   @inline def planarToV3(upCord: Scalar): V3 = V3(x, upCord, -y)
@@ -160,6 +156,11 @@ case class V2(x: Scalar, y: Scalar) extends WithMap{
 //  @inline def sameDirection(other: V2): Boolean = y == 0 && other.y == 0 || (x / y ~= other.x / other.y)
   @inline def sameDirection(other: V2): Boolean = normalize ~= other.normalize
 
+  @inline def floor: V2 = V2(Math.floor(x), Math.floor(y))
+
+  @inline def ceil: V2 = V2(Math.ceil(x), Math.ceil(y))
+
+  @inline def round: V2 = V2(Math.round(x), Math.round(y))
 
 }
 
