@@ -5,6 +5,7 @@ import utils.math.planar.algo.straightSkeleton.implhelpers.{Cache, ConsecutivePa
 import utils.math.planar.algo.straightSkeleton.math.{LinearForm3D, Ray3d}
 import utils.math.space.V3
 import utils.math.space.V3
+import utils.math.space.V3.toNormal
 
 import scala.collection.mutable
 
@@ -169,8 +170,6 @@ class Edge(var start: Corner, var end: Corner) {
   def direction: V3 =
     new V3(this.end.x, this.end.y, 0) - new V3(this.start.x, this.start.y, 0)
 
-  override def toString = "[" + start + "," + end + "]"
-
   def distance(ept: V3): Double =
     new Ray3d(start.asV3, end.asV3 - start.asV3).projectSegment(ept) match
       case Some(p) => p.distance(ept)
@@ -201,5 +200,8 @@ class Edge(var start: Corner, var end: Corner) {
     }
     out
   }
+
+
+  override def toString = s"Edge($angle, ${uphill == null}, $currentCorners, $start -> $end)"
 }
 

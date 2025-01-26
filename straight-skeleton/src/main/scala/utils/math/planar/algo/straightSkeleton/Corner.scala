@@ -178,8 +178,9 @@ class Corner(
     scala.math.sqrt((x - other.x) * (x - other.x) + (y - other.y) * (y - other.y) + (z - other.z) * (z - other.z))
 
   def getLoc3 = new V3(x, y, 0)
-  
+
   def asV3 = new V3(x, y, z)
+
   /**
    * Corners (unlike V3s) are only equal to themselves. We never move a point,
    * but can create multiple (uniques) at one location. We also change prev/next pointers to
@@ -189,7 +190,7 @@ class Corner(
    * @param t1
    * @return
    */
-  override def toString = String.format("(%f,%f,%f)", x, y, z)
+
   /**
    * We rely on the fact that we can shift the point's heights without changing
    * their locations in hashmaps.
@@ -214,5 +215,6 @@ class Corner(
       out
     }
   }
+  override def toString = s"Corner($asV3, ${nextL.start.asV3}, ${prevL.start.asV3}, ${nextC.asV3}, ${prevC.asV3})"
 }
 

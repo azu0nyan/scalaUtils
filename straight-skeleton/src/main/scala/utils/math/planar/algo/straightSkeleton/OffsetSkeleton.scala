@@ -149,6 +149,9 @@ class OffsetSkeleton(cornersIn: LoopL[Corner], var interval: Double) { // clone 
 
       false
     }
+
+
+    override def toString = s"InstanceHeightEvent($height, $endHere, $step)"
   }
   class OffsetMachine
   //        E profile;

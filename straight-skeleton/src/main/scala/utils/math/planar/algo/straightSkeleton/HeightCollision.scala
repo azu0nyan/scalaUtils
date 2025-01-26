@@ -201,6 +201,8 @@ class HeightCollision(
   def newHoriz(toAdd: Corner): Unit = {
     newHoriz.add(toAdd)
   }
-  override def toString = "collisions at " + height
+
+
+  override def toString = s"HeightCollision($height, $newHoriz, $coHeighted)"
 }
 

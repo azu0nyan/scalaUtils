@@ -54,7 +54,7 @@ object EdgeCollision {
 
     if (nextDot > 0) nDist = -nDist
     if (first.nextC.nextL.uphill == first.nextL.uphill) {
-      val dir = - first.nextL.direction.normalize
+      val dir = -first.nextL.direction.normalize
       next = new LinearForm3D(dir, first.nextC.asV3)
       nDist = next.pointDistance(collision)
     }
@@ -141,7 +141,7 @@ class EdgeCollision(var loc: V3, var a: Edge, var b: Edge, var c: Edge) extends 
    * Three way collisions are delt with in CoSitedCollision
    */
   override def process(skel: Skeleton): Boolean = throw new Error
-  
-  override def toString = loc.toShortString + ":" + a + "," + b + "," + c
+
+  override def toString = "EdgeCollision(" + loc.toShortString + ":" + a + "," + b + "," + c + ")"
 }
 

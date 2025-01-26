@@ -10,7 +10,13 @@ import utils.math.space.V3
 
 
 object SSOps {
-  def setupFor(vs: (Scalar, Scalar)*): Skeleton = {
+  def calculcateFor(vs: (Scalar, Scalar)*): Skeleton = {
+    val skel = makeSkeleton(vs: _*)
+    skel.skeleton()
+    skel
+  }
+
+  def makeSkeleton(vs: (Scalar, Scalar)*): Skeleton = {
     val corners: Seq[Corner] = vs.map((x, y) => new Corner(x, y))
     val speed1 = new Machine(Math.PI / 4)
 
@@ -24,7 +30,7 @@ object SSOps {
 
     val loop1 = new Loop[Edge](edges: _ *)
     val skel = new Skeleton(loop1.singleton, true)
-    skel.skeleton()
+
     skel
   }
 

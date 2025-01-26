@@ -5,6 +5,7 @@ import drawing.library.{DrawableGrid, DrawingUtils}
 import utils.datastructures.{CircullarOps, IntV2}
 import utils.datastructures.CircullarOps.asCyclicPairs
 import utils.math.Scalar
+import utils.math.planar.algo.straightSkeleton.helpers.SSOps
 import utils.math.planar.algo.straightSkeleton.{Corner, Edge, Machine, OffsetSkeleton}
 import utils.math.planar.algo.straightSkeleton.implhelpers.{Loop, LoopL}
 import utils.math.planar.{PolygonRegion, V2}
@@ -20,6 +21,7 @@ import scala.util.{Failure, Success, Try}
 @main
 def main(): Unit = {
   Drawing.startDrawingThread()
+  Drawing.camera.invertY = true
 
   val debugOut = new PrintWriter(new FileOutputStream(new File("out.txt"), true), true)
   debugOut.println(s"-" * 100)
@@ -27,15 +29,13 @@ def main(): Unit = {
 
 
   var points: Seq[V2] = Seq(
-    V2(100.0, 100.0),
-    V2(200.0, 100.0),
-    V2(200.0, -100.0),
-    V2(0.0, -100.0),
-    V2(0.0, 0.0),
-    V2(100.0, 0.0),
-    V2(0.0, 100.0),
-    V2(0.0, -198.0),
-
+    V2(600.0, -100.0),
+    V2(600.0, 0.0),
+    V2(500.0, 0.0),
+    V2(500.0, 400.0),
+    V2(400.0, 400.0),
+    V2(400.0, -100.0),
+    V2(500.0, -200.0),
   )
 
   var offset: Scalar = 10
@@ -88,7 +88,8 @@ def main(): Unit = {
       DrawingUtils.drawPolygon(PolygonRegion(points), g, true, new Color(0, 255, 0, 100))
 
       try {
-        applyDrawAlgo(g)
+        applyDrawShrinkAlgo(g)
+        applyDrawPolys(g)
       } catch {
         case e: Throwable =>
           e.printStackTrace()
@@ -97,7 +98,7 @@ def main(): Unit = {
   })
 
 
-  def applyDrawAlgo(g: Graphics2D): Unit = {
+  def applyDrawShrinkAlgo(g: Graphics2D): Unit = {
     val loop1 = new Loop[Edge]()
 
     val corners = points.map { case V2(x, y) => new Corner(x, y) }
@@ -124,6 +125,28 @@ def main(): Unit = {
     } {
       DrawingUtils.drawPolygon(p, g, false, new Color(0, 255, 0))
     }
+  }
+
+  def applyDrawPolys(g: Graphics2D): Unit = {
+    val skel = SSOps.calculcateFor(points.map(_.toProduct): _ *)
+    val faces = SSOps.dumpFaces(skel)
+
+    //    val maxHeight = faces.flatMap(_.map(_.z)).max
+    //
+
+    for {
+      f <- faces
+    } {
+      DrawingUtils.drawPolygon(PolygonRegion(f.map(_.dropZ)), g, false, new Color(255, 0, 0))
+    }
+
+
+    //    for{f <- faces;
+    //      (s, e) <- CircullarOps        .toCyclicPairs(f)} {
+    //      
+    //    }
+
+
   }
 
 

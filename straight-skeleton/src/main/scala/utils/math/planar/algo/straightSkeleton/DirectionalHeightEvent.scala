@@ -52,6 +52,9 @@ class DirectionHeightEvent(
     machine.findNextHeight(skel)
     true
   }
+
+
+  override def toString = s"DirectionHeightEvent($height, $newAngle)"
 }
 
 
