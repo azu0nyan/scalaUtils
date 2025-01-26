@@ -60,7 +60,6 @@ class HeightCollision(
     //      val css = cit.next
     //      if (!css.findChains(skel)) cit.remove()
     //    }
-    print("")
     coSited = coSited.filter(_.findChains(skel)) //TODO do it in place
 
     /**

@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent
 import java.awt.{Color, Graphics2D}
 import java.io.{File, FileOutputStream, PrintWriter}
 import java.time.{Instant, LocalDateTime}
+import scala.util.{Failure, Success, Try}
 
 
 @main
@@ -25,7 +26,17 @@ def main(): Unit = {
   debugOut.println(s"new run at: ${LocalDateTime.now().toString}")
 
 
-  var points: Seq[V2] = Seq()
+  var points: Seq[V2] = Seq(
+    V2(100.0, 100.0),
+    V2(200.0, 100.0),
+    V2(200.0, -100.0),
+    V2(0.0, -100.0),
+    V2(0.0, 0.0),
+    V2(100.0, 0.0),
+    V2(0.0, 100.0),
+    V2(0.0, -198.0),
+
+  )
 
   var offset: Scalar = 10
 
@@ -49,12 +60,12 @@ def main(): Unit = {
   Drawing.addMouseLeftClickBinding(pos =>
     if (Drawing.shiftControlAlt.noModsPressed) {
       points = points :+ pos
-      debugOut.println(s"add point: $pos")
+      debugOut.println(s" $pos")
     } else if (Drawing.shiftControlAlt.shiftPressed) {
       val newPos = ((pos + V2(gridSize / 2, gridSize / 2)) / gridSize).floor * gridSize
       points = points :+ newPos
       println(s"$pos $newPos")
-      debugOut.println(s"add point: $newPos")
+      debugOut.println(s" $newPos")
     }
   )
 
@@ -75,7 +86,13 @@ def main(): Unit = {
       DrawingUtils.drawLine(points(0), points(1), g, Color.RED, 3)
     } else if (points.size >= 3) {
       DrawingUtils.drawPolygon(PolygonRegion(points), g, true, new Color(0, 255, 0, 100))
-      applyDrawAlgo(g)
+
+      try {
+        applyDrawAlgo(g)
+      } catch {
+        case e: Throwable =>
+          e.printStackTrace()
+      }
     }
   })
 

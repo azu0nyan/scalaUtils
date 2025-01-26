@@ -182,19 +182,20 @@ class Skeleton {
    */
   def skeleton(): Unit = {
     validate()
-    var he: Option[HeightEvent] = qu.poll
+    var he: Option[HeightEvent] = None
     var i = 0
 
-    while (he.nonEmpty) try {
-      if (he.get.process(this)) {
+    while {
+      he = qu.poll
+      he.nonEmpty
+    } do try {
+      if (he.get.process(this)) { // business happens here
         height = he.get.getHeight
 
         validate()
-      } // business happens here
+      }
 
       refindFaceEventsIfNeeded()
-
-      he = qu.poll
     } catch {
       case t: Throwable =>
         t.printStackTrace()
@@ -422,7 +423,7 @@ class Skeleton {
         togo.remove(current)
         loop.append(current)
         current = current.nextC
-        
+
         handbrake += 1
       }
 
