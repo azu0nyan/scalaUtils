@@ -8,6 +8,7 @@ import utils.math.space.V3
 
 import java.util.{Collections, Comparator}
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.BufferHasAsJava
 
 /**
@@ -19,7 +20,7 @@ import scala.jdk.CollectionConverters.BufferHasAsJava
 class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: HeightCollision) {
   var edges = new mutable.LinkedHashSet[EdgeCollision]
   var debugHoriz = false
-  var chains = mutable.Buffer[Chain]()
+  var chains = new ArrayBuffer[Chain]()
 
   add(ec)
 
@@ -33,7 +34,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
    * @return true if valid chains found at this site
    */
   def findChains(skel: Skeleton): Boolean = {
-    chains = mutable.Buffer[Chain]()
+    chains = new ArrayBuffer[Chain]()
     // remove duplicate edges
     val allEdges = new mutable.LinkedHashSet[Edge]
 
@@ -74,9 +75,8 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
       for (c <- chains) {
         if (c.chain.size > 1) edgeStarts.addAll(c.chain)
       }
-      val chit = chains.iterator
-      while (chit.hasNext) {
-        val chain = chit.next
+
+      chains.filterInPlace { chain =>
         if (chain.chain.size == 1) {
           // first corner of edge is not necessarily the corner of the edge segment bounding the collision
           val s = chain.chain.head
@@ -84,9 +84,11 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
           //                if (found != null && !edgeStarts.contains( found ))
           // fixme: because we (strangely) add all the chain starts above, we can just check if it's unchanged...
           if ((found eq s) && !edgeStarts.contains(found)) {
-          }
-          else chains -= chain //todo fix concurrent mod ex
-        }
+            //                    chain.chain.clear();
+            //                    chain.chain.add( found );
+            false
+          } else true
+        } else true
       }
       // while still no-horizontals in chains (there may be when dealing with multiple
       // sites at one height), process chains to a counter clockwise order
@@ -246,7 +248,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
         chains = chains.filterNot(_.loop)
 
         // was entirely closed loops
-        if (chains.isEmpty)  true
+        if (chains.isEmpty) true
         else {
           // connect end of previous chain, to start of next
           // in case we are colliding against a smash (no-corner/split event)-edge, we cache the next-corner before

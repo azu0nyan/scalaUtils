@@ -44,7 +44,8 @@ def main(): Unit = {
   )
 
   Drawing.addDrawer(g => {
-    for (p <- points)
+    val pold = points
+    for (p <- pold)
       DrawingUtils.drawCircle(p, 1f, g, Color.BLUE, true)
 
 
