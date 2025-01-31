@@ -10,7 +10,7 @@ trait MultiMap[A, B, C[_]] {
   def contains(a: A, b: B): Boolean
   def get(a: A): C[B]
   def getMultiple(a: A*): C[B]
-  def keySet: Set[A]
+  def keySet: collection.Set[A]
   def values: C[B]
 }
 

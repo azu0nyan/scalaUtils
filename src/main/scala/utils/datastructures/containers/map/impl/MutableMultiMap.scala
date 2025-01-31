@@ -33,8 +33,8 @@ class MutableMultiMap[A, B, C[_]](
       .reduceOption(co.combine)
       .getOrElse(co.empty)
 
-  override def keySet: Set[A] =
-    innerMap.keySet.toSet
+  override def keySet: collection.Set[A] =
+    innerMap.keySet
 
   override def values: C[B] =
     getMultiple(innerMap.keys.toSeq *)
