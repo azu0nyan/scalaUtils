@@ -54,12 +54,12 @@ object EdgeCollision {
 
     if (nextDot > 0) nDist = -nDist
     if (first.nextC.nextL.uphill == first.nextL.uphill) {
-      val dir = -first.nextL.direction.normalize
+      val dir = -JavaCompat.normalizeJava(first.nextL.direction)
       next = new LinearForm3D(dir, first.nextC.asV3)
       nDist = next.pointDistance(collision)
     }
     if (first.prevL.uphill == first.nextL.uphill) {
-      val dir = first.prevL.direction.normalize
+      val dir = JavaCompat.normalizeJava(first.prevL.direction)
       prev = new LinearForm3D(dir, first.asV3)
       pDist = prev.pointDistance(collision)
     }
@@ -112,7 +112,7 @@ object EdgeCollision {
   }
 }
 
-class EdgeCollision(var loc: V3, var a: Edge, var b: Edge, var c: Edge) extends HeightEvent {
+class EdgeCollision(var loc: Option[V3], var a: Edge, var b: Edge, var c: Edge) extends HeightEvent {
   var debugInfinite = false
   override def equals(obj: Any): Boolean = {
     if (obj.isInstanceOf[EdgeCollision]) {
@@ -136,12 +136,14 @@ class EdgeCollision(var loc: V3, var a: Edge, var b: Edge, var c: Edge) extends 
     else 0)
     hash * 31
   }
-  override def getHeight = loc.z
+  override def getHeight = loc match
+    case Some(v) => v.z
+    case None => throw new Exception("EdgeCollision has no height")
   /**
    * Three way collisions are delt with in CoSitedCollision
    */
   override def process(skel: Skeleton): Boolean = throw new Error
 
-  override def toString = "EdgeCollision(" + loc.toShortString + ":" + a + "," + b + "," + c + ")"
+  override def toString = "EdgeCollision(" + loc.map(_.toShortString).getOrElse("None") + ":" + a + "," + b + "," + c + ")"
 }
 

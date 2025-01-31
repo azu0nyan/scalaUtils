@@ -202,7 +202,7 @@ class Output(var skeleton: Skeleton) {
           if (f.definingSE.isEmpty) {
             f.definingSE.add(e)
             f.edge = new Edge(new Corner(e.start), new Corner(e.end))
-            val dir = f.edge.direction.normalize
+            val dir = JavaCompat.normalizeJava(f.edge.direction.normalize)
             f.edge.uphill = new V3(-dir.y, dir.x, 0)
             faces.put(new Corner(loopable.get), f)
           }

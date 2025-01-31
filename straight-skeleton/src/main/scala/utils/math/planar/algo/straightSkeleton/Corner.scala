@@ -162,7 +162,7 @@ class Corner(
               var x: Double,
               var y: Double,
               var z: Double
-            ) extends Iterable[Corner] {
+            ) {
   var nextL: Edge = null
   var prevL: Edge = null
   var nextC: Corner = null
@@ -197,7 +197,7 @@ class Corner(
    *
    * @return
    */
-  override def iterator = new CornerIterator(this)
+  def iterator = new CornerIterator(this)
   /**
    * Over all corners in the same loop as the one given
    */
@@ -215,6 +215,6 @@ class Corner(
       out
     }
   }
-  override def toString = s"Corner($asV3, ${nextL.start.asV3}, ${prevL.start.asV3}, ${nextC.asV3}, ${prevC.asV3})"
+  override def toString = s"Corner(pos: ${asV3.toShortString}, nextLStart: ${nextL.start.asV3.toShortString}, prevLStart: ${prevL.start.asV3.toShortString}, nextC: ${nextC.asV3.toShortString}, prevC: {prevC.asV3.toShortString})"
 }
 

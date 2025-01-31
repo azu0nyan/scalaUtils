@@ -16,7 +16,7 @@ import scala.collection.mutable.ArrayBuffer
  * @author twak
  */
 
-class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: HeightCollision) {
+class CoSitedCollision(val loc: V3, ec: EdgeCollision, private var parent: HeightCollision) {
   var edges = new mutable.LinkedHashSet[EdgeCollision]
   var debugHoriz = false
   var chains = new ArrayBuffer[Chain]()
@@ -187,6 +187,7 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     // can check that the input edge triplets still have two consecutive edges.
     val validEdges = new mutable.LinkedHashSet[Edge]
 
+    println(edges)
     for (ec <- edges) {
       // todo: adjacent pairs may not be parallel!
       if (hasAdjacent(edgeToCorner(ec.a), edgeToCorner(ec.b), edgeToCorner(ec.c)))
@@ -214,6 +215,32 @@ class CoSitedCollision(var loc: V3, ec: EdgeCollision, private var parent: Heigh
     else if ((c.nextC eq a) || (c.nextC eq b)) true
     else false
 
+  /*
+        if (hasAdjacent(edgeToCorner.get(ec.a), edgeToCorner.get(ec.b), edgeToCorner.get(ec.c)))
+        if (skel.liveEdges.contains(ec.a) && skel.liveEdges.contains(ec.b) && skel.liveEdges.contains(ec.c)) {
+          validEdges.add(ec.a)
+          validEdges.add(ec.b)
+          validEdges.add(ec.c)
+        }
+    }
+    val chainOrder = mutable.Buffer[Chain](chains.toSeq *)
+    // remove parts of chains that aren't a valid triple.
+
+    for (cc <- chainOrder) {
+      // remove and split
+      chains.insertAll(chains.indexOf(cc), cc.removeCornersWithoutEdges(validEdges).iterator)
+    }
+    // kill 0-length chains
+    chains.filterInPlace(_.chain.nonEmpty)
+  }
+
+  private def hasAdjacent(a: Option[Corner], b: Option[Corner], c: Option[Corner]): Boolean =
+    if (a.isEmpty || b.isEmpty || c.isEmpty) false
+    else if ((a.get.nextC eq b) || (a.get.nextC eq c)) true // todo: speedup by puting consec in a,b always?
+    else if ((b.get.nextC eq c) || (b.get.nextC eq a)) true
+    else if ((c.get.nextC eq a) || (c.get.nextC eq b)) true
+    else false
+   */
 
   def processChains(skel: Skeleton): Boolean = {
     if (moreOneSmashEdge)

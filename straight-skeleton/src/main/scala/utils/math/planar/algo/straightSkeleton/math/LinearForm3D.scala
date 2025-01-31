@@ -1,11 +1,12 @@
 package utils.math.planar.algo.straightSkeleton.math
 
+import utils.math.planar.algo.straightSkeleton.JavaCompat
 import utils.math.space.V3
 
 
 object LinearForm3D {
   def linePerp(s: V3, e: V3) =
-    new LinearForm3D((e - s).normalize, e)
+    new LinearForm3D(JavaCompat.normalizeJava(e - s), e)
 }
 
 class LinearForm3D {
@@ -87,15 +88,17 @@ class LinearForm3D {
     }
   }
 
-  def collide(b: LinearForm3D, c: LinearForm3D) =
+  def collide(b: LinearForm3D, c: LinearForm3D) = {
+//    println(s"lf: $this b: $b c: $c")
     if (!this.hasNaN && !b.hasNaN && !c.hasNaN) {
       val three = Matrix3d.make(this.A, this.B, this.C, b.A, b.B, b.C, c.A, c.B, c.C)
       val offset = new V3(-this.D, -b.D, -c.D)
-       Jama.solve(three, offset)
+      Jama.solve(three, offset)
     }
     else throw new Error
+  }
 
-  def createNormalVector = V3(A, B, C).normalize
+  def createNormalVector = JavaCompat.normalizeJava(V3(A, B, C))
 
   override def toString = A + "," + B + "," + C + "," + D
 

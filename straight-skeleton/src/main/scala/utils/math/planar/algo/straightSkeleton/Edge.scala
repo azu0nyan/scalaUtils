@@ -99,7 +99,7 @@ object Edge {
         // a vector in the direction of uphill from a
         // via similar triangle (pyramids)
         //assume, they're all coincident?
-        val dir = a.prevL.uphill.normalize * (height - a.z) + a.asV3
+        val dir = JavaCompat.normalizeJava(a.prevL.uphill) * (height - a.z) + a.asV3
         new V3(dir.x, dir.y, height)
     }
   }
@@ -145,7 +145,7 @@ class Edge(var start: Corner, var end: Corner) {
     // perpendicular in x,y plane
     // horizontal component
     // vertical component
-    uphill = new V3(-direction.y, direction.x, 0).normalize * Math.sin(getAngle) + new V3(0, 0, Math.cos(getAngle))
+    uphill = JavaCompat.normalizeJava(new V3(-direction.y, direction.x, 0)) * Math.sin(getAngle) + new V3(0, 0, Math.cos(getAngle))
   }
   /**
    * finds the Ax + By + Cz = D form of the edge
@@ -163,7 +163,7 @@ class Edge(var start: Corner, var end: Corner) {
    * The normal the edge
    */
   def getPlaneNormal: V3 =
-    direction.normalize ^ uphill
+    JavaCompat.normalizeJava(direction) ^ uphill
 
   def length = start.distance(end)
 
@@ -202,6 +202,6 @@ class Edge(var start: Corner, var end: Corner) {
   }
 
 
-  override def toString = s"Edge($angle, ${uphill == null}, $currentCorners, $start -> $end)"
+  override def toString = s"Edge( ${start.asV3.toShortString} -> ${end.asV3.toShortString}, ${currentCorners.map(_.asV3).mkString(",")}, $angle, ${if (uphill == null) "null" else uphill.toShortString},)"
 }
 

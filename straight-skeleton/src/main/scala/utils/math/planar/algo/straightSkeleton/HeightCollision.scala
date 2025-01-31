@@ -39,12 +39,12 @@ class HeightCollision(
     // I love the smell of O(n^2) in the morning
     for (ec <- coHeighted) try {
       for (csc <- coSited) {
-        if (ec.loc.distance(csc.loc) < 0.01) {
+        if (ec.loc.exists(ecloc => ecloc.distance(csc.loc) < 0.01)) {
           csc.add(ec)
           throw cont
         }
       }
-      val collision = new CoSitedCollision(ec.loc, ec, this)
+      val collision = new CoSitedCollision(ec.loc.get, ec, this)
       coSited += collision
     } catch
       case cont => ()

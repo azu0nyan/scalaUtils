@@ -139,7 +139,7 @@ class Skeleton {
       allEdges.put(c.nextL, c)
     } // input.count()
 
-    // combine shared edges into single output faces
+    // combine shared edges into single output faces 
 
     for (e <- allEdges.keySet) {
       e.currentCorners.clear()

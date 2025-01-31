@@ -41,7 +41,7 @@ class CollisionQ(var skel: Skeleton) {
         if (ec.isEmpty)
           break
         // valid if we haven't seen it, and it's height is "greater" than the current skeleton height
-        if (!skel.seen.contains(ec.get) && ec.get.loc.z - skel.height > -0.001)
+        if (!skel.seen.contains(ec.get) && ec.get.getHeight - skel.height > -0.001)
           break
       }
     }
@@ -136,7 +136,7 @@ class CollisionQ(var skel: Skeleton) {
         postProcess.newHoriz += toAdd
       // if just a peak, assume the loops-of-two-rule will finish it awf
     } else for (e <- skel.liveEdges) {
-      val ex = new EdgeCollision(null, toAdd.prevL, toAdd.nextL, e)
+      val ex = new EdgeCollision(None, toAdd.prevL, toAdd.nextL, e)
       if ((!useCache) || !seen.contains(ex)) {
         seen.add(ex)
         cornerEdgeCollision(toAdd, e)
@@ -169,7 +169,7 @@ class CollisionQ(var skel: Skeleton) {
 
       res = edge.linearForm.collide(corner.prevL.linearForm, corner.nextL.linearForm)
     } catch {
-      case f: Throwable =>
+      case f: Throwable => 
         if (skel.preserveParallel) if (corner.prevL.uphill == edge.uphill && corner.prevC.prevL == edge)
           res = corner.nextL.linearForm.collide(corner.prevC.asV3, corner.prevL.uphill)
         else if (corner.nextL.uphill == edge.uphill && corner.nextC.nextL == edge)
@@ -183,8 +183,9 @@ class CollisionQ(var skel: Skeleton) {
         if (res.z < corner.z || res.z < edge.start.z)
           ()
         else {
-          val ec = new EdgeCollision(res, corner.prevL, corner.nextL, edge)
+          val ec = new EdgeCollision(Some(res), corner.prevL, corner.nextL, edge)
           if (!skel.seen.contains(ec))
+            println(ec)
             faceEvents += (ec)
           ()
         }
