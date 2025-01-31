@@ -2,7 +2,6 @@ package utils.math.planar.algo.straightSkeleton
 
 
 import utils.math.Scalar
-import utils.math.planar.algo.polygonClipping.PolyBool.CombineResult
 import utils.math.planar.algo.straightSkeleton.implhelpers.ConsecutivePairs
 import utils.math.planar.algo.straightSkeleton.math.{LinearForm3D, Ray3d}
 import utils.math.space.V3
@@ -34,6 +33,9 @@ class CoSitedCollision(val loc: V3, ec: EdgeCollision, private var parent: Heigh
    */
   def findChains(skel: Skeleton): Boolean = {
     chains = new ArrayBuffer[Chain]()
+    if(loc == V3(450.0, -50.0, 50.00000000000001)) {
+//      println()
+    }
     // remove duplicate edges
     val allEdges = new mutable.LinkedHashSet[Edge]
 
@@ -42,8 +44,6 @@ class CoSitedCollision(val loc: V3, ec: EdgeCollision, private var parent: Heigh
       allEdges.add(ec.b)
       allEdges.add(ec.c)
     }
-
-    val eit = allEdges.iterator
 
     allEdges.filterInPlace(skel.liveEdges.contains)
 
@@ -81,8 +81,8 @@ class CoSitedCollision(val loc: V3, ec: EdgeCollision, private var parent: Heigh
           if ((found eq s) && !edgeStarts.contains(found)) {
             //                    chain.chain.clear();
             //                    chain.chain.add( found );
-            false
-          } else true
+            true
+          } else false
         } else true
       }
       // while still no-horizontals in chains (there may be when dealing with multiple
@@ -187,36 +187,10 @@ class CoSitedCollision(val loc: V3, ec: EdgeCollision, private var parent: Heigh
     // can check that the input edge triplets still have two consecutive edges.
     val validEdges = new mutable.LinkedHashSet[Edge]
 
-    println(edges)
+//    println("Edges" + edges)
     for (ec <- edges) {
       // todo: adjacent pairs may not be parallel!
-      if (hasAdjacent(edgeToCorner(ec.a), edgeToCorner(ec.b), edgeToCorner(ec.c)))
-        if (skel.liveEdges.contains(ec.a) && skel.liveEdges.contains(ec.b) && skel.liveEdges.contains(ec.c)) {
-          validEdges.add(ec.a)
-          validEdges.add(ec.b)
-          validEdges.add(ec.c)
-        }
-    }
-    val chainOrder = mutable.Buffer[Chain](chains.toSeq *)
-    // remove parts of chains that aren't a valid triple.
-
-    for (cc <- chainOrder) {
-      // remove and split
-      chains.insertAll(chains.indexOf(cc), cc.removeCornersWithoutEdges(validEdges).iterator)
-    }
-    // kill 0-length chains
-    chains.filterInPlace(_.chain.nonEmpty)
-  }
-
-  private def hasAdjacent(a: Corner, b: Corner, c: Corner): Boolean =
-    if (a == null || b == null || c == null) false
-    else if ((a.nextC eq b) || (a.nextC eq c)) true // todo: speedup by puting consec in a,b always?
-    else if ((b.nextC eq c) || (b.nextC eq a)) true
-    else if ((c.nextC eq a) || (c.nextC eq b)) true
-    else false
-
-  /*
-        if (hasAdjacent(edgeToCorner.get(ec.a), edgeToCorner.get(ec.b), edgeToCorner.get(ec.c)))
+      if (hasAdjacent(edgeToCorner.get(ec.a), edgeToCorner.get(ec.b), edgeToCorner.get(ec.c)))
         if (skel.liveEdges.contains(ec.a) && skel.liveEdges.contains(ec.b) && skel.liveEdges.contains(ec.c)) {
           validEdges.add(ec.a)
           validEdges.add(ec.b)
@@ -236,11 +210,11 @@ class CoSitedCollision(val loc: V3, ec: EdgeCollision, private var parent: Heigh
 
   private def hasAdjacent(a: Option[Corner], b: Option[Corner], c: Option[Corner]): Boolean =
     if (a.isEmpty || b.isEmpty || c.isEmpty) false
-    else if ((a.get.nextC eq b) || (a.get.nextC eq c)) true // todo: speedup by puting consec in a,b always?
-    else if ((b.get.nextC eq c) || (b.get.nextC eq a)) true
-    else if ((c.get.nextC eq a) || (c.get.nextC eq b)) true
+    else if ((a.get.nextC eq b.get) || (a.get.nextC eq c.get)) true // todo: speedup by puting consec in a,b always?
+    else if ((b.get.nextC eq c.get) || (b.get.nextC eq a.get)) true
+    else if ((c.get.nextC eq a.get) || (c.get.nextC eq b.get)) true
     else false
-   */
+
 
   def processChains(skel: Skeleton): Boolean = {
     if (moreOneSmashEdge)

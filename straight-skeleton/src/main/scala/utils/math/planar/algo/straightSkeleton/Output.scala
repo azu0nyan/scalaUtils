@@ -324,7 +324,7 @@ class Output(var skeleton: Skeleton) {
     val toGoFace = faces.get(toGo.nextL.start)
     val toKeepFace = faces.get(toKeep.nextL.start)
     if (toGoFace.isEmpty) {
-      System.err.println("three consecutive parallel edges in input?")
+      println("three consecutive parallel edges in input?")
     } else {
       toKeepFace.get.definingSE ++= toGoFace.get.definingSE
       if (toKeepFace.get.results != toGoFace.get.results) { //todo check needed????

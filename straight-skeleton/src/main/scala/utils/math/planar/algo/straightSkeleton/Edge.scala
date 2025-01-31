@@ -202,6 +202,10 @@ class Edge(var start: Corner, var end: Corner) {
   }
 
 
-  override def toString = s"Edge( ${start.asV3.toShortString} -> ${end.asV3.toShortString}, ${currentCorners.map(_.asV3).mkString(",")}, $angle, ${if (uphill == null) "null" else uphill.toShortString},)"
+  override def toString = s"Edge(" +
+    s"${if(start!= null) start.asV3.toShortString else "null"} -> ${if(end != null) end.asV3.toShortString else "null"}, " +
+    s"${currentCorners.map(_.asV3).mkString(",")}," +
+    s" $angle," +
+    s" ${if (uphill == null) "null" else uphill.toShortString},)"
 }
 

@@ -185,7 +185,7 @@ class CollisionQ(var skel: Skeleton) {
         else {
           val ec = new EdgeCollision(Some(res), corner.prevL, corner.nextL, edge)
           if (!skel.seen.contains(ec))
-            println(ec)
+//            println(ec)
             faceEvents += (ec)
           ()
         }
@@ -261,7 +261,7 @@ class CollisionQ(var skel: Skeleton) {
     var i = 0
 
     for (ec <- faceEvents) {
-      System.out.println(String.format("%d : %s ", {
+      println(String.format("%d : %s ", {
         i += 1;
         i - 1
       }, ec))

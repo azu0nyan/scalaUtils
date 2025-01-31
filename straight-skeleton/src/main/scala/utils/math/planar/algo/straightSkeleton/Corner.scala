@@ -215,6 +215,10 @@ class Corner(
       out
     }
   }
-  override def toString = s"Corner(pos: ${asV3.toShortString}, nextLStart: ${nextL.start.asV3.toShortString}, prevLStart: ${prevL.start.asV3.toShortString}, nextC: ${nextC.asV3.toShortString}, prevC: {prevC.asV3.toShortString})"
+  override def toString = s"Corner(pos: ${asV3.toShortString}," +
+    s" nextLStart: ${if (nextL != null && nextL.start != null) nextL.start.asV3.toShortString else "null"}," +
+    s" prevLStart: ${if (prevL != null && prevL.start != null) prevL.start.asV3.toShortString else "null"}," +
+    s" nextC: ${if (nextC != null) nextC.asV3.toShortString else "null"}, " +
+    s"prevC: ${if (prevC != null) prevC.asV3.toShortString else "null"})"
 }
 

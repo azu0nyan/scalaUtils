@@ -114,6 +114,7 @@ class Skeleton {
         lc.append(e.start)
         e.start.nextL = e
         e.end.prevL = e
+//        println(s"${if (e.start != null) e.start.asV3 else "null"} ${if (e.start != null && e.start.nextC != null) e.start.nextC.asV3 else "null"} ${if (e.end != null) e.end.asV3 else "null"}")
         e.start.nextC = e.end
         e.end.prevC = e.start
       }
@@ -199,7 +200,6 @@ class Skeleton {
       case t: Throwable =>
         t.printStackTrace()
         if (t.getCause != null) {
-          System.out.println(" caused by:")
           t.getCause.printStackTrace()
         }
     }
