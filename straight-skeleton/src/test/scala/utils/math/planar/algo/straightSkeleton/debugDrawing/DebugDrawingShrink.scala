@@ -28,15 +28,8 @@ def main(): Unit = {
   debugOut.println(s"new run at: ${LocalDateTime.now().toString}")
 
 
-  var points: Seq[V2] = Seq(
-    V2(600.0, -100.0),
-    V2(600.0, 0.0),
-    V2(500.0, 0.0),
-    V2(500.0, 400.0),
-    V2(400.0, 400.0),
-    V2(400.0, -100.0),
-    V2(500.0, -200.0),
-  )
+  var points: Seq[V2] = Seq()
+//  var points: Seq[V2] = HardCase.vs
 
   var offset: Scalar = 10
 
