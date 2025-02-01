@@ -74,8 +74,14 @@ lazy val `straight-skeleton` = (project in file("straight-skeleton"))
     `awt-drawing` % "test->test"
   )
 
+lazy val `behaviour-tree` = (project in file("behaviour-tree"))
+  .settings(
+    commonSettings,
+    name := "behaviour-tree",
+  )
+
 lazy val root = (project in file("."))
-  .aggregate(core, dcel, triangulation, `straight-skeleton`, `awt-drawing`)
+  .aggregate(core, dcel, triangulation, `straight-skeleton`, `awt-drawing`, `behaviour-tree`)
   .settings(
     commonSettings,
     name := "root",
