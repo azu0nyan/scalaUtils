@@ -11,20 +11,15 @@ import utils.math.planar.V2
 import java.util.concurrent.atomic.AtomicInteger
 
 class PlanarDCELTest extends AnyFunSuite {
-  type DATA = DCELData {
-    type VertexData = V2
-    type HalfEdgeData = Int
-    type FaceData = Int
-  }
-  object Provider extends DCELDataProvider[DATA] {
+  object Provider extends DCELDataProvider[V2, Int, Int] {
     val x = new AtomicInteger()
     override def newVertexData(v: V2): V2 = v
-    override def newFaceData(edge: HalfEdge[DATA]): Int = x.getAndIncrement()
-    override def splitEdgeData(edge: HalfEdge[DATA], data: V2): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
-    override def newEdgeData(v1: Vertex[DATA], v2: Vertex[DATA]): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
+    override def newFaceData(edge: HalfEdge[V2, Int, Int]): Int = x.getAndIncrement()
+    override def splitEdgeData(edge: HalfEdge[V2, Int, Int], data: V2): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
+    override def newEdgeData(v1: Vertex[V2, Int, Int], v2: Vertex[V2, Int, Int]): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
   }
-  type DCEL = PlanarDCEL[DATA]
-  type Face = DCEL.Face[DATA]
+  type DCEL = PlanarDCEL[V2, Int, Int]
+  type Face = DCEL.Face[V2, Int, Int]
 
   def cut(dcel: DCEL, poly: Seq[V2]): Face = {
     val res = dcel.cutPoly(poly, Provider)
@@ -252,7 +247,7 @@ class PlanarDCELTest extends AnyFunSuite {
 
 
   test("Cut bug test") {
-    val dcel = new PlanarDCEL[DATA](0, x => x)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
     /*
          | e1
          |
@@ -271,7 +266,7 @@ class PlanarDCELTest extends AnyFunSuite {
   }
 
   test("connect vertices") {
-    val dcel = new PlanarDCEL[DATA](0, x => x)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
     dcel.cutPoly(AARectangle(V2(0, 0), V2(100, 100)).toPolygon.vertices, Provider)
 
     val he = dcel.connectVerticesUnsafe(dcel.getVertex(V2(0, 0)).get, dcel.getVertex(V2(100, 100)).get, Provider)
@@ -286,7 +281,7 @@ class PlanarDCELTest extends AnyFunSuite {
 
 
   test("connect vertices holes") {
-    val dcel = new PlanarDCEL[DATA](0, x => x)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
     dcel.cutPoly(AARectangle(V2(0, 0), V2(100, 100)).toPolygon.vertices, Provider)
     dcel.cutPoly(AARectangle(V2(200, 0), V2(300, 100)).toPolygon.vertices, Provider)
 

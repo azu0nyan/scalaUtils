@@ -43,6 +43,20 @@ lazy val dcel = (project in file("dcel"))
   )
   .dependsOn(core)
 
+lazy val `dcel-nav` = (project in file("dcel-nav"))
+  .settings(
+    commonSettings,
+    name := "dcel-nav",
+  )
+  .dependsOn(dcel)
+
+lazy val triangulation = (project in file("triangulation"))
+  .settings(
+    commonSettings,
+    name := "triangulation",
+  )
+  .dependsOn(dcel)
+
 lazy val root = (project in file("."))
   .aggregate(core, dcel)
   .settings(

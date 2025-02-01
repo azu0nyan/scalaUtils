@@ -2,10 +2,9 @@ package utils.datastructures.dcel.nav
 
 import utils.datastructures.dcel.DCEL.{Face, HalfEdge}
 import utils.datastructures.dcel.PlanarDCEL.PlanarEdge
-import utils.datastructures.dcel.nav.NavMesh.{NavMeshDcelData}
+import utils.datastructures.dcel.nav.NavMesh.{NavMeshFaceData, NavMeshHalfEdgeData}
 import utils.datastructures.graph.Graph.Path
-import utils.math._
-import utils.math.WithAlmostEquals
+import utils.math.*
 import utils.math.misc.IntervalOps
 import utils.math.planar.V2
 
@@ -16,14 +15,14 @@ object DCELPath {
     def face: NavigableFace
   }
 
-  case class NavMeshPosition(point: V2, face: NavigableFace, navMeshFace: Face[NavMeshDcelData]) extends PathNode {
+  case class NavMeshPosition(point: V2, face: NavigableFace, navMeshFace: Face[V2, NavMeshHalfEdgeData, NavMeshFaceData]) extends PathNode {
     def distancesToBorders: Seq[(PathNode, Scalar)] = navMeshFace.edges.flatMap(e => e.data.boundTo match {
       case Some(borderEdge) => borderEdge.borderNodes.map(bn => (bn, bn.point.distance(point)))
       case None => Seq((NavMeshEdge(e), e.asSegment.center.distance(point)))
     }).toSeq
   }
 
-  case class NavMeshEdge(edge: HalfEdge[NavMeshDcelData]) extends PathNode {
+  case class NavMeshEdge(edge: HalfEdge[V2, NavMeshHalfEdgeData, NavMeshFaceData]) extends PathNode {
     override def point: V2 = edge.asSegment.center
     override def face: NavigableFace = ???
   }

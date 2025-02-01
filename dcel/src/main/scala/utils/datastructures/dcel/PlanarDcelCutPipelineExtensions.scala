@@ -9,18 +9,18 @@ trait PlanarDcelCutPipelineExtensions {
    sealed trait OffsetFaceType
    case class AngleBisectors(offsetValue: Scalar) extends OffsetFaceType
    case class OffsetSidesAlongNormal(offsetValue: Scalar) extends OffsetFaceType
-   case class OffsetFace[D <: DCELData, L <: Labels](faceSelector: FaceSelector[D, L],
+   case class OffsetFace[VD, HD, FD, VL, HL, FL](faceSelector: FaceSelector[VD, HD, FD, VL, HL, FL],
                                                      offsetType: OffsetFaceType,
-                                                     insideFaceLabel: Option[L#FaceLabel] = None
-                                                    ) extends PlanarDCELCutPipeline[D, L]
+                                                     insideFaceLabel: Option[FL] = None
+                                                    ) extends PlanarDCELCutPipeline[VD, HD, FD, VL, HL, FL]
 
    sealed trait OffsetEdgeType
    case class SimpleOffsetAlongNormal(offsetValue: Scalar) extends OffsetEdgeType
    case class OffsetAlongNormalAndTraceToFaceBorder(offsetValue: Scalar) extends OffsetFaceType
-   case class OffsetEdge[D <: DCELData, L <: Labels](edgeSelector: EdgeSelector[D, L],
+   case class OffsetEdge[VD, HD, FD, VL, HL, FL](edgeSelector: EdgeSelector[VD, HD, FD, VL, HL, FL],
                                                      offsetEdgeType: OffsetEdgeType,
-                                                     edgeLabel: Option[L#HalfEdgeLabel] = None,
-                                                     twinEdgeLabel: Option[L#HalfEdgeLabel] = None) extends PlanarDCELCutPipeline[D, L]
+                                                     edgeLabel: Option[HL] = None,
+                                                     twinEdgeLabel: Option[HL] = None) extends PlanarDCELCutPipeline[VD, HD, FD, VL, HL, FL]
 
    case class TracePath(path: Path, subdivisions: Int)*/
 

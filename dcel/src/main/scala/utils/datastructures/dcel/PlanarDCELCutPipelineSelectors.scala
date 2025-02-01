@@ -7,23 +7,23 @@ import utils.math.planar.{SegmentPlanar, V2}
 trait PlanarDCELCutPipelineSelectors {
 
   //Selectors
-  def SelectFacesByLabel[D <: DCELData, L <: Labels](label: L#FaceLabel): FaceSelector[D, L] =
+  def SelectFacesByLabel[VD, HD, FD, VL, HL, FL](label: FL): FaceSelector[VD, HD, FD, VL, HL, FL] =
     ctx => ctx.labelToFace.getOrElse(label, Set()).toSeq
-  def SelectEdgesByLabel[D <: DCELData, L <: Labels](label: L#HalfEdgeLabel): EdgeSelector[D, L] =
+  def SelectEdgesByLabel[VD, HD, FD, VL, HL, FL](label: HL): EdgeSelector[VD, HD, FD, VL, HL, FL] =
     ctx => ctx.labelToHalfEdge.getOrElse(label, Set()).toSeq
-  def SelectVerticesByLabel[D <: DCELData, L <: Labels](label: L#VertexLabel): VertexSelector[D, L] =
+  def SelectVerticesByLabel[VD, HD, FD, VL, HL, FL](label: VL): VertexSelector[VD, HD, FD, VL, HL, FL] =
     ctx => ctx.labelToVertex.getOrElse(label, Set()).toSeq
-  def SelectEdgesBetween[D <: DCELData, L <: Labels](label1: L#FaceLabel, label2: L#FaceLabel): EdgeSelector[D, L] =
+  def SelectEdgesBetween[VD, HD, FD, VL, HL, FL](label1: FL, label2: FL): EdgeSelector[VD, HD, FD, VL, HL, FL] =
     ctx => (SelectFaceEdges(label1)(ctx).toSet & SelectFaceEdges(label2)(ctx).map(_.twin).toSet).toSeq
-  def SelectFaceEdges[D <: DCELData, L <: Labels](label: L#FaceLabel): EdgeSelector[D, L] =
+  def SelectFaceEdges[VD, HD, FD, VL, HL, FL](label: FL): EdgeSelector[VD, HD, FD, VL, HL, FL] =
     ctx => SelectFacesByLabel(label)(ctx).flatMap(_.edges)
-  def SelectEdgesInSegment[D <: DCELData, L <: Labels](seg: SegmentPlanar): EdgeSelector[D, L] =
+  def SelectEdgesInSegment[VD, HD, FD, VL, HL, FL](seg: SegmentPlanar): EdgeSelector[VD, HD, FD, VL, HL, FL] =
     ctx => ctx.halfEdgesProduced.filter(e => seg.containsSegment(ctx.dcel.asSegment(e))).toSeq
-  def SelectEdgesEqualToSegmentAndSameDirection[D <: DCELData, L <: Labels](seg: SegmentPlanar): EdgeSelector[D, L] =
+  def SelectEdgesEqualToSegmentAndSameDirection[VD, HD, FD, VL, HL, FL](seg: SegmentPlanar): EdgeSelector[VD, HD, FD, VL, HL, FL] =
     ctx => ctx.halfEdgesProduced.filter(e => (ctx.dcel.position(e.origin) ~= seg.start) && (ctx.dcel.position(e.ending) ~= seg.end)).toSeq
-  def SelectEdgesContainsPoint[D <: DCELData, L <: Labels](p: V2): EdgeSelector[D, L] =
+  def SelectEdgesContainsPoint[VD, HD, FD, VL, HL, FL](p: V2): EdgeSelector[VD, HD, FD, VL, HL, FL] =
     ctx => ctx.halfEdgesProduced.filter(e => ctx.dcel.asSegment(e).contains(p)).toSeq
-  def SelectOneEdge[D <: DCELData, L <: Labels](s: EdgeSelector[D, L]): SingleEdgeSelector[D, L] =
+  def SelectOneEdge[VD, HD, FD, VL, HL, FL](s: EdgeSelector[VD, HD, FD, VL, HL, FL]): SingleEdgeSelector[VD, HD, FD, VL, HL, FL] =
     ctx => s.apply(ctx).headOption
 
 

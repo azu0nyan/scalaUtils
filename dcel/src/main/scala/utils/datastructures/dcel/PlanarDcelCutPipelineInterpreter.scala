@@ -10,16 +10,16 @@ object PlanarDcelCutPipelineInterpreter {
 
 
 
-  def cutPipeline[D <: DCELData, L <: Labels](at: PlanarDCEL[D],
-                                              provider: DCELDataProvider[D],
-                                              pipeline: PlanarDCELCutPipeline[D, L]): CuttingContext[D, L] = {
-    val context = CuttingContext[D, L](at, provider)
+  def cutPipeline[VD, HD, FD, VL, HL, FL](at: PlanarDCEL[VD, HD, FD],
+                                              provider: DCELDataProvider[VD, HD, FD],
+                                              pipeline: PlanarDCELCutPipeline[VD, HD, FD, VL, HL, FL]): CuttingContext[VD, HD, FD, VL, HL, FL] = {
+    val context = CuttingContext[VD, HD, FD, VL, HL, FL](at, provider)
     cutPipelineWithContext(pipeline, context)
   }
 
-  def cutPipelineWithContext[D <: DCELData, L <: Labels](
-                                                          pipeline: PlanarDCELCutPipeline[D, L],
-                                                          context: CuttingContext[D, L]): CuttingContext[D, L] = {
+  def cutPipelineWithContext[VD, HD, FD, VL, HL, FL](
+                                                          pipeline: PlanarDCELCutPipeline[VD, HD, FD, VL, HL, FL],
+                                                          context: CuttingContext[VD, HD, FD, VL, HL, FL]): CuttingContext[VD, HD, FD, VL, HL, FL] = {
     pipeline match {
       case ProducePipeline(producer) => cutPipelineWithContext(producer(context), context)
       case TransformContext(transformer) => transformer(context)
@@ -36,22 +36,22 @@ object PlanarDcelCutPipelineInterpreter {
       case Empty() =>
         context
       case Do(code) =>
-        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {code.apply(c);c}, context)
+        PlanarDCELCutOps.withContextChangesTracking[VD, HD, FD, VL, HL, FL](c => {code.apply(c);c}, context)
       case ForEachFace(selector, doWith) =>
-        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {for (f <- selector(c)) doWith(f); c}, context)
+        PlanarDCELCutOps.withContextChangesTracking[VD, HD, FD, VL, HL, FL](c => {for (f <- selector(c)) doWith(f); c}, context)
       case ForEachEdge(selector, doWith) =>
-        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {for (he <- selector(c)) doWith(he); c}, context)
+        PlanarDCELCutOps.withContextChangesTracking[VD, HD, FD, VL, HL, FL](c => {for (he <- selector(c)) doWith(he); c}, context)
       case ForEachVertex(selector, doWith) =>
-        PlanarDCELCutOps.withContextChangesTracking[D, L](c => {for (v <- selector(c)) doWith(v); c}, context)
-      case t: TraceSegmentAtAngle[D, L] =>
+        PlanarDCELCutOps.withContextChangesTracking[VD, HD, FD, VL, HL, FL](c => {for (v <- selector(c)) doWith(v); c}, context)
+      case t: TraceSegmentAtAngle[VD, HD, FD, VL, HL, FL] =>
         PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.traceSegmentAtAngle(t, _), context)
-      case c: CutPoly[D, L] =>
+      case c: CutPoly[VD, HD, FD, VL, HL, FL] =>
         PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.cutPoly(c, _), context)
-      case c: CutChain[D, L] =>
+      case c: CutChain[VD, HD, FD, VL, HL, FL] =>
         PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.cutChain(c, _), context)
-      case m: MergeFaces[D, L] =>
+      case m: MergeFaces[VD, HD, FD, VL, HL, FL] =>
         PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.mergeFaces(m, _), context)
-      case c: ConnectVertices[D, L] =>
+      case c: ConnectVertices[VD, HD, FD, VL, HL, FL] =>
         PlanarDCELCutOps.withContextChangesTracking(PlanarDCELCutOps.connectVertices(c, _), context)
     }
   }

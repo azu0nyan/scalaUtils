@@ -7,9 +7,9 @@ import scala.collection.mutable
 
 object SpatialStorage {
 
-  //implicit def toMapping[D](spatialMap: SpatialMap[D]): Mapping[V3, Seq[D]] = spatialMap.values
+  //implicit def toMapping[VD, HD, FD](spatialMap: SpatialMap[VD, HD, FD]): Mapping[V3, Seq[VD, HD, FD]] = spatialMap.values
 
-  //implicit def toMapping[D](spatialMap: SpatialMap[D]): Mapping[Area, Seq[D]] = spatialMap.values
+  //implicit def toMapping[VD, HD, FD](spatialMap: SpatialMap[VD, HD, FD]): Mapping[Area, Seq[VD, HD, FD]] = spatialMap.values
 
   class NaiveSpatialStorageImplementation[A <: Shape, V] extends SpatialStorage[A, V] {
 

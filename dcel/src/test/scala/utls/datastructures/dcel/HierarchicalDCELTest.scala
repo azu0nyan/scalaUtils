@@ -3,7 +3,7 @@ package utils.datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCELOps
-import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalDCElDataProvider, HierarchicalFace, OwnDataProvider, RHalfEdge, RVertex}
+import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCElDataProvider, HierarchicalFace, OwnDataProvider, RHalfEdge, RVertex}
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.{PolygonRegion, SegmentPlanar, V2}
 
@@ -12,29 +12,24 @@ import java.util.concurrent.atomic.AtomicInteger
 class HierarchicalDCELTest extends AnyFunSuite {
 
   val x = new AtomicInteger()
-  type HData = HierarchicalDCELOwnData {
-    type VertexOwnData = V2
-    type HalfEdgeOwnData = String
-    type FaceOwnData = String
-  }
-  class DataProvider() extends OwnDataProvider[HData] {
-    override def newFaceData(edge: RHalfEdge[HData]): String = x.getAndIncrement().toString
+  class DataProvider() extends OwnDataProvider[V2, String, String] {
+    override def newFaceData(edge: RHalfEdge[V2, String, String]): String = x.getAndIncrement().toString
 
     override def newVertexData(v: V2): V2 = v
 
-    override def newEdgeData(v1: RVertex[HData], v2: RVertex[HData]): (String, String) = (x.getAndIncrement().toString, x.getAndIncrement().toString)
+    override def newEdgeData(v1: RVertex[V2, String, String], v2: RVertex[V2, String, String]): (String, String) = (x.getAndIncrement().toString, x.getAndIncrement().toString)
 
-    override def splitEdgeData(edge: RHalfEdge[HData], at: V2): (String, String) = (x.getAndIncrement().toString, x.getAndIncrement().toString)
+    override def splitEdgeData(edge: RHalfEdge[V2, String, String], at: V2): (String, String) = (x.getAndIncrement().toString, x.getAndIncrement().toString)
   }
 
 
-  def cutInside(face: HierarchicalFace[HData], toCut: PolygonRegion) = {
+  def cutInside(face: HierarchicalFace[V2, String, String], toCut: PolygonRegion) = {
     face.cutClamped(toCut)
   }
 
   test("Single rectangle cut") {
 
-    val root = new HierarchicalFace[HData](None, "ROOT", new HierarchicalDCElDataProvider[HData](new DataProvider))(x => x)
+    val root = new HierarchicalFace[V2, String, String](None, "ROOT", new HierarchicalDCElDataProvider[V2, String, String](new DataProvider))(x => x)
     val toCut = AARectangle(V2(-100, -100), V2(100, 100)).toPolygon
     val cutResult = cutInside(root, toCut)
 
@@ -90,7 +85,7 @@ class HierarchicalDCELTest extends AnyFunSuite {
 
    */
   test("Parent correctness") {
-    val root = new HierarchicalFace[HData](None, "ROOT", new HierarchicalDCElDataProvider[HData](new DataProvider))(x => x)
+    val root = new HierarchicalFace[V2, String, String](None, "ROOT", new HierarchicalDCElDataProvider[V2, String, String](new DataProvider))(x => x)
     val containerShape = AARectangle(V2(0, 0), V2(100, 100)).toPolygon
     val containerHole1 = AARectangle(V2(20, 20), V2(30, 30)).toPolygon
     val containerHole2 = AARectangle(V2(40, 30), V2(50, 40)).toPolygon

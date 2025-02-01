@@ -4,7 +4,7 @@ package utils.datastructures.dcel
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.DCEL._
-import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutChain, CutPoly, CuttingContext, Labels, MergeFaces, StepsSeq, TraceSegmentAtAngle}
+import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutChain, CutPoly, CuttingContext, MergeFaces, StepsSeq, TraceSegmentAtAngle}
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.{PolygonRegion, V2}
 import utils.math._
@@ -12,27 +12,18 @@ import utils.math._
 import java.util.concurrent.atomic.AtomicInteger
 
 class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
-  type DATA = DCELData {
-    type VertexData = V2
-    type HalfEdgeData = Int
-    type FaceData = Int
-  }
-  type LABELS = Labels {
-    type VertexLabel = Int
-    type HalfEdgeLabel = Int
-    type FaceLabel = Int
-  }
 
-  object Provider extends DCELDataProvider[DATA] {
+
+  object Provider extends DCELDataProvider[V2, Int, Int] {
     val x = new AtomicInteger()
     override def newVertexData(v: V2): V2 = v
-    override def newFaceData(edge: HalfEdge[DATA]): Int = x.getAndIncrement()
-    override def splitEdgeData(edge: HalfEdge[DATA], data: V2): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
-    override def newEdgeData(v1: Vertex[DATA], v2: Vertex[DATA]): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
+    override def newFaceData(edge: HalfEdge[V2, Int, Int]): Int = x.getAndIncrement()
+    override def splitEdgeData(edge: HalfEdge[V2, Int, Int], data: V2): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
+    override def newEdgeData(v1: Vertex[V2, Int, Int], v2: Vertex[V2, Int, Int]): (Int, Int) = (x.getAndIncrement(), x.getAndIncrement())
   }
 
   test("Cut simple chain test") {
-    val dcel = new PlanarDCEL[DATA](0, x => x)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
     /*
          | e1
          |
@@ -42,7 +33,7 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
       e2 |   / e3
          |/
       */
-    val op1 = CutChain[DATA, LABELS](Seq(V2(0, 200), V2(0, -200), V2(200, 0), V2(-200, 0)),
+    val op1 = CutChain[V2, Int, Int, Int, Int, Int](Seq(V2(0, 200), V2(0, -200), V2(200, 0), V2(-200, 0)),
       Seq(1, 2, 3), Seq(4, 5, 6), Seq(-1, -2, -3, -4))
 
     val res = PlanarDcelCutPipelineInterpreter.cutPipeline(dcel, Provider, op1)
@@ -73,19 +64,19 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
     assert(res.vertexToLabel(v4) == Set(-4))
 
 
-//    println(dcel.halfEdges.mkString("\n"))
-//
-//    println(v1.edgesWithOriginHere.toSeq)
-//    println(v2.edgesWithOriginHere.toSeq)
-//    println(v3.edgesWithOriginHere.toSeq)
-//    println(v4.edgesWithOriginHere.toSeq)
-//    println(v5.edgesWithOriginHere.toSeq)
-//
-//    println(v1._incidentEdge)
-//    println(v2._incidentEdge)
-//    println(v3._incidentEdge)
-//    println(v4._incidentEdge)
-//    println(v5._incidentEdge)
+    //    println(dcel.halfEdges.mkString("\n"))
+    //
+    //    println(v1.edgesWithOriginHere.toSeq)
+    //    println(v2.edgesWithOriginHere.toSeq)
+    //    println(v3.edgesWithOriginHere.toSeq)
+    //    println(v4.edgesWithOriginHere.toSeq)
+    //    println(v5.edgesWithOriginHere.toSeq)
+    //
+    //    println(v1._incidentEdge)
+    //    println(v2._incidentEdge)
+    //    println(v3._incidentEdge)
+    //    println(v4._incidentEdge)
+    //    println(v5._incidentEdge)
 
 
     val e1 = dcel.getEdge(V2(0, 200), V2(0, 0)).get
@@ -106,7 +97,7 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
   }
 
   test("Cut bug test2") {
-    val dcel = new PlanarDCEL[DATA](0, x => x)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
     /*
          | e1
          |
@@ -118,20 +109,20 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
       */
     val chain = List(V2(0.0, 200.0), V2(0.0, -200.0), V2(200.0, 0.0), V2(-200.0, 0.0))
 
-    PlanarDCELCutOps.cutChain[DATA, LABELS](CutChain(chain), CuttingContext[DATA, LABELS](dcel, Provider))
-//    println(dcel.toLongSting)
+    PlanarDCELCutOps.cutChain[V2, Int, Int, Int, Int, Int](CutChain(chain), CuttingContext[V2, Int, Int, Int, Int, Int](dcel, Provider))
+    //    println(dcel.toLongSting)
     dcel.sanityCheck()
 
   }
 
   test("Cut poly test") {
-    val dcel = new PlanarDCEL[DATA](0, x => x)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
 
-    val op1 = CutChain[DATA, LABELS](Seq(V2(0, 1000), V2(0, -1000)))
+    val op1 = CutChain[V2, Int, Int, Int, Int, Int](Seq(V2(0, 1000), V2(0, -1000)))
     PlanarDcelCutPipelineInterpreter.cutPipeline(dcel, Provider, op1)
 
     val poly = Seq(V2(-200, -200), V2(200, -200), V2(200, 200), V2(-200, 200))
-    val op2 = CutPoly[DATA, LABELS](PolygonRegion(poly), Some(0), Seq(1, 2, 3, 4), Seq(5, 6, 7, 8), Seq(-1, -2, -3, -4))
+    val op2 = CutPoly[V2, Int, Int, Int, Int, Int](PolygonRegion(poly), Some(0), Seq(1, 2, 3, 4), Seq(5, 6, 7, 8), Seq(-1, -2, -3, -4))
     val res = PlanarDcelCutPipelineInterpreter.cutPipeline(dcel, Provider, op2)
 
     dcel.sanityCheck()
@@ -166,8 +157,8 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
     assert(res.vertexProduced.size == 6)
 
     val faces = res.faceProduced
-//    println(faces)
-//    println(faces.map(f => res.faceToLabel(f)))
+    //    println(faces)
+    //    println(faces.map(f => res.faceToLabel(f)))
     assert(faces.forall(f => res.faceToLabel(f) == Set(0)))
     assert(res.labelToFace(0) == faces.toSet)
 
@@ -188,10 +179,10 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
   }
 
   test("Trace segment test") {
-    val dcel = new PlanarDCEL[DATA](0, x => x)
-    val op1 = CutPoly[DATA, LABELS](AARectangle(V2(-200, -200), V2(200, 200)).toPolygon)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
+    val op1 = CutPoly[V2, Int, Int, Int, Int, Int](AARectangle(V2(-200, -200), V2(200, 200)).toPolygon)
 
-    val op2 = TraceSegmentAtAngle[DATA, LABELS](ctx => ctx.dcel.getEdge(V2(-200, -200), V2(200, -200)).toSeq,
+    val op2 = TraceSegmentAtAngle[V2, Int, Int, Int, Int, Int](ctx => ctx.dcel.getEdge(V2(-200, -200), V2(200, -200)).toSeq,
       0.5, 1000, utils.math.QUARTER_PI,
       lFaceLabel = Some(1), rFaceLabel = Some(2),
       lEdgeLabel = Some(3), rEdgeLabel = Some(4),
@@ -228,14 +219,14 @@ class PlanarDCELCutPipelineInterpreterTest extends AnyFunSuite {
   }
 
   test("Merge faces") {
-    val op1 = StepsSeq[DATA, LABELS](
+    val op1 = StepsSeq[V2, Int, Int, Int, Int, Int](
       (for (i <- 0 until 3; j <- 0 until 3)
-        yield CutPoly[DATA, LABELS](AARectangle(V2(i, j) * 100, V2(i + 1, j + 1) * 100).toPolygon, Some(i * 3 + j))): _*)
+        yield CutPoly[V2, Int, Int, Int, Int, Int](AARectangle(V2(i, j) * 100, V2(i + 1, j + 1) * 100).toPolygon, Some(i * 3 + j))): _*)
     val op2 = StepsSeq(op1,
-      MergeFaces[DATA, LABELS](ctx => ctx.labelToFace(4).headOption,
+      MergeFaces[V2, Int, Int, Int, Int, Int](ctx => ctx.labelToFace(4).headOption,
         ctx => (ctx.labelToFace(1) | ctx.labelToFace(3) | ctx.labelToFace(5) | ctx.labelToFace(7)).toSeq, Some(-1)))
 
-    val dcel = new PlanarDCEL[DATA](0, x => x)
+    val dcel = new PlanarDCEL[V2, Int, Int](0, x => x)
 
     val res = PlanarDcelCutPipelineInterpreter.cutPipeline(dcel, Provider, op2)
     dcel.sanityCheck()

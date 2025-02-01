@@ -1,12 +1,11 @@
 package utils.datastructures.dcel.nav
 
 
-import utils.datastructures.dcel.PlanarDCELCutPipeline._
 import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge}
-import utils.datastructures.dcel.{DCEL, DCELDataProvider, PlanarDCEL, PlanarDcelCutPipelineInterpreter}
-import utils.datastructures.dcel.PlanarDCELCutPipeline.{CutPoly, Labels, StepsSeq}
+import utils.datastructures.dcel.PlanarDCELCutPipeline.*
 import utils.datastructures.dcel.nav.DCELPath.{BorderNode, NavMeshEdge, PathNode}
 import utils.datastructures.dcel.nav.NavMesh.NavMeshFaceData
+import utils.datastructures.dcel.{DCEL, DCELDataProvider, PlanarDCEL, PlanarDcelCutPipelineInterpreter}
 import utils.datastructures.graph.{ArrayBufferGraph, GraphOps}
 import utils.math.Scalar
 import utils.math.planar.algo.PolygonToConvex
@@ -19,18 +18,13 @@ object NavMesh {
   class NavMeshHalfEdgeData(var boundTo: Option[NavigableHalfEdge] = None)
   class NavMeshFaceData(var isHole: Boolean)
 
-  type NavMeshDcelData = DCELData {
-    type VertexData = V2
-    type HalfEdgeData = NavMeshHalfEdgeData
-    type FaceData = NavMeshFaceData
-  }
 
-//  type NavMesh = PlanarDCEL[NavMeshDcelData]
+//  type NavMesh = PlanarDCEL[V2, NavMeshHalfEdgeData, NavMeshFaceData]
   type NavMeshGraph =  ArrayBufferGraph[PathNode, Scalar]
 
-  class NavMesh extends PlanarDCEL[NavMeshDcelData](new NavMeshFaceData(true), x => x) {
-    def boundMeshEdge(bn: BorderNode): Option[HalfEdge[NavMeshDcelData]] = halfEdges.find(_.data.boundTo.contains(bn.border))
-    def boundMeshFace(bn: BorderNode): Option[Face[NavMeshDcelData]] = halfEdges.find(_.data.boundTo.contains(bn.border)).map(_.leftFace)
+  class NavMesh extends PlanarDCEL[V2, NavMeshHalfEdgeData, NavMeshFaceData](new NavMeshFaceData(true), x => x) {
+    def boundMeshEdge(bn: BorderNode): Option[HalfEdge[V2, NavMeshHalfEdgeData, NavMeshFaceData]] = halfEdges.find(_.data.boundTo.contains(bn.border))
+    def boundMeshFace(bn: BorderNode): Option[Face[V2, NavMeshHalfEdgeData, NavMeshFaceData]] = halfEdges.find(_.data.boundTo.contains(bn.border)).map(_.leftFace)
 
   }
 
@@ -39,18 +33,12 @@ object NavMesh {
 
   def buildNavMeshFromNavigableFace(face: NavigableFace): NavMesh = {
     val res = new NavMesh
-    //todo more efficient
-    type CutLabels = Labels {
-      type VertexLabel = Unit
-      type HalfEdgeLabel = Unit
-      type FaceLabel = String
-    }
 
-    val provider = new DCELDataProvider[NavMeshDcelData] {
+    val provider = new DCELDataProvider[V2, NavMeshHalfEdgeData, NavMeshFaceData] {
       override def newVertexData(v: V2): V2 = v
-      override def newEdgeData(v1: DCEL.Vertex[NavMeshDcelData], v2: DCEL.Vertex[NavMeshDcelData]): (NavMeshHalfEdgeData, NavMeshHalfEdgeData) = (new NavMeshHalfEdgeData(), new NavMeshHalfEdgeData)
-      override def newFaceData(edge: DCEL.HalfEdge[NavMeshDcelData]): NavMeshFaceData = new NavMeshFaceData(false)
-      override def splitEdgeData(edge: DCEL.HalfEdge[NavMeshDcelData], data: V2): (NavMeshHalfEdgeData, NavMeshHalfEdgeData) = (new NavMeshHalfEdgeData(), new NavMeshHalfEdgeData)
+      override def newEdgeData(v1: DCEL.Vertex[V2, NavMeshHalfEdgeData, NavMeshFaceData], v2: DCEL.Vertex[V2, NavMeshHalfEdgeData, NavMeshFaceData]): (NavMeshHalfEdgeData, NavMeshHalfEdgeData) = (new NavMeshHalfEdgeData(), new NavMeshHalfEdgeData)
+      override def newFaceData(edge: DCEL.HalfEdge[V2, NavMeshHalfEdgeData, NavMeshFaceData]): NavMeshFaceData = new NavMeshFaceData(false)
+      override def splitEdgeData(edge: DCEL.HalfEdge[V2, NavMeshHalfEdgeData, NavMeshFaceData], data: V2): (NavMeshHalfEdgeData, NavMeshHalfEdgeData) = (new NavMeshHalfEdgeData(), new NavMeshHalfEdgeData)
     }
 
 
@@ -58,24 +46,24 @@ object NavMesh {
     val nested = Polygon.toNestedPolygons(outer.regions)
     val partitioned = Polygon.partitionNested(nested)
 
-    val cutPoly = StepsSeq[NavMeshDcelData, CutLabels](
+    val cutPoly = StepsSeq[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String](
       partitioned.zipWithIndex.map { case (poly, i) =>
-        StepsSeq[NavMeshDcelData, CutLabels](
-          poly.map(p => CutPoly[NavMeshDcelData, CutLabels](p, Some(if (i % 2 == 0) "NO_HOLE" else "HOLE"))): _*
+        StepsSeq[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String](
+          poly.map(p => CutPoly[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String](p, Some(if (i % 2 == 0) "NO_HOLE" else "HOLE"))): _*
         )
       }: _*)
 
     val edgesToCheck = face.hierarchicalFace.fullBorder ++ face.hierarchicalFace.innerDCEL.outerFace.holesContours.flatten.toSeq
-    val markEdges = StepsSeq[NavMeshDcelData, CutLabels](
-      (for (edge <- edgesToCheck) yield ForEachEdge[NavMeshDcelData, CutLabels](
+    val markEdges = StepsSeq[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String](
+      (for (edge <- edgesToCheck) yield ForEachEdge[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String](
         SelectEdgesEqualToSegmentAndSameDirection(face.hierarchicalFace.innerDCEL.asSegment(edge)),
         e => e.data.boundTo = Some(edge.data.ownData))): _*
     )
 
-    val markFaces = ForEachFace[NavMeshDcelData, CutLabels](SelectFacesByLabel[NavMeshDcelData, CutLabels]("HOLE"), f => f.data.isHole = true)
+    val markFaces = ForEachFace[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String](SelectFacesByLabel[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String]("HOLE"), f => f.data.isHole = true)
 
-    val toConvex = ForEachFace[NavMeshDcelData, CutLabels](
-      SelectFacesByLabel[NavMeshDcelData, CutLabels]("NO_HOLE"),
+    val toConvex = ForEachFace[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String](
+      SelectFacesByLabel[V2, NavMeshHalfEdgeData, NavMeshFaceData, Unit, Unit, String]("NO_HOLE"),
       f => PolygonToConvex.toConvexPolygonsDCEL(res, f, provider)
     )
 
@@ -91,7 +79,7 @@ object NavMesh {
     res
   }
 
-  def buildGraphFromDcel(from: PlanarDCEL[NavMeshDcelData]): NavMeshGraph = {
+  def buildGraphFromDcel(from: PlanarDCEL[V2, NavMeshHalfEdgeData, NavMeshFaceData]): NavMeshGraph = {
     val res = new NavMeshGraph
 
     for(e <- from.halfEdges) {

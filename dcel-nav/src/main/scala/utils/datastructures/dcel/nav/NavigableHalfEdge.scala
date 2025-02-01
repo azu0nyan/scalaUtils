@@ -1,15 +1,16 @@
 package utils.datastructures.dcel.nav
 
-import utils.datastructures.dcel.HierarchicalDCEL._
+import utils.datastructures.dcel.HierarchicalDCEL.*
 import utils.datastructures.dcel.nav.DCELPath.BorderNode
-import utils.datastructures.dcel.nav.NavigableDCEL._
-import utils.math.planar.V2
-import utils.math._
+import utils.datastructures.dcel.nav.NavigableDCEL.*
+import utils.math.*
 import utils.math.misc.IntervalOps
+import utils.math.planar.V2
 
 trait NavigableHalfEdge {
-  var hierarchicalEdge: HierarchicalEdge[NavigableDCELOwnData] = _
-  def setHalfEdge[D <: NavigableDCELOwnData](he: HierarchicalEdge[D]): Unit = hierarchicalEdge = he.asInstanceOf[HierarchicalEdge[NavigableDCELOwnData]]
+  var hierarchicalEdge: HierarchicalEdge[?, ? <: NavigableHalfEdge, ? <: NavigableFace] = _
+  def setHalfEdge(he: HierarchicalEdge[?, ? <: NavigableHalfEdge, ? <: NavigableFace]): Unit =
+    hierarchicalEdge = he
 
   def edgeNodeTwin: NavigableHalfEdge = hierarchicalEdge.edge.twin.data.ownData
 
@@ -35,7 +36,7 @@ trait NavigableHalfEdge {
       }
       //todo fake edges impassable or smth
       // todo split where blocking wall going ortogonal to edge
-       IntervalOps.cutFrom((0d, 1d), blocked).map { case (l, r) => BorderNode(this, l, r) }
+      IntervalOps.cutFrom((0d, 1d), blocked).map { case (l, r) => BorderNode(this, l, r) }
     } else Seq()
 
 

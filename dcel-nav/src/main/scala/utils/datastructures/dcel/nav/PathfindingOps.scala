@@ -1,6 +1,6 @@
 package utils.datastructures.dcel.nav
 
-import utils.datastructures.dcel.nav.DCELPath._
+import utils.datastructures.dcel.nav.DCELPath.*
 import utils.math.planar.V2
 
 class PathfindingOps {

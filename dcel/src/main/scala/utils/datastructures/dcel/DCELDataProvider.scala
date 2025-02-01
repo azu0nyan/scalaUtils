@@ -4,29 +4,29 @@ import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
 import utils.math.planar.V2
 
 
-trait NewFaceDataProvider[D <: DCELData] {
-  def newFaceData(edge: HalfEdge[D]): D#FaceData
+trait NewFaceDataProvider[VD, HD, FD] {
+  def newFaceData(edge: HalfEdge[VD, HD, FD]): FD
 }
 
-trait NewVertexDataProvider[D <: DCELData] {
-  def newVertexData(v: V2): D#VertexData
+trait NewVertexDataProvider[VD, HD, FD] {
+  def newVertexData(v: V2): VD
 }
 
-trait NewEdgeDataProvider[D <: DCELData] {
-  def newEdgeData(v1: Vertex[D], v2: Vertex[D]): (D#HalfEdgeData, D#HalfEdgeData)
+trait NewEdgeDataProvider[VD, HD, FD] {
+  def newEdgeData(v1: Vertex[VD, HD, FD], v2: Vertex[VD, HD, FD]): (HD, HD)
 }
 
-trait SplitEdgeDataProvider[D <: DCELData] {
-  def splitEdgeData(edge: HalfEdge[D], data: V2): (D#HalfEdgeData, D#HalfEdgeData)
+trait SplitEdgeDataProvider[VD, HD, FD] {
+  def splitEdgeData(edge: HalfEdge[VD, HD, FD], data: V2): (HD, HD)
 }
 
-trait MergeFaceDatas[D <: DCELData] {
-  def mergeFaceDatas(main: Face[D], toMerge: Face[D]): D#FaceData = main.data
+trait MergeFaceDatas[VD, HD, FD] {
+  def mergeFaceDatas(main: Face[VD, HD, FD], toMerge: Face[VD, HD, FD]): FD = main.data
 }
 
-trait DCELDataProvider[D <: DCELData]
-  extends NewFaceDataProvider[D]
-    with NewVertexDataProvider[D]
-    with NewEdgeDataProvider[D]
-    with SplitEdgeDataProvider[D]
-    with MergeFaceDatas[D]
+trait DCELDataProvider[VD, HD, FD]
+  extends NewFaceDataProvider[VD, HD, FD]
+    with NewVertexDataProvider[VD, HD, FD]
+    with NewEdgeDataProvider[VD, HD, FD]
+    with SplitEdgeDataProvider[VD, HD, FD]
+    with MergeFaceDatas[VD, HD, FD]

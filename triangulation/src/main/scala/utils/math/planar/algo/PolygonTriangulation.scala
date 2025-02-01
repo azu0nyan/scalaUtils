@@ -5,7 +5,7 @@ import utils.datastructures.containers.BinaryTree.{BinaryTree, EmptyTree}
 import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.{DCELDataProvider, PlanarDCEL}
 import utils.math.planar.{AngleOps, PolygonRegion, TrianglePlanar, V2}
-import utils.math._
+import utils.math.{min, *}
 
 import java.util.logging.Level
 import scala.collection.mutable
@@ -50,26 +50,21 @@ object PolygonTriangulation {
     else Regular
   }
 
-  //  def classifyVertex[D <: DCELData](d: PlanarDCEL[D], face: Face[D], v: Vertex[D]): VType = {
+  //  def classifyVertex[VD, HD, FD](d: PlanarDCEL[VD, HD, FD], face: Face[VD, HD, FD], v: Vertex[VD, HD, FD]): VType = {
   //    val prev = v.edgesWithEndHere.find(_.leftFace == face).get.origin
   //    val next = v.edgesWithOriginHere.find(_.leftFace == face).get.origin
   //    classify(d.position(prev), d.position(v), d.position(next))
   //  }
 
   def monotonePartitionNonHole(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
-    type DATA = DCELData {
-      type VertexData = V2
-      type HalfEdgeData = Unit
-      type FaceData = Unit
-    }
-    object provider extends DCELDataProvider[DATA] {
-      override def splitEdgeData(edge: HalfEdge[DATA], data: V2): (Unit, Unit) = ((), ())
+    object provider extends DCELDataProvider[V2, Unit, Unit] {
+      override def splitEdgeData(edge: HalfEdge[V2, Unit, Unit], data: V2): (Unit, Unit) = ((), ())
       override def newVertexData(v: V2): V2 = v
-      override def newEdgeData(v1: Vertex[DATA], v2: Vertex[DATA]): (Unit, Unit) = ((), ())
-      override def newFaceData(edge: HalfEdge[DATA]): Unit = ()
+      override def newEdgeData(v1: Vertex[V2, Unit, Unit], v2: Vertex[V2, Unit, Unit]): (Unit, Unit) = ((), ())
+      override def newFaceData(edge: HalfEdge[V2, Unit, Unit]): Unit = ()
     }
 
-    val d = new PlanarDCEL[DATA]((), x => x)
+    val d = new PlanarDCEL[V2, Unit, Unit]((), x => x)
 
     for (p <- polygons) d.cutPoly(p, provider)
 
@@ -78,8 +73,8 @@ object PolygonTriangulation {
     result
   }
 
-  def monotonePartitionNonHolesDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
-    var res: Seq[Face[D]] = d.nonHoleFaces
+  def monotonePartitionNonHolesDCEL[VD, HD, FD](d: PlanarDCEL[VD, HD, FD], provider: DCELDataProvider[VD, HD, FD]): Seq[Face[VD, HD, FD]] = {
+    var res: Seq[Face[VD, HD, FD]] = d.nonHoleFaces
     val sub = d.onNewFace.subscribe(f => res = res :+ f)
     for (f <- d.nonHoleFaces) monotonePartitionDCELFace(d, f, provider)
     d.onNewFace.unSubscribe(sub)
@@ -88,26 +83,21 @@ object PolygonTriangulation {
 
 
   def triangulateNonHoles(polygons: Seq[Seq[V2]]): Seq[Seq[V2]] = {
-    type DATA = DCELData {
-      type VertexData = V2
-      type HalfEdgeData = Unit
-      type FaceData = Unit
-    }
-    object provider extends DCELDataProvider[DATA] {
-      override def splitEdgeData(edge: HalfEdge[DATA], data: V2): (Unit, Unit) = ((), ())
+    object provider extends DCELDataProvider[V2, Unit, Unit] {
+      override def splitEdgeData(edge: HalfEdge[V2, Unit, Unit], data: V2): (Unit, Unit) = ((), ())
       override def newVertexData(v: V2): V2 = v
-      override def newEdgeData(v1: Vertex[DATA], v2: Vertex[DATA]): (Unit, Unit) = ((), ())
-      override def newFaceData(edge: HalfEdge[DATA]): Unit = ()
+      override def newEdgeData(v1: Vertex[V2, Unit, Unit], v2: Vertex[V2, Unit, Unit]): (Unit, Unit) = ((), ())
+      override def newFaceData(edge: HalfEdge[V2, Unit, Unit]): Unit = ()
     }
 
-    val d = new PlanarDCEL[DATA]((), x => x)
+    val d = new PlanarDCEL[V2, Unit, Unit]((), x => x)
     for (p <- polygons) d.cutPoly(p, provider)
     val triangulation = triangulateNoneHolesDCEL(d, provider)
 
     triangulation.map(_.vertices.map(d.position).toSeq).toSeq
   }
 
-  def triangulateNoneHolesDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
+  def triangulateNoneHolesDCEL[VD, HD, FD](d: PlanarDCEL[VD, HD, FD], provider: DCELDataProvider[VD, HD, FD]): Seq[Face[VD, HD, FD]] = {
     val (holesSeq, nonHolesSeq) = d.holeNonHoleFaces
     val holes = holesSeq.toSet
     var triangulation = nonHolesSeq
@@ -123,15 +113,15 @@ object PolygonTriangulation {
     triangulation
   }
 
-  //  def triangulateMonotonePartitionedDCEL[D <: DCELData](d: PlanarDCEL[D], provider: DCELDataProvider[D]): Unit = {
+  //  def triangulateMonotonePartitionedDCEL[VD, HD, FD](d: PlanarDCEL[VD, HD, FD], provider: DCELDataProvider[VD, HD, FD]): Unit = {
   //    for (face <- d.innerFaces) triangulateMonotone(d, face, provider)
   //  }
 
   //Actual working functions
 
-  def monotonePartitionDCELFace[D <: DCELData](dcel: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
+  def monotonePartitionDCELFace[VD, HD, FD](dcel: PlanarDCEL[VD, HD, FD], face: Face[VD, HD, FD], provider: DCELDataProvider[VD, HD, FD]): Seq[Face[VD, HD, FD]] = {
     var curY = 0d
-    var res: Seq[Face[D]] = Seq(face)
+    var res: Seq[Face[VD, HD, FD]] = Seq(face)
     val sub = dcel.onNewFace.subscribe(f => res = f +: res)
 
     println(s"Monotone Partitioning s${face.vertices.toSeq}")
@@ -139,11 +129,11 @@ object PolygonTriangulation {
 
     def queueLt(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x > q.x) //??
     //using halfEdges instead of vertices to prevent duplicate vertices in chains
-    val q = new mutable.PriorityQueue[HalfEdge[D]]()(Ordering.fromLessThan((v1, v2) => queueLt(dcel.position(v1.origin), dcel.position(v2.origin))))
+    val q = new mutable.PriorityQueue[HalfEdge[VD, HD, FD]]()(Ordering.fromLessThan((v1, v2) => queueLt(dcel.position(v1.origin), dcel.position(v2.origin))))
     for (v <- face.edges) q += v
 
     //todo check
-    implicit val heOrd: Ordering[HalfEdge[D]] = Ordering.fromLessThan { (he1, he2) =>
+    implicit val heOrd: Ordering[HalfEdge[VD, HD, FD]] = Ordering.fromLessThan { (he1, he2) =>
       val he1Seg = dcel.asSegment(he1)
       val x1 = he1Seg.xFromY(curY)
       val he2Seg = dcel.asSegment(he2)
@@ -153,20 +143,20 @@ object PolygonTriangulation {
       else if (x2.nonEmpty) min(he1Seg.start.x, he1Seg.end.x) < x2.get
       else min(he1Seg.start.x, he1Seg.end.x) < min(he2Seg.start.x, he2Seg.end.x)
     }
-    def xleq(x: Scalar): HalfEdge[D] => Boolean = he => dcel.asSegment(he).xFromY(curY) match {
+    def xleq(x: Scalar): HalfEdge[VD, HD, FD] => Boolean = he => dcel.asSegment(he).xFromY(curY) match {
       case Some(value) => value <= x
       case None => min(dcel.asSegment(he).start.x, dcel.asSegment(he).end.x) <= x
     }
 
-    var xStructure: BinaryTree[HalfEdge[D]] = EmptyTree
-    val helper: mutable.Map[HalfEdge[D], HalfEdge[D]] = mutable.Map()
+    var xStructure: BinaryTree[HalfEdge[VD, HD, FD]] = EmptyTree
+    val helper: mutable.Map[HalfEdge[VD, HD, FD], HalfEdge[VD, HD, FD]] = mutable.Map()
 
     //bake since can be changed during algo(is it important??)
-    val prevEdge: Map[HalfEdge[D], HalfEdge[D]] = face.edges.map(he => (he, he.prev)).toMap //face.vertices.map(v => (v, v.edgesWithEndHere.find(_.leftFace == face).get)).toMap
-    //    val nextEdge: Map[HalfEdge[D], HalfEdge[D]] = face.edges.map(he => (he, he.next)).toMap //face.vertices.map(v => (v, v.edgesWithOriginHere.find(_.leftFace == face).get)).toMap
-    //    val prevVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, prevEdge(v).origin)).toMap
-    //    val nextVertex: Map[Vertex[D], Vertex[D]] = face.vertices.map(v => (v, nextEdge(v).ending)).toMap
-    val classifyInner: Map[HalfEdge[D], VType] =
+    val prevEdge: Map[HalfEdge[VD, HD, FD], HalfEdge[VD, HD, FD]] = face.edges.map(he => (he, he.prev)).toMap //face.vertices.map(v => (v, v.edgesWithEndHere.find(_.leftFace == face).get)).toMap
+    //    val nextEdge: Map[HalfEdge[VD, HD, FD], HalfEdge[VD, HD, FD]] = face.edges.map(he => (he, he.next)).toMap //face.vertices.map(v => (v, v.edgesWithOriginHere.find(_.leftFace == face).get)).toMap
+    //    val prevVertex: Map[Vertex[VD, HD, FD], Vertex[VD, HD, FD]] = face.vertices.map(v => (v, prevEdge(v).origin)).toMap
+    //    val nextVertex: Map[Vertex[VD, HD, FD], Vertex[VD, HD, FD]] = face.vertices.map(v => (v, nextEdge(v).ending)).toMap
+    val classifyInner: Map[HalfEdge[VD, HD, FD], VType] =
     face.edges.map(vHe => (vHe, classify(dcel.position(prevEdge(vHe).origin), dcel.position(vHe.origin), dcel.position(vHe.ending)))).toMap
 
     while (q.nonEmpty) {
@@ -187,13 +177,13 @@ object PolygonTriangulation {
 
     //vi = v.origin
     //ei =v
-    def handleStart(v: HalfEdge[D]): Unit = {
+    def handleStart(v: HalfEdge[VD, HD, FD]): Unit = {
       // Insert ei in T and set helper(ei ) to vi.
       xStructure = xStructure.add(v)
       helper += v -> v
     }
 
-    def handleSplit(v: HalfEdge[D]): Unit = {
+    def handleSplit(v: HalfEdge[VD, HD, FD]): Unit = {
       val xst = xStructure.elements
       //      Search ej in T
       val ej = xStructure.maximumSatisfiesCondition(xleq(dcel.position(v.origin).x)).get
@@ -205,14 +195,14 @@ object PolygonTriangulation {
       helper += v -> v
     }
 
-    def handleEnd(v: HalfEdge[D]): Unit = {
+    def handleEnd(v: HalfEdge[VD, HD, FD]): Unit = {
       if (classifyInner(helper(prevEdge(v))) == Merge) {
         dcel.connectVerticesUnsafe(v.origin, helper(prevEdge(v)).origin, provider)
       }
       xStructure = xStructure.remove(prevEdge(v))
     }
 
-    def handleMerge(v: HalfEdge[D]): Unit = {
+    def handleMerge(v: HalfEdge[VD, HD, FD]): Unit = {
       val toConnect = helper(prevEdge(v))
       if (classifyInner(toConnect) == Merge) {
         dcel.connectVerticesUnsafe(v.origin, toConnect.origin, provider)
@@ -231,7 +221,7 @@ object PolygonTriangulation {
     def liesToTheRight(p: V2, v: V2): Boolean = {
       v.y < p.y || (v.y == p.y && p.x < v.x)
     }
-    def handleRegular(v: HalfEdge[D]): Unit = {
+    def handleRegular(v: HalfEdge[VD, HD, FD]): Unit = {
       //if interior of P lies to the right of v
       if (liesToTheRight(dcel.position(prevEdge(v).origin), dcel.position(v.origin))) {
         if (classifyInner(helper(prevEdge(v))) == Merge) {
@@ -257,8 +247,8 @@ object PolygonTriangulation {
   }
 
 
-  def triangulateMonotoneFace[D <: DCELData](d: PlanarDCEL[D], face: Face[D], provider: DCELDataProvider[D]): Seq[Face[D]] = {
-    implicit def vToV2(v: Vertex[D]): V2 = d.position(v)
+  def triangulateMonotoneFace[VD, HD, FD](d: PlanarDCEL[VD, HD, FD], face: Face[VD, HD, FD], provider: DCELDataProvider[VD, HD, FD]): Seq[Face[VD, HD, FD]] = {
+    implicit def vToV2(v: Vertex[VD, HD, FD]): V2 = d.position(v)
     val vs = face.vertices.toSeq
     if (vs.size > 3) {
       var res = Seq(face)
@@ -296,7 +286,7 @@ object PolygonTriangulation {
       println("leftVertices: " + leftVertices.map(_.toProduct).toString())
 
       //Initialize an empty stack S, and push u1 and u2 onto it.
-      val s = mutable.Stack[Vertex[D]]()
+      val s = mutable.Stack[Vertex[VD, HD, FD]]()
       s.push(u(0))
       s.push(u(1))
       for (j <- 2 to (u.size - 2)) {

@@ -1,15 +1,15 @@
 package utils.datastructures.dcel.nav
 
 import utils.datastructures.dcel.DCEL.DCELData
-import utils.datastructures.dcel.HierarchicalDCEL._
-import utils.datastructures.dcel.nav.DCELPath._
+import utils.datastructures.dcel.HierarchicalDCEL.*
+import utils.datastructures.dcel.nav.DCELPath.*
 import utils.datastructures.dcel.nav.NavMesh.{NavMesh, NavMeshGraph}
-import utils.datastructures.dcel.nav.NavigableDCEL._
+import utils.datastructures.dcel.nav.NavigableDCEL.*
 import utils.datastructures.dcel.nav.NavigableFace.FaceNavData
 import utils.datastructures.graph.Graph.Graph
 import utils.datastructures.graph.{ArrayBufferGraph, Graph, GraphOps}
+import utils.math.*
 import utils.math.planar.V2
-import utils.math._
 
 object NavigableFace {
 
@@ -128,8 +128,8 @@ object NavigableFace {
     }
 
     /** Graph for finding patches on face level, contains inner DCEL edges and border edges
-      * should be calculated and updated recursively for all childs first
-      * */
+     * should be calculated and updated recursively for all childs first
+     * */
     def edgeGraph: Graph[BorderNode, PathEdge[_, _]] = {
       val res = new ArrayBufferGraph[BorderNode, PathEdge[_, _]]()
 
@@ -177,14 +177,14 @@ object NavigableFace {
     }
 
     def findPathOnEdgeGraph(from: BorderNode, to: BorderNode): Option[DCELPath] = {
-//      if (edgeGraph.nodes.contains(from) && edgeGraph.nodes.contains(to)) {
-//        GraphOps
-//          .shortestPath(edgeGraph, Seq((from, 0d)), Seq((to, 0d)), (x: PathEdge[_, _]) => x.length, (n: PathNode) => n.point.distance(to.point), Some(params.maxPathLength))
-//          .map(p => fromPath(p))
-//      } else {
-//        println(s"No nodes in edge graph $edgeGraph $from $to") //todo remove
-//        None
-//      }
+      //      if (edgeGraph.nodes.contains(from) && edgeGraph.nodes.contains(to)) {
+      //        GraphOps
+      //          .shortestPath(edgeGraph, Seq((from, 0d)), Seq((to, 0d)), (x: PathEdge[_, _]) => x.length, (n: PathNode) => n.point.distance(to.point), Some(params.maxPathLength))
+      //          .map(p => fromPath(p))
+      //      } else {
+      //        println(s"No nodes in edge graph $edgeGraph $from $to") //todo remove
+      //        None
+      //      }
       ???
     }
 
@@ -202,7 +202,7 @@ object NavigableFace {
     }
 
 
-    /** Assumes that from is inside own area*/
+    /** Assumes that from is inside own area */
     def reachableFromOwnAreaOwnAreaExits(from: NavMeshPosition): Seq[DCELPath] =
       ownAreaExits.flatMap(e => findPathOnNavMeshBetweenPositionAndBorder(from, e))
 
@@ -211,20 +211,21 @@ object NavigableFace {
     //  borderWaysOut.flatMap(e => findPathOnNavMeshBetweenPositionAndBorder(from, e))
 
     /** Assumes that from inside outer border and some level deeper in hierarchy */
-//    def reachableDeepWaysOut(from: NavMeshPosition): Seq[DCELPath] = ???
+    //    def reachableDeepWaysOut(from: NavMeshPosition): Seq[DCELPath] = ???
 
     def findPath(from: NavMeshPosition, to: NavMeshPosition): Option[DCELPath] = {
-//      val lca =
+      //      val lca =
       ???
     }
 
-//    def findPathInside(from: NavMeshPosition, to: NavMeshPosition) = ???
+    //    def findPathInside(from: NavMeshPosition, to: NavMeshPosition) = ???
 
   }
 }
 
 trait NavigableFace {
   var navData: FaceNavData = _
-  var hierarchicalFace: HierarchicalFace[NavigableDCELOwnData] = _
-  def setFace[D <: NavigableDCELOwnData](face: HierarchicalFace[D]): Unit = hierarchicalFace = face.asInstanceOf[HierarchicalFace[NavigableDCELOwnData]]
+  var hierarchicalFace: HierarchicalFace[?, ? <: NavigableHalfEdge, ? <: NavigableFace] = _
+  def setFace(face: HierarchicalFace[?, ? <: NavigableHalfEdge, ? <: NavigableFace]): Unit =
+    hierarchicalFace = face
 }

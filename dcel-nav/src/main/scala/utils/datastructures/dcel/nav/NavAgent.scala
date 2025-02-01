@@ -1,10 +1,10 @@
 package utils.datastructures.dcel.nav
 
+import utils.datastructures.dcel.nav.DCELPath.*
+import utils.datastructures.dcel.nav.NavigableDCEL.*
 import utils.math.Scalar
 import utils.math.planar.V2
 import utils.system.CalcExecTime.CalcTimeStats
-import utils.datastructures.dcel.nav.NavigableDCEL._
-import utils.datastructures.dcel.nav.DCELPath._
 
 
 object NavAgent {

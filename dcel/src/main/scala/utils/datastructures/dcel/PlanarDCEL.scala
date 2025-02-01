@@ -9,51 +9,51 @@ import scala.collection.mutable
 
 
 object PlanarDCEL {
-  implicit class PlanarVertex[D <: DCELData](f: Vertex[D])(implicit extractor: D#VertexData => V2) {
+  implicit class PlanarVertex[VD, HD, FD](f: Vertex[VD, HD, FD])(implicit extractor: VD => V2) {
     def position: V2 = extractor(f.data)
 
     /** If vertex has no connected edges return face containing vertex */
-    def insideFace(implicit dcel: PlanarDCEL[D]): Option[Face[D]] = Option.when(f.incidentEdge.isEmpty)(dcel.faceAt(position))
+    def insideFace(implicit dcel: PlanarDCEL[VD, HD, FD]): Option[Face[VD, HD, FD]] = Option.when(f.incidentEdge.isEmpty)(dcel.faceAt(position))
   }
 
-  implicit class PlanarFace[D <: DCELData](f: Face[D])(implicit extractor: D#VertexData => V2) {
+  implicit class PlanarFace[VD, HD, FD](f: Face[VD, HD, FD])(implicit extractor: VD => V2) {
     def polygon: PolygonRegion = PolygonRegion(f.outsideVertices.map(v => extractor(v.data)).toSeq)
   }
 
-  implicit class PlanarEdge[D <: DCELData](e: HalfEdge[D])(implicit extractor: D#VertexData => V2) {
+  implicit class PlanarEdge[VD, HD, FD](e: HalfEdge[VD, HD, FD])(implicit extractor: VD => V2) {
     def asSegment: SegmentPlanar = SegmentPlanar(extractor(e.origin.data), extractor(e.dest.data))
 
   }
 }
 
-class PlanarDCEL[D <: DCELData](
-                                 outerFaceData: D#FaceData,
-                                 implicit val extractor: D#VertexData => V2
-                               ) extends DCEL[D](outerFaceData) {
+class PlanarDCEL[VD, HD, FD](
+                                 outerFaceData: FD,
+                                 implicit val extractor: VD => V2
+                               ) extends DCEL[VD, HD, FD](outerFaceData) {
 
 
-  def position(v: Vertex[D]): V2 = extractor(v.data)
+  def position(v: Vertex[VD, HD, FD]): V2 = extractor(v.data)
 
-  def asSegment(e: HalfEdge[D]): SegmentPlanar = e.asSegment
+  def asSegment(e: HalfEdge[VD, ?, ?]): SegmentPlanar = e.asSegment
 
-  def outerContour(f: Face[D]): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.position).toSeq)
+  def outerContour(f: Face[VD, HD, FD]): PolygonRegion = PolygonRegion(f.outsideVertices.map(_.position).toSeq)
 
-  def asPolygon(f: Face[D]): Polygon = Polygon(outerContour(f) +: f.holesIncidentEdges.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
+  def asPolygon(f: Face[VD, HD, FD]): Polygon = Polygon(outerContour(f) +: f.holesIncidentEdges.toSeq.map(h => PolygonRegion(h.traverseEdges.map(_.origin.position).toSeq)))
 
-  def getEdge(from: V2, to: V2): Option[HalfEdge[D]] =
+  def getEdge(from: V2, to: V2): Option[HalfEdge[VD, HD, FD]] =
     for (f <- getVertex(from); to <- getVertex(to); e <- f.edgeTo(to)) yield e
 
-  def getStraightEdgePath(from: V2, to: V2): Seq[HalfEdge[D]] = {
+  def getStraightEdgePath(from: V2, to: V2): Seq[HalfEdge[VD, HD, FD]] = {
     val f = getVertex(from)
     val t = getVertex(to)
     if (f.isEmpty || t.isEmpty) Seq()
     else getStraightEdgePathVertex(f.get, t.get)
   }
 
-  def getStraightEdgePathVertex(from: Vertex[D], to: Vertex[D]): Seq[HalfEdge[D]] =
+  def getStraightEdgePathVertex(from: Vertex[VD, HD, FD], to: Vertex[VD, HD, FD]): Seq[HalfEdge[VD, HD, FD]] =
     if (from == to) Seq()
     else {
-      var res: Seq[HalfEdge[D]] = Seq()
+      var res: Seq[HalfEdge[VD, HD, FD]] = Seq()
       val dir = to.position - from.position
       var cur = from.edgesWithOriginHere.find(_.asSegment.body.sameDirection(dir))
       while (cur.nonEmpty && cur.get.ending != to) {
@@ -64,16 +64,16 @@ class PlanarDCEL[D <: DCELData](
       else Seq()
     }
 
-  def closestVertexOpt(pos: V2): Option[Vertex[D]] = vertices.minByOption(_.position.distance(pos))
+  def closestVertexOpt(pos: V2): Option[Vertex[VD, HD, FD]] = vertices.minByOption(_.position.distance(pos))
 
-  def faceAt(pos: V2): Face[D] = {
+  def faceAt(pos: V2): Face[VD, HD, FD] = {
     innerFaces.find(f => f.polygon.contains(pos) &&
       !f.holesContours.exists(c => PolygonRegion(c.map(_.origin.position).toSeq).contains(pos))).getOrElse(outerFace)
   }
 
-  def getVertex(pos: V2): Option[Vertex[D]] = vertices.find(_.position ~= pos)
+  def getVertex(pos: V2): Option[Vertex[VD, HD, FD]] = vertices.find(_.position ~= pos)
 
-  def getOrAddVertex(pos: V2, newVdProvider: NewVertexDataProvider[D], splitEdProvider: SplitEdgeDataProvider[D]): Vertex[D] = {
+  def getOrAddVertex(pos: V2, newVdProvider: NewVertexDataProvider[VD, HD, FD], splitEdProvider: SplitEdgeDataProvider[VD, HD, FD]): Vertex[VD, HD, FD] = {
     val res = vertices.find(_.position ~= pos)
       .orElse(
         halfEdges.find(_.asSegment.contains(pos)).map {
@@ -87,13 +87,13 @@ class PlanarDCEL[D <: DCELData](
     res
   }
 
-  //  private def holeAreasOf(f:Face[D]):Seq[Face[D]] = f.holes.toSeq ++ f.holes.flatMap(h => h.holes.flatMap(holeAreasOf).toSeq)
-  //  def nonHoleFaces:Seq[Face[D]] = holeAreasOf(outerFace)
+  //  private def holeAreasOf(f:Face[VD, HD, FD]):Seq[Face[VD, HD, FD]] = f.holes.toSeq ++ f.holes.flatMap(h => h.holes.flatMap(holeAreasOf).toSeq)
+  //  def nonHoleFaces:Seq[Face[VD, HD, FD]] = holeAreasOf(outerFace)
 
 
-  def holeNonHoleFaces: (Seq[Face[D]], Seq[Face[D]]) = {
-    val odd: mutable.Buffer[Face[D]] = mutable.Buffer()
-    val even: mutable.Buffer[Face[D]] = mutable.Buffer()
+  def holeNonHoleFaces: (Seq[Face[VD, HD, FD]], Seq[Face[VD, HD, FD]]) = {
+    val odd: mutable.Buffer[Face[VD, HD, FD]] = mutable.Buffer()
+    val even: mutable.Buffer[Face[VD, HD, FD]] = mutable.Buffer()
     var curWave = 0
     var curWaveFaces = Seq(outerFace)
     while (curWaveFaces.nonEmpty){
@@ -107,7 +107,7 @@ class PlanarDCEL[D <: DCELData](
     (odd.toSeq, even.toSeq)
   }
 
-  def nonHoleFaces:Seq[Face[D]] = holeNonHoleFaces._2
+  def nonHoleFaces:Seq[Face[VD, HD, FD]] = holeNonHoleFaces._2
 
   /*innerFaces.filter(_._holes.isEmpty).find(_.polygon.contains(pos)).getOrElse {
   val cont = innerFaces.filter(_._holes.nonEmpty).filter(_.polygon.contains(pos))
@@ -122,19 +122,19 @@ class PlanarDCEL[D <: DCELData](
     * @param poly              in ccw order with Y-up
     * @param newVdProvider     maps new vertex position to VertexData
     * @param newEdProvider     newHalfEdges to its halfEdgeData's
-    * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with D#HalfEdgeData copied from args. Provide new EdgeData if needed.
-    * @param splitFaceListener calls on face split, takes egde that splits face as parameter, its leftFace is newly created face with twin.leftFace D#FaceData copied. Provide new FaceData if needed.
+    * @param splitEdgeListener calls on edge split, takes splitted edge as argument, arg.next is new edge with origin at split point, with HD copied from args. Provide new EdgeData if needed.
+    * @param splitFaceListener calls on face split, takes egde that splits face as parameter, its leftFace is newly created face with twin.leftFace FD copied. Provide new FaceData if needed.
     * @return Seq of vertices that connected by cutted edges, first and last vertices are equal
     */
   def cutPoly(poly: Seq[V2],
-              dcelDataProvider: DCELDataProvider[D]
-             ): Seq[Vertex[D]] = cutChain(poly :+ poly.head, dcelDataProvider)
+              dcelDataProvider: DCELDataProvider[VD, HD, FD]
+             ): Seq[Vertex[VD, HD, FD]] = cutChain(poly :+ poly.head, dcelDataProvider)
 
-  def cutFromTo(from: V2, to: V2, dcelDataProvider: DCELDataProvider[D]): Seq[Vertex[D]] =
+  def cutFromTo(from: V2, to: V2, dcelDataProvider: DCELDataProvider[VD, HD, FD]): Seq[Vertex[VD, HD, FD]] =
     cutChain(Seq(from, to), dcelDataProvider)
 
-  def cutChain(poly: Seq[V2], dcelDataProvider: DCELDataProvider[D]): Seq[Vertex[D]] = {
-    var res: Seq[Vertex[D]] = Seq()
+  def cutChain(poly: Seq[V2], dcelDataProvider: DCELDataProvider[VD, HD, FD]): Seq[Vertex[VD, HD, FD]] = {
+    var res: Seq[Vertex[VD, HD, FD]] = Seq()
 
 
     if (poly.size <= 1) return Seq()
@@ -148,11 +148,11 @@ class PlanarDCEL[D <: DCELData](
 
     res = res :+ previous
 
-    def popNext(): Vertex[D] = {
+    def popNext(): Vertex[VD, HD, FD] = {
       val cur: V2 = previous.position
       val end: V2 = toTraverse.head
 
-      val toTest: Seq[HalfEdge[D]] = if (previous.incidentEdge.isEmpty) {
+      val toTest: Seq[HalfEdge[VD, HD, FD]] = if (previous.incidentEdge.isEmpty) {
         val face = faceAt(cur)
         //        println(if (face == outerFace) "outer" else face.data.toString)
         //        println(face.edges.map(_.asSegment.start).toSeq)
@@ -333,7 +333,7 @@ class PlanarDCEL[D <: DCELData](
                     //if hole become part of border
                     case Some(edge) => leftFace._holesIncidentEdges = leftFace._holesIncidentEdges.filter(_ != edge)
                     case None =>
-                      var badHoles: Set[HalfEdge[D]] = Set()
+                      var badHoles: Set[HalfEdge[VD, HD, FD]] = Set()
 
                       for (i <- 0 until holes.size; j <- (i + 1) until holes.size) {
                         if (holes(i).traverseEdges.contains(holes(j))) {
@@ -395,7 +395,7 @@ class PlanarDCEL[D <: DCELData](
     * Assumes that v1 close to v2 or in the same place. Assumes that DCEL correct, but can have vertices in the same place.
     * Merge allowed only on planar DCEL's, since on usual DCEL winding order after merge undefined
     * */
-  def mergeVertices(v1: Vertex[D], v2: Vertex[D], newFaceDataProvider: NewFaceDataProvider[D]): Unit =
+  def mergeVertices(v1: Vertex[VD, HD, FD], v2: Vertex[VD, HD, FD], newFaceDataProvider: NewFaceDataProvider[VD, HD, FD]): Unit =
     if (v1.incidentEdge.nonEmpty && v2.incidentEdge.nonEmpty) {
       //for(e <- v1.edgeTo(v2)) deleteEdge(e) //Don't do it like that,  since deleteEdge can delete face that shouldn't be deleted  after vertex merge
       val edgeBetween = v1.edgeTo(v2)
@@ -620,7 +620,7 @@ class PlanarDCEL[D <: DCELData](
   //todo face & heDataPrivider when scala 3
   //todo check
   /** Assumes that there is no intersections for adding edge, so makes no cuts */
-  def connectVerticesUnsafe(from: Vertex[D], to: Vertex[D], dataProvider: DCELDataProvider[D]): HalfEdge[D] = {
+  def connectVerticesUnsafe(from: Vertex[VD, HD, FD], to: Vertex[VD, HD, FD], dataProvider: DCELDataProvider[VD, HD, FD]): HalfEdge[VD, HD, FD] = {
     val (ld, rd) = dataProvider.newEdgeData(from, to)
     if (from.incidentEdge.isEmpty && to.incidentEdge.isEmpty) {
       val face = faceAt(from.position)
@@ -638,7 +638,7 @@ class PlanarDCEL[D <: DCELData](
       //      val fromFaceEdge = from.edgesWithOriginHere.minBy(e => edgeDir.angleCCW0to2PI(e.asSegment.body))
       val fromFaceEdge = from.edgesWithOriginHere.minBy(e => e.asSegment.body.angleCCW0to2PI(edgeDir))
       val faceWeIn = fromFaceEdge.leftFace
-      val toFaceEdge: HalfEdge[D] = to.edgesWithOriginHere.minBy(e => e.asSegment.body.angleCCW0to2PI(edgeDir.opposite))//find(_.leftFace == faceWeIn).get
+      val toFaceEdge: HalfEdge[VD, HD, FD] = to.edgesWithOriginHere.minBy(e => e.asSegment.body.angleCCW0to2PI(edgeDir.opposite))//find(_.leftFace == faceWeIn).get
 
       val next = toFaceEdge
       val prev = fromFaceEdge.prev
@@ -730,15 +730,15 @@ class PlanarDCEL[D <: DCELData](
 
 
   /** untested */
-  def insert[O <: DCELData](ot: DCEL[O],
-                            mapVertexData: Vertex[O] => D#VertexData,
-                            mapHalfEdgeData: HalfEdge[O] => D#HalfEdgeData,
-                            mapFaceData: Face[O] => D#FaceData,
+  def insert[OVD, OHD, OFD](ot: DCEL[OVD, OHD, OFD],
+                            mapVertexData: Vertex[OVD, OHD, OFD] => VD,
+                            mapHalfEdgeData: HalfEdge[OVD, OHD, OFD] => HD,
+                            mapFaceData: Face[OVD, OHD, OFD] => FD,
                             mergeVerticesAtSamePosition: Boolean,
-                            newFaceDataProvider: NewFaceDataProvider[D]): Unit = {
-    val newFaces: mutable.Map[Face[O], Face[D]] = mutable.Map()
-    val newHalfEdges: mutable.Map[HalfEdge[O], HalfEdge[D]] = mutable.Map()
-    val newVertices: mutable.Map[Vertex[O], Vertex[D]] = mutable.Map()
+                            newFaceDataProvider: NewFaceDataProvider[VD, HD, FD]): Unit = {
+    val newFaces: mutable.Map[Face[OVD, OHD, OFD], Face[VD, HD, FD]] = mutable.Map()
+    val newHalfEdges: mutable.Map[HalfEdge[OVD, OHD, OFD], HalfEdge[VD, HD, FD]] = mutable.Map()
+    val newVertices: mutable.Map[Vertex[OVD, OHD, OFD], Vertex[VD, HD, FD]] = mutable.Map()
     for (v <- ot.vertices) {
       val v1 = makeVertex(mapVertexData(v))
       newVertices += v -> v1
@@ -750,7 +750,7 @@ class PlanarDCEL[D <: DCELData](
     for (he <- ot.halfEdges) {
       val edgeFace = if (he.leftFace == ot.outerFace) outerFace else newFaces(he.leftFace)
       val origin = newVertices(he._origin)
-      val he1 = new HalfEdge[D](mapHalfEdgeData(he), origin, null, edgeFace, null, null)
+      val he1 = new HalfEdge[VD, HD, FD](mapHalfEdgeData(he), origin, null, edgeFace, null, null)
       newHalfEdges += he -> he1
       if (origin.incidentEdge.isEmpty) {
         origin._incidentEdge = Some(he1)

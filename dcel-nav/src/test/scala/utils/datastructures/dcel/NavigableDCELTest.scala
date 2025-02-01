@@ -1,11 +1,11 @@
 package utils.datastructures.dcel
 
+import org.scalatest.AppendedClues.*
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.AppendedClues._
 import utils.datastructures.dcel.HierarchicalDCEL.{HierarchicalDCELOwnData, HierarchicalFace}
-import utils.datastructures.dcel.nav.DCELPath._
+import utils.datastructures.dcel.nav.DCELPath.*
+import utils.datastructures.dcel.nav.NavigableDCEL.*
 import utils.datastructures.dcel.nav.{NavigableDCEL, NavigableFace, NavigableHalfEdge}
-import utils.datastructures.dcel.nav.NavigableDCEL._
 import utils.datastructures.spatial.AARectangle
 import utils.math.planar.V2
 

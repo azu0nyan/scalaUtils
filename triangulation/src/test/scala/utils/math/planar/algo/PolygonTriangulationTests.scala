@@ -1,6 +1,7 @@
 package utils.math.planar.algo
-import utils.math._
+
 import org.scalatest.funsuite.AnyFunSuite
+import utils.math.*
 import utils.math.planar.TrianglePlanar.toPoly
 import utils.math.planar.{Polygon, PolygonRegion, TrianglePlanar, V2}
 

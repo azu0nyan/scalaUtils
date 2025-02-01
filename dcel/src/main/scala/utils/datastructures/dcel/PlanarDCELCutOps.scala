@@ -20,7 +20,9 @@ object PlanarDCELCutOps {
 
    at = origin + (ending - origin) * ratio
     */
-  def traceSegmentAtAngle[D <: DCELData, L <: Labels](t: TraceSegmentAtAngle[D, L], context: CuttingContext[D, L]): CuttingContext[D, L] = {
+  def traceSegmentAtAngle[VD, HD, FD, VL, HL, FL](
+                                                   t: TraceSegmentAtAngle[VD, HD, FD, VL, HL, FL],
+                                                   context: CuttingContext[VD, HD, FD, VL, HL, FL]): CuttingContext[VD, HD, FD, VL, HL, FL] = {
     t match {
       case TraceSegmentAtAngle(edgeSelector, ratioFromOrigin, maxLength, angleCCW,
       lFaceLabel, rFaceLabel, lEdgeLabel, rEdgeLabel, fHalfLabel, sHalfLabel, atLabel, rayEndOrHitPointLabel) =>
@@ -70,11 +72,11 @@ object PlanarDCELCutOps {
   }
 
   /** because during cut one input edge can result in several edges,
-    * we need to group input edge with list of vertices that edge produced,
-    * return groupped edges in same order as input edges */
-  def group[D <: DCELData](originalVertices: Seq[V2], result: Seq[Vertex[D]], ex: Vertex[D] => V2, circullar: Boolean): Seq[Seq[Vertex[D]]] = {
-    val grouped: mutable.Buffer[Seq[Vertex[D]]] = mutable.Buffer()
-    var curGroup: Seq[Vertex[D]] = Seq()
+   * we need to group input edge with list of vertices that edge produced,
+   * return groupped edges in same order as input edges */
+  def group[VD, HD, FD](originalVertices: Seq[V2], result: Seq[Vertex[VD, HD, FD]], ex: Vertex[VD, HD, FD] => V2, circullar: Boolean): Seq[Seq[Vertex[VD, HD, FD]]] = {
+    val grouped: mutable.Buffer[Seq[Vertex[VD, HD, FD]]] = mutable.Buffer()
+    var curGroup: Seq[Vertex[VD, HD, FD]] = Seq()
     var resultLeft = result
     var originalLeft = originalVertices.tail //skip first
     while (resultLeft.nonEmpty && originalLeft.nonEmpty) {
@@ -105,7 +107,10 @@ object PlanarDCELCutOps {
     grouped.toSeq
   }
 
-  def cutPoly[D <: DCELData, L <: Labels](c: CutPoly[D, L], context: CuttingContext[D, L]): CuttingContext[D, L] =
+  def cutPoly[VD, HD, FD, VL, HL, FL](
+                                       c: CutPoly[VD, HD, FD, VL, HL, FL],
+                                       context: CuttingContext[VD, HD, FD, VL, HL, FL]
+                                     ): CuttingContext[VD, HD, FD, VL, HL, FL] =
     c match {
       case CutPoly(poly, insideLabel, edgeLabels, edgeTwinLabels, vertexLabels) =>
         val result = context.dcel.cutPoly(poly.vertices, context.provider)
@@ -139,7 +144,10 @@ object PlanarDCELCutOps {
         } else context
     }
 
-  def cutChain[D <: DCELData, L <: Labels](c: CutChain[D, L], context: CuttingContext[D, L]): CuttingContext[D, L] =
+  def cutChain[VD, HD, FD, VL, HL, FL](
+                                        c: CutChain[VD, HD, FD, VL, HL, FL],
+                                        context: CuttingContext[VD, HD, FD, VL, HL, FL]
+                                      ): CuttingContext[VD, HD, FD, VL, HL, FL] =
     c match {
       case CutChain(chain, edgeLabels, edgeTwinLabels, vertexLabels) =>
         val result = context.dcel.cutChain(chain, context.provider)
@@ -167,7 +175,10 @@ object PlanarDCELCutOps {
 
     }
 
-  def mergeFaces[D <: DCELData, L <: Labels](m: MergeFaces[D, L], context: CuttingContext[D, L]): CuttingContext[D, L] = {
+  def mergeFaces[VD, HD, FD, VL, HL, FL](
+                                          m: MergeFaces[VD, HD, FD, VL, HL, FL],
+                                          context: CuttingContext[VD, HD, FD, VL, HL, FL]
+                                        ): CuttingContext[VD, HD, FD, VL, HL, FL] = {
     m match {
       case MergeFaces(mainFaceSelector, toMereFaceSelector, resultingFaceLabel) =>
         val main = mainFaceSelector(context)
@@ -180,10 +191,13 @@ object PlanarDCELCutOps {
     }
   }
 
-  def connectVertices[D <: DCELData, L <: Labels](c: ConnectVertices[D, L], context: CuttingContext[D, L]): CuttingContext[D, L] = {
+  def connectVertices[VD, HD, FD, VL, HL, FL](
+                                               c: ConnectVertices[VD, HD, FD, VL, HL, FL],
+                                               context: CuttingContext[VD, HD, FD, VL, HL, FL]
+                                             ): CuttingContext[VD, HD, FD, VL, HL, FL] = {
     c match { //todo vertex labels
       case ConnectVertices(centerVertexSelector, otherVertexSelector, edgeLabel, twinEdgeLabel) =>
-        val edgeLabels: Seq[(L#HalfEdgeLabel, HalfEdge[D])] =
+        val edgeLabels: Seq[(HL, HalfEdge[VD, HD, FD])] =
           for (center <- centerVertexSelector(context).toSeq;
                other <- otherVertexSelector(context);
                res = context.dcel.cutFromTo(context.dcel.position(center), context.dcel.position(other), context.provider);
@@ -198,17 +212,17 @@ object PlanarDCELCutOps {
 
 
   /** Tracks created and deleted dcel parts during DCEL operation,
-    * some parts can exist in both 'new' and 'deleted' lists.
-    * */
-  def withContextChangesTracking[D <: DCELData, L <: Labels](op: CuttingContext[D, L] => CuttingContext[D, L],
-                                                             context: CuttingContext[D, L]): CuttingContext[D, L] = {
-    val newVertices: mutable.Set[Vertex[D]] = mutable.Set[Vertex[D]]()
-    val newHalfEdges: mutable.Set[HalfEdge[D]] = mutable.Set[HalfEdge[D]]()
-    val newFaces: mutable.Set[Face[D]] = mutable.Set[Face[D]]()
+   * some parts can exist in both 'new' and 'deleted' lists.
+   * */
+  def withContextChangesTracking[VD, HD, FD, VL, HL, FL](op: CuttingContext[VD, HD, FD, VL, HL, FL] => CuttingContext[VD, HD, FD, VL, HL, FL],
+                                                         context: CuttingContext[VD, HD, FD, VL, HL, FL]): CuttingContext[VD, HD, FD, VL, HL, FL] = {
+    val newVertices: mutable.Set[Vertex[VD, HD, FD]] = mutable.Set[Vertex[VD, HD, FD]]()
+    val newHalfEdges: mutable.Set[HalfEdge[VD, HD, FD]] = mutable.Set[HalfEdge[VD, HD, FD]]()
+    val newFaces: mutable.Set[Face[VD, HD, FD]] = mutable.Set[Face[VD, HD, FD]]()
 
-    val removedVertices: mutable.Set[Vertex[D]] = mutable.Set[Vertex[D]]()
-    val removedHalfEdges: mutable.Set[HalfEdge[D]] = mutable.Set[HalfEdge[D]]()
-    val removedFaces: mutable.Set[Face[D]] = mutable.Set[Face[D]]()
+    val removedVertices: mutable.Set[Vertex[VD, HD, FD]] = mutable.Set[Vertex[VD, HD, FD]]()
+    val removedHalfEdges: mutable.Set[HalfEdge[VD, HD, FD]] = mutable.Set[HalfEdge[VD, HD, FD]]()
+    val removedFaces: mutable.Set[Face[VD, HD, FD]] = mutable.Set[Face[VD, HD, FD]]()
 
 
     val dcel = context.dcel
@@ -220,7 +234,7 @@ object PlanarDCELCutOps {
     val rhel = dcel.onHalfEdgeRemoved.subscribe(removedHalfEdges.addOne)
     val rfl = dcel.onFaceRemoved.subscribe(removedFaces.addOne)
 
-    val result: CuttingContext[D, L] = op(context)
+    val result: CuttingContext[VD, HD, FD, VL, HL, FL] = op(context)
 
     dcel.onNewVertex.unSubscribe(nvl)
     dcel.onNewHalfEdge.unSubscribe(nhel)
