@@ -1,5 +1,3 @@
-
-
 val scalaTest =
   Seq(
     "org.scalatest" %% "scalatest" % "3.2.19" % "test",
@@ -57,8 +55,27 @@ lazy val triangulation = (project in file("triangulation"))
   )
   .dependsOn(dcel)
 
+lazy val `awt-drawing` = (project in file("awt-drawing"))
+  .settings(
+    commonSettings,
+    name := "awt-drawing",
+  )
+  .dependsOn(
+    core
+  )
+
+lazy val `straight-skeleton` = (project in file("straight-skeleton"))
+  .settings(
+    commonSettings,
+    name := "straight-skeleton",
+  )
+  .dependsOn(
+    core,
+    `awt-drawing` % "test->test"
+  )
+
 lazy val root = (project in file("."))
-  .aggregate(core, dcel)
+  .aggregate(core, dcel, triangulation, `straight-skeleton`, `awt-drawing`)
   .settings(
     commonSettings,
     name := "root",
