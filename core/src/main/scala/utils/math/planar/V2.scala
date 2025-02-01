@@ -1,6 +1,5 @@
 package utils.math.planar
 
-import utils.abstractions.Monoid
 import utils.datastructures.IntV2
 import utils.math.*
 import utils.math.space.V3
@@ -23,13 +22,6 @@ object V2 {
   val oy: V2 = V2(0, 1)
 
   val ZERO: V2 = V2(0, 0)
-
-  implicit val V2additionMonoid: Monoid[V2] = new Monoid[V2] {
-    override def empty: V2 = ZERO
-
-    override def combine(x: V2, y: V2): V2 = x + y
-  }
-
 }
 
 case class V2(x: Scalar, y: Scalar) extends WithMap {
