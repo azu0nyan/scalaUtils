@@ -1,6 +1,6 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, MalformedDCELException, Vertex}
+import utils.datastructures.dcel.DCEL.{Face, HalfEdge, MalformedDCELException, Vertex}
 import utils.datastructures.dcel.PlanarDCELCutPipeline.{ConnectVertices, CutChain, CutPoly, CuttingContext, Labels, MergeFaces, TraceSegmentAtAngle}
 import utils.math.planar.{PointIntersection, SegmentIntersection, SegmentPlanar, V2}
 import utils.math.{WithAlmostEquals, compare}

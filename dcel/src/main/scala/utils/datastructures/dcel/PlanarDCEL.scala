@@ -1,6 +1,6 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{CantDoOpOnDCELException, DCELData, Face, HalfEdge, MalformedDCELException, MultipleEdgesBetweenTwoVerticesException, Vertex}
+import utils.datastructures.dcel.DCEL.{CantDoOpOnDCELException, Face, HalfEdge, MalformedDCELException, MultipleEdgesBetweenTwoVerticesException, Vertex}
 import utils.datastructures.dcel.PlanarDCEL._
 import utils.math.planar.{AngleCCWPlanar, AngleOps, PointIntersection, Polygon, PolygonRegion, SegmentIntersection, SegmentPlanar, V2}
 import utils.math._

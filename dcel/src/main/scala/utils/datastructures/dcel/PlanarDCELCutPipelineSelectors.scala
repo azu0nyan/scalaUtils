@@ -1,6 +1,5 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.DCELData
 import utils.datastructures.dcel.PlanarDCELCutPipeline._
 import utils.math.planar.{SegmentPlanar, V2}
 

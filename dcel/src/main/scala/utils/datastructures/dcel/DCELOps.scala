@@ -1,7 +1,7 @@
 package utils.datastructures.dcel
 
 import utils.datastructures.CircullarOps
-import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
+import utils.datastructures.dcel.DCEL.{Face, HalfEdge, Vertex}
 import utils.math.planar.PolygonRegion
 
 import scala.collection.mutable

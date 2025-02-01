@@ -12,7 +12,7 @@ import utils.math.planar.{AngleOps, PolygonRegion, V2}
 
 import java.awt.{Color, Graphics2D}
 
-class DrawableDcel[D <: DCELData](
+class DrawableDcel[VD, HD , FD](
                                        var dcel: PlanarDCEL[D],
                                        var verticesColor: D#VertexData => Color = (x: D#VertexData) => new Color(0, 0, 255),
                                        var edgesColor: D#HalfEdgeData => Color = (x: D#HalfEdgeData) => new Color(10, 159, 10),

@@ -1,6 +1,6 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
+import utils.datastructures.dcel.DCEL.{ Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.HierarchicalDCELCache.HierarchicalDCELCacheInstance
 import utils.datastructures.graph.VisibilityGraphOps
 import utils.math.planar.{Polygon, PolygonRegion, SegmentPlanar, V2}

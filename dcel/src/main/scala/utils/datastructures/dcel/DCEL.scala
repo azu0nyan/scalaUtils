@@ -8,13 +8,6 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 object DCEL {
-  type DCELData = {
-    type VertexData
-    type HalfEdgeData
-    type FaceData
-  }
-
-
   class DCELException(text: String) extends RuntimeException(text)
 
   class MalformedDCELException(text: String) extends DCELException(text)

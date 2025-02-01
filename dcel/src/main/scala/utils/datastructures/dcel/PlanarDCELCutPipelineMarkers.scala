@@ -1,6 +1,6 @@
 package utils.datastructures.dcel
 
-import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
+import utils.datastructures.dcel.DCEL.{Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.PlanarDCELCutPipeline.{CuttingContext, Labels, PlanarDCELCutPipeline, TransformContext}
 
 trait PlanarDCELCutPipelineMarkers {
