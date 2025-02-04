@@ -45,17 +45,19 @@ object Plane {
 
 case class Plane(origin: V3, x: V3, y: V3, isLeft: Boolean = true) extends NormalAndClosest {
 
-  inline def offset(offset: V3): Plane = Plane(origin + offset, x, y)
+  inline def offset(offset: V3): Plane = Plane(origin + offset, x, y, isLeft)
 
-  inline def offset(planeCords: IntV2): Plane = Plane(toWorldCords(planeCords.toV2), x, y)
+  inline def offset(planeCords: IntV2): Plane = Plane(toWorldCords(planeCords.toV2), x, y, isLeft)
 
-  inline def offsetUp(offset: Scalar): Plane = Plane(origin + normal * offset, x, y)
+  inline def offsetUp(offset: Scalar): Plane = Plane(origin + normal * offset, x, y, isLeft)
 
   inline def fromOrigin(point: V3): V3 = point - origin
 
   inline def normal: UnitV3 = if (isLeft) x ^ y else -(x ^ y)
 
   inline def dot: Scalar = normal ** origin
+
+  inline def invert: Plane = this.copy(isLeft = !isLeft)
 
   override inline def distanceTo(point: V3): Scalar = normal ** (point - origin)
 

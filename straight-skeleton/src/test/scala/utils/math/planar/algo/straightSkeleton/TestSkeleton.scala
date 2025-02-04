@@ -5,6 +5,7 @@ import org.scalatest.*
 import flatspec.*
 import matchers.*
 import utils.math.Scalar
+import utils.math.planar.PolygonRegion
 import utils.math.planar.algo.straightSkeleton.helpers.SSOps
 import utils.math.planar.algo.straightSkeleton.implhelpers.{Loop, LoopL}
 import utils.math.space.V3
@@ -244,6 +245,9 @@ class TestSkeleton extends AnyFlatSpec with should.Matchers {
     assert(SSOps.almostEqWithShifts(dumped, expected))
     //with order
     assert(expected.zip(dumped).forall((e, d) => e.zip(d).forall(_ ~= _)))
+
+    for {d <- dumped}
+      assert(PolygonRegion(d.map(_.dropZ)).isCcw)
   }
 
 }
