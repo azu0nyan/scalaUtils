@@ -1,4 +1,5 @@
-package utils.math
+package utils.math.planar
+
 import org.scalatest.AppendedClues.*
 import org.scalatest.funsuite.AnyFunSuite
 import utils.math.planar.{SegmentPlanar, V2}

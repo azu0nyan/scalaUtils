@@ -3,14 +3,20 @@ package utils.math.planar.algo.straightSkeleton.helpers
 
 import utils.datastructures.CircullarOps.{asCyclicPairs, existsWithShifts}
 import utils.math.Scalar
-import utils.math.planar.V2
+import utils.math.planar.{PolygonRegion, V2}
 import utils.math.planar.algo.straightSkeleton.{Corner, Edge, Machine, Skeleton}
 import utils.math.planar.algo.straightSkeleton.implhelpers.{Loop, LoopL}
 import utils.math.space.V3
 
 
 object SSOps {
-  def calculcateFor(vs: (Scalar, Scalar)*): Skeleton = {
+
+  def calculateForPolygonRegion(poly: PolygonRegion): Skeleton = {
+    println(poly.isCcw)
+    makeSkeleton(poly.vertices.map(_.toProduct): _*)
+  }
+
+  def calculateFor(vs: (Scalar, Scalar)*): Skeleton = {
     val skel = makeSkeleton(vs: _*)
     skel.skeleton()
     skel

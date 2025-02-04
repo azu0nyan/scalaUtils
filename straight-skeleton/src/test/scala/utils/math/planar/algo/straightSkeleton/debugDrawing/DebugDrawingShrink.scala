@@ -27,8 +27,11 @@ def main(): Unit = {
   debugOut.println(s"-" * 100)
   debugOut.println(s"new run at: ${LocalDateTime.now().toString}")
 
+  var points: Seq[V2] = Seq(
+    V2(0.0, 30.0), V2(-10.0, 25.0), V2(-5.0, 5.0), V2(-30.0, 20.0), V2(-20.0, -10.0), V2(-10.0, -10.0), V2(0.0, 0.0), V2(0.0, 20.0)
+  )
 
-  var points: Seq[V2] = Seq()
+  println(PolygonRegion(points).isCcw)
 //  var points: Seq[V2] = HardCase.vs
 
   var offset: Scalar = 10
@@ -121,7 +124,7 @@ def main(): Unit = {
   }
 
   def applyDrawPolys(g: Graphics2D): Unit = {
-    val skel = SSOps.calculcateFor(points.map(_.toProduct): _ *)
+    val skel = SSOps.calculateFor(points.map(_.toProduct): _ *)
     val faces = SSOps.dumpFaces(skel)
 
     //    val maxHeight = faces.flatMap(_.map(_.z)).max

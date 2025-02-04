@@ -133,8 +133,14 @@ case class V3(x: Scalar, y: Scalar, z: Scalar) {
 
   @inline def distanceSquared(v: V3): Scalar = (this - v).lengthSquared
 
-  //todo
-  //def rotate(a: Scalar) = V3(x * math.cos(a).toScalar - y * math.sin(a).toScalar, x * math.sin(a).toScalar + y * math.cos(a).toScalar)
+  @inline def rotate(axis: V3, a: Scalar) = {
+    val axisNorm = axis.normalize
+    val vxp = axisNorm ^ this
+    val vxvxp = axisNorm ^ vxp
+    this + sin(a) * vxp + (1 - cos(a)) * vxvxp
+  }
+
+  @inline def rotateAroundPoint(point: V3, axis: V3, a: Scalar) = (this - point).rotate(axis, a) + point
 
   @inline def lengthSquared: Scalar = this ** this
 

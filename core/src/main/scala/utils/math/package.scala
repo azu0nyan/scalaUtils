@@ -51,6 +51,21 @@ package object math
   /** A value to multiply a radian value by, to convert it to degrees. */
   val RAD_TO_DEG: Scalar = 180.0f / PI
 
+  /*experimental naming*/
+  val `PI/2` = PI / 2
+  val `3PI/2` = 3 * PI / 2
+  val `2PI/3` = 2 * PI / 3
+  val `PI/3` = PI / 3
+  val `3PI/4` = 3 * PI / 4
+  val `PI/4` = PI / 4
+  val `PI/6` = PI / 6
+  val `2PI/6` = 2 * PI / 6
+  val `5PI/6` = 5 * PI / 6
+  val `2PI` = 2 * PI
+  val `3PI` = 3 * PI
+  
+  val `sqrt(2)` = math.sqrt(2)
+
   def toShortStr(s: Scalar): String = {
     val res = f"$s%.3f"
     val dropped = res.reverse.dropWhile(_ == '0').reverse
@@ -66,9 +81,9 @@ package object math
     def cubed: Scalar = s * s * s
 
     def tesseracted: Scalar = s * s * s * s
-    
+
     def sqrt: Scalar = math.sqrt(s)
-    
+
     def cbrt: Scalar = math.pow(s, 1.0 / 3.0)
   }
 
@@ -88,7 +103,7 @@ package object math
     def cubed: Long = s * s * s
 
     def tesseracted: Long = s * s * s * s
-    
+
   }
 
 
@@ -110,8 +125,8 @@ package object math
 
 
   /**
-    * safe scalar from [0,1]
-    */
+   * safe scalar from [0,1]
+   */
   case class UnitScalar private[math](value: Scalar) extends AnyVal {
     /** 1 - value */
     def inverse: Scalar = 1 - value

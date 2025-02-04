@@ -40,7 +40,7 @@ class TestSkeleton extends AnyFlatSpec with should.Matchers {
     skel.skeleton()
 
     for (face <- skel.output.faces.values) {
-//      System.out.println("face:")
+      //      System.out.println("face:")
       for {lp3 <- face.points.iterator;
            pt <- lp3.iterator} {
         System.out.println(pt)
@@ -234,9 +234,8 @@ class TestSkeleton extends AnyFlatSpec with should.Matchers {
     ),
   )
 
-
   def test(vs: (Scalar, Scalar)*)(expected: Seq[V3]*): Unit = {
-    val s = SSOps.calculcateFor(vs: _*)
+    val s = SSOps.calculateFor(vs: _*)
     val dumped = SSOps.dumpFaces(s)
 
     println(dumped)
