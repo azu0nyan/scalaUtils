@@ -7,6 +7,8 @@ import utils.math.planar.PolygonalChain.PolygonalChainOps
 import utils.math.planar.patch.Path.Path
 import utils.math.space.{Plane, V3}
 
+import scala.annotation.targetName
+
 object PolygonRegion {
 
   final val BORDER = 0
@@ -15,7 +17,9 @@ object PolygonRegion {
 
   def from(p: Path, vertices: Int): PolygonRegion = PolygonRegion(p.toPoints(vertices))
 
-
+  @targetName("from")
+  def apply(vertices: V2*): PolygonRegion = new PolygonRegion(vertices)
+  
   trait PolygonRegionOps[MYTYPE <: PolygonRegionOps[MYTYPE]] extends PolygonalChainOps[MYTYPE] {
 
 
@@ -236,4 +240,6 @@ case class PolygonRegion(vertices: Seq[V2]) extends PolygonRegionOps[PolygonRegi
 
   override def replacePoints(vertices: Seq[V2]): PolygonRegion = PolygonRegion(vertices)
 }
+
+
 

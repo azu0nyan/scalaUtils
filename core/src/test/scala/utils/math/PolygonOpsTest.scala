@@ -153,7 +153,7 @@ class PolygonOpsTest extends AnyFunSuite {
   }
 
   test("isConvex bug") {
-    val p = PolygonRegion(List((200.0, 200.0), (400.0, 0.0), (500.0, 100.0), (400.0, 200.0), (500.0, 300.0), (400.0, 400.0)))
+    val p = PolygonRegion(List(V2(200.0, 200.0), V2(400.0, 0.0), V2(500.0, 100.0), V2(400.0, 200.0), V2(500.0, 300.0), V2(400.0, 400.0)))
     println(p.sideAngles)
 //    println(p.sideAngles.map({ case AngleCCWPlanar(l, c, r) => AngleOps.turnAngleCCW(l, c, r) }))
     println(p.sideAngles.map({ case AngleCCWPlanar(l, c, r) => AngleOps.turnAngleCCW02PI(l, c, r) }))
