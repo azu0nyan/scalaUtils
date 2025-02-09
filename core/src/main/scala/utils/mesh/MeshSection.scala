@@ -41,6 +41,16 @@ trait MeshSection {
   }
 
   override def toString = s"MeshSection[verts:${vertices.size}, tris:${triangles.size}, uvs:${uvs.size}, normals:${normals.size}])"
+  
+  def toFullString: String = {
+    toString + 
+      "\nvertices\n" +      vertices.map(v => s"v ${v.x} ${v.y} ${v.z}").mkString("\n") +
+      "\ntriangles\n" + triangles.map(tr => s"f ${tr._1 + 1} ${tr._2 + 1} ${tr._3 + 1}").mkString("\n") +
+      "\nnormals\n" + normals.map(v => s"vn ${v.x} ${v.y} ${v.z}").mkString("\n") + 
+      "\nuvs\n" + uvs.map(v => s"vt ${v.x} ${v.y}").mkString("\n")
+    
+    
+  }
 
   def splitByParts(maxVertices: Int): Seq[MeshSection] = {
     if (vertices.size <= maxVertices) Seq(this)

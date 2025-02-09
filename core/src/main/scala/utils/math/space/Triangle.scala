@@ -34,9 +34,9 @@ case class Triangle(a: V3, b: V3, c: V3) extends NormalAndClosest with Shape {
 
   @inline def bc: V3 = c - b
 
-  @inline def normal: Normal = (ab ^ bc).normalize
+  @inline def normal: Normal = (ab ^ ac).normalize
 
-  @inline def area: Scalar = (ab ^ bc).length / 2f
+  @inline def area: Scalar = (ab ^ ac).length / 2f
 
   @inline def onPositiveSide(otherNormal: V3): Boolean = normal ** otherNormal > 0
 
