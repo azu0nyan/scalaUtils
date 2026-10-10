@@ -111,33 +111,33 @@ object PolygonContains {
       }
     }
 
-    Logging.logger.info(s"Init finished")
+    // Logging.logger.info(s"Init finished")
 //    Logging.logger.info(s"Parent segments: ${parentSegments.map{case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})"}.mkString(" | ")}")
 //    Logging.logger.info(s"Child segments: ${childSegments.map{case SegmentPlanar(v1, v2) => s"(${v1.toShortString}->${v2.toShortString})"}.mkString(" | ")}  ")
 
     def logStats(): Unit = {
-      Logging.logger.info(s"currentX: ${currentX}")
-      Logging.logger.info(s"xStructure: ${xStructure.clone().dequeueAll[V2].map(_.toShortString)} ")
-      Logging.logger.info(s"yStructure: ${yStructure.toSeq.map { case SegmentIsParent(SegmentPlanar(v1, v2), isParent) =>
-        s"(${v1.toShortString} -> ${v2.toShortString} ${if(isParent) "PARENT" else "CHILD"})"}.mkString(" | ")}")
-      Logging.logger.info(s"segmentQueue: ${segmentQueue.clone().dequeueAll[SegmentIsParent]
-        .map { case SegmentIsParent(SegmentPlanar(v1, v2), isParent) =>
-          s"(${v1.toShortString} -> ${v2.toShortString} ${if(isParent) "PARENT" else "CHILD"})" }.mkString(" | ")}")
+      // Logging.logger.info(s"currentX: ${currentX}")
+      // Logging.logger.info(s"xStructure: ${xStructure.clone().dequeueAll[V2].map(_.toShortString)} ")
+      // Logging.logger.info(s"yStructure: ${yStructure.toSeq.map { case SegmentIsParent(SegmentPlanar(v1, v2), isParent) =>
+      //   s"(${v1.toShortString} -> ${v2.toShortString} ${if(isParent) "PARENT" else "CHILD"})"}.mkString(" | ")}")
+      // Logging.logger.info(s"segmentQueue: ${segmentQueue.clone().dequeueAll[SegmentIsParent]
+      //   .map { case SegmentIsParent(SegmentPlanar(v1, v2), isParent) =>
+      //     s"(${v1.toShortString} -> ${v2.toShortString} ${if(isParent) "PARENT" else "CHILD"})" }.mkString(" | ")}")
     }
     logStats()
     while (xStructure.nonEmpty && contains) {
       //dequeue points and all it's copies
       val sweepPoint = xStructure.dequeue()
-      Logging.logger.info(s"Dequeued new current sweep point: $sweepPoint")
+      // Logging.logger.info(s"Dequeued new current sweep point: $sweepPoint")
       while (xStructure.nonEmpty && (xStructure.head ~= sweepPoint)) {
-        Logging.logger.info(s"Dequeued copy of sweep point: ${xStructure.head}")
+        // Logging.logger.info(s"Dequeued copy of sweep point: ${xStructure.head}")
         xStructure.dequeue()
       }
 
       //if we moved sweep line to next vertical bar
       if (currentX != sweepPoint.x) {
-        Logging.logger.info(s"New currentX found: ${sweepPoint.x}")
-        Logging.logger.info(s"Running inside check for: ${currentX} ${yStructure.flatMap(s => s.segment.yFromX(currentX))}")
+        // Logging.logger.info(s"New currentX found: ${sweepPoint.x}")
+        // Logging.logger.info(s"Running inside check for: ${currentX} ${yStructure.flatMap(s => s.segment.yFromX(currentX))}")
         contains &= checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
           case Some(y) => Seq(SegmentMiddle(y, s.isParent))
           case _ => Seq()
@@ -155,7 +155,13 @@ object PolygonContains {
         var iter = start
         for (_ <- start to end)
           if (yStructure(iter).segment.v2 ~= sweepPoint) {
-            Logging.logger.info(s"Removing ending segment: ${yStructure.remove(iter)}")
+            // NOTE: `yStructure.remove(iter)` was originally embedded *inside* the
+            // `Logging.logger.info(s"...")` call's string interpolation — i.e. the
+            // actual removal was a side effect of building a log message. Commenting
+            // out the whole line (as naively requested) would have silently stopped
+            // removing ended segments and broken the algorithm. Kept the call, dropped
+            // only the logging wrapper around it.
+            yStructure.remove(iter)
           }
           else iter += 1
         //iter becomes new end
@@ -229,7 +235,7 @@ object PolygonContains {
         //assumes (curSeg.length > 0)
         val curSeg = segmentQueue.dequeue()
         val insertionPoint = yStructure.lastIndexWhere(ySeg => lessAt(sweepPoint, ySeg.segment, curSeg.segment))
-        Logging.logger.info(s"Dequeue starting segment : $curSeg inserting at ${if(insertionPoint == -1) "BEGIN" else (insertionPoint + 1).toString}")
+        // Logging.logger.info(s"Dequeue starting segment : $curSeg inserting at ${if(insertionPoint == -1) "BEGIN" else (insertionPoint + 1).toString}")
 
         if (insertionPoint != -1) yStructure.insert(insertionPoint + 1, curSeg)
         else yStructure.prepend(curSeg)
@@ -258,7 +264,7 @@ object PolygonContains {
     }
 
     if (contains && yStructure.nonEmpty) {
-      Logging.logger.info(s"WTFFF")
+      // Logging.logger.info(s"WTFFF")
       contains &= checkInside(yStructure.flatMap(s => s.segment.yFromX(currentX) match {
         case Some(y) => Seq(SegmentMiddle(y, s.isParent))
         case _ => Seq()
@@ -307,17 +313,17 @@ object PolygonContains {
 
     }
 
-    Logging.logger.info(s"Checking inside for intersections: $intersectionsOrdered")
+    // Logging.logger.info(s"Checking inside for intersections: $intersectionsOrdered")
     var cur = intersectionsOrdered
     var curStatus = Status()
-    Logging.logger.info(s"Initial status: $curStatus")
+    // Logging.logger.info(s"Initial status: $curStatus")
     while(!curStatus.failed && cur.nonEmpty) {
-      Logging.logger.info(s"Checking inside for intersections: ${cur.head}")
+      // Logging.logger.info(s"Checking inside for intersections: ${cur.head}")
       curStatus = processEvent(curStatus, cur.head)
-      Logging.logger.info(s"Current status: $curStatus")
+      // Logging.logger.info(s"Current status: $curStatus")
       cur = cur.tail
     }
-    Logging.logger.info(s"contains: ${!curStatus.failed}")
+    // Logging.logger.info(s"contains: ${!curStatus.failed}")
     !curStatus.failed
 
   }
