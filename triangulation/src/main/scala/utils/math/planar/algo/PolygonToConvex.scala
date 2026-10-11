@@ -1,6 +1,6 @@
 package utils.math.planar.algo
 
-import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
+import utils.datastructures.dcel.DCEL.{Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.{DCELDataProvider, PlanarDCEL}
 import utils.math.planar.algo.PolygonTriangulation.triangulateNoneHolesDCEL
 import utils.math.planar.algo.polygonClipping.{PolygonClipping, PolygonClippingImplicits}

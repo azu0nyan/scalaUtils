@@ -2,7 +2,7 @@ package utils.math.planar.algo
 
 import utils.Logging
 import utils.datastructures.containers.BinaryTree.{BinaryTree, EmptyTree}
-import utils.datastructures.dcel.DCEL.{DCELData, Face, HalfEdge, Vertex}
+import utils.datastructures.dcel.DCEL.{Face, HalfEdge, Vertex}
 import utils.datastructures.dcel.{DCELDataProvider, PlanarDCEL}
 import utils.math.planar.{AngleOps, PolygonRegion, TrianglePlanar, V2}
 import utils.math.{min, *}
@@ -124,7 +124,7 @@ object PolygonTriangulation {
     var res: Seq[Face[VD, HD, FD]] = Seq(face)
     val sub = dcel.onNewFace.subscribe(f => res = f +: res)
 
-    println(s"Monotone Partitioning s${face.vertices.toSeq}")
+    // println(s"Monotone Partitioning s${face.vertices.toSeq}")
 
 
     def queueLt(p: V2, q: V2): Boolean = p.y < q.y || (p.y == q.y && p.x > q.x) //??
@@ -279,11 +279,11 @@ object PolygonTriangulation {
         (-p.y, p.x)
       }).toIndexedSeq
 
-      println("vs: " + vs.map(_.toProduct).toString())
-      println("u: " + u.map(d.position).toString())
-      println(minI.toString)
-      println(maxI.toString)
-      println("leftVertices: " + leftVertices.map(_.toProduct).toString())
+      // println("vs: " + vs.map(_.toProduct).toString())
+      // println("u: " + u.map(d.position).toString())
+      // println(minI.toString)
+      // println(maxI.toString)
+      // println("leftVertices: " + leftVertices.map(_.toProduct).toString())
 
       //Initialize an empty stack S, and push u1 and u2 onto it.
       val s = mutable.Stack[Vertex[VD, HD, FD]]()
@@ -292,8 +292,8 @@ object PolygonTriangulation {
       for (j <- 2 to (u.size - 2)) {
         val slc = leftVertices.contains(s.top)
         val ujlc = leftVertices.contains(u(j))
-        println(s.map(_.toProduct))
-        println(s"${s.top.toProduct} ${u(j).toProduct} $slc $ujlc")
+        // println(s.map(_.toProduct))
+        // println(s"${s.top.toProduct} ${u(j).toProduct} $slc $ujlc")
         // if u_j and the vertex on top of S are on different chains
         if (slc != ujlc) {
           // then Pop all vertices from S.
@@ -309,7 +309,7 @@ object PolygonTriangulation {
           // Pop one vertex from S.
           var lastPopped = s.pop()
           //Pop the other vertices from S as long as the diagonals from u_j to them are inside P.
-          println(s"${u(j).toProduct} ${lastPopped.toProduct} ${s.top.toProduct} ${AngleOps.isCCW(u(j), lastPopped, s.top)}")
+          // println(s"${u(j).toProduct} ${lastPopped.toProduct} ${s.top.toProduct} ${AngleOps.isCCW(u(j), lastPopped, s.top)}")
           while (s.nonEmpty && TrianglePlanar(u(j), lastPopped, s.top).nonDegenerate && (ujlc != AngleOps.isCCW(u(j), lastPopped, s.top))) {
             lastPopped = s.pop()
             // Insert these diagonals into D

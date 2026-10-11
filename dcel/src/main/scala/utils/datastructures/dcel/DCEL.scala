@@ -78,7 +78,7 @@ object DCEL {
            e <- hIE.traverseAllReachableEdges() if e.leftFace != this) {
         faces += e.leftFace
       }
-      println(faces)
+      // println(faces)
       faces.toSeq
     }
 
