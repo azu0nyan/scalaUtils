@@ -5,6 +5,9 @@ import utils.datastructures.containers.ThreadedAVLTree.ThreadedAVLTree
 import utils.datastructures.graph.{ArrayBufferGraph, Graph}
 import utils.datastructures.spatial.SpatialStorage.NaiveSpatialStorageImplementation
 import utils.datastructures.spatial.Octree.OctreeStorage
+import utils.datastructures.IntV2
+import utils.heightmap.{HeightGridRandom, Pow2ArrayHeightGrid, TiledHeightmap}
+import utils.math.planar.V2
 import utils.math.space.{AABox, V3}
 
 /** Micro-benchmarks for `utils.datastructures` (containers, graph, and the
@@ -172,6 +175,33 @@ object DataStructuresBench {
     report("naive_query (500 aabbs)", 50000L, i => naive.values(queries(i.toInt % Q_SIZE)).size.toDouble)
   }
 
+  /** No Rust-vs-Scala accumulator parity expected here (unlike every other
+    * case above): `HeightGridRandom`'s decorrelation hash is a faithful-
+    * in-spirit (not bit-for-bit) port of Java's nested `Random` — see
+    * `rust-utils/docs/porting.md`'s `utils.heightmap` section.
+    */
+  def benchHeightmap(): Unit = {
+    val g = new HeightGridRandom(IntV2(256, 256), 1) with TiledHeightmap
+    report(
+      "heightmap_tiled_sample",
+      200000L,
+      i => {
+        val x = ((i * 1000003L) % 255000L).toDouble / 1000.0
+        val y = ((i * 999983L) % 255000L).toDouble / 1000.0
+        g.heightAt(V2(x, y))
+      },
+    )
+    report(
+      "heightmap_bake_pow2",
+      200L,
+      i => {
+        val g2 = HeightGridRandom(IntV2(256, 256), i.toInt)
+        val baked: Pow2ArrayHeightGrid = g2.bakeToPow2Array
+        baked.valueAt(IntV2(0, 0))
+      },
+    )
+  }
+
   def main(args: Array[String]): Unit = {
     println(s"scalaUtils datastructures benchmark - $WARMUP_CHUNKS warmup chunks, then $CHUNKS measured chunks per op\n")
     benchBinHeapAddPoll()
@@ -179,5 +209,6 @@ object DataStructuresBench {
     benchAvlTreeAddContains()
     benchGraphShortestPath()
     benchOctreeQueryVsNaive()
+    benchHeightmap()
   }
 }
